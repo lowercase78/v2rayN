@@ -8,7 +8,7 @@
     },
     {
       "tag": "local",
-      "address": "223.5.5.5",
+      "address": "local",
       "strategy": "ipv4_only",
       "detour": "direct"
     },
