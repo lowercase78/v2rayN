@@ -9,7 +9,7 @@ namespace v2rayN
         public const string GithubUrl = "https://github.com";
         public const string GithubApiUrl = "https://api.github.com/repos";
         public const string V2flyCoreUrl = "https://github.com/v2fly/v2ray-core/releases";
-        public const string XrayCoreUrl = "https://github.com/XTLS/Xray-core/releases";
+        public const string XrayCoreUrl = "https://github.com/GFW-knocker/Xray-core/releases";
         public const string SagerNetCoreUrl = "https://github.com/SagerNet/v2ray-core/releases";
         public const string NUrl = @"https://github.com/2dust/v2rayN/releases";
         public const string ClashCoreUrl = "https://github.com/Dreamacro/clash/releases";
@@ -18,13 +18,13 @@ namespace v2rayN
         public const string HysteriaCoreUrl = "https://github.com/apernet/hysteria/releases";
         public const string NaiveproxyCoreUrl = "https://github.com/klzgrad/naiveproxy/releases";
         public const string TuicCoreUrl = "https://github.com/EAimTY/tuic/releases";
-        public const string SingboxCoreUrl = "https://github.com/SagerNet/sing-box/releases";
-        public const string GeoUrl = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{0}.dat";
+        public const string SingboxCoreUrl = "https://github.com/kyochikuto/sing-box-plus/releases";
+        public const string GeoUrl = "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/{0}.dat";
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
         public const string JuicityCoreUrl = "https://github.com/juicity/juicity/releases";
         public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/2dust/v2rayCustomRoutingList/master/";
-        public const string SingboxRulesetUrlGeosite = @"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{0}.srs";
-        public const string SingboxRulesetUrlGeoip = @"https://raw.githubusercontent.com/Loyalsoldier/geoip/release/srs/{0}.srs";
+        public const string SingboxRulesetUrlGeosite = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/{0}.srs";
+        public const string SingboxRulesetUrlGeoip = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/{0}.srs";
 
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
         public const string ConfigFileName = "guiNConfig.json";
