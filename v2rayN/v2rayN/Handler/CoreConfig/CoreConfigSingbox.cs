@@ -844,7 +844,7 @@ namespace v2rayN.Handler.CoreConfig
             dns4Sbox.servers.Add(new()
             {
                 tag = tag,
-                address = "local",
+                address = "8.8.8.8",
                 detour = Global.DirectTag,
                 //strategy = strategy
             });
