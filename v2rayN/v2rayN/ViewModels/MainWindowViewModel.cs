@@ -17,6 +17,7 @@ using System.Windows.Media;
 using v2rayN.Enums;
 using v2rayN.Handler;
 using v2rayN.Handler.Fmt;
+using v2rayN.Handler.Statistics;
 using v2rayN.Models;
 using v2rayN.Resx;
 using v2rayN.Views;
@@ -105,6 +106,7 @@ namespace v2rayN.ViewModels
         public ReactiveCommand<Unit, Unit> CopyServerCmd { get; }
         public ReactiveCommand<Unit, Unit> SetDefaultServerCmd { get; }
         public ReactiveCommand<Unit, Unit> ShareServerCmd { get; }
+        public ReactiveCommand<Unit, Unit> SetDefaultMultipleServerCmd { get; }
 
         //servers move
         public ReactiveCommand<Unit, Unit> MoveTopCmd { get; }
@@ -125,7 +127,6 @@ namespace v2rayN.ViewModels
         public ReactiveCommand<Unit, Unit> Export2ClientConfigCmd { get; }
 
         public ReactiveCommand<Unit, Unit> Export2ShareUrlCmd { get; }
-        public ReactiveCommand<Unit, Unit> Export2SubContentCmd { get; }
 
         //Subscription
         public ReactiveCommand<Unit, Unit> SubSettingCmd { get; }
@@ -150,6 +151,7 @@ namespace v2rayN.ViewModels
 
         //CheckUpdate
         public ReactiveCommand<Unit, Unit> CheckUpdateNCmd { get; }
+
         public ReactiveCommand<Unit, Unit> CheckUpdateXrayCoreCmd { get; }
         public ReactiveCommand<Unit, Unit> CheckUpdateClashMetaCoreCmd { get; }
         public ReactiveCommand<Unit, Unit> CheckUpdateSingBoxCoreCmd { get; }
@@ -396,6 +398,10 @@ namespace v2rayN.ViewModels
             {
                 ShareServer();
             }, canEditRemove);
+            SetDefaultMultipleServerCmd = ReactiveCommand.Create(() =>
+            {
+                SetDefaultMultipleServer();
+            }, canEditRemove);
             //servers move
             MoveTopCmd = ReactiveCommand.Create(() =>
             {
@@ -443,10 +449,6 @@ namespace v2rayN.ViewModels
             Export2ShareUrlCmd = ReactiveCommand.Create(() =>
             {
                 Export2ShareUrl();
-            }, canEditRemove);
-            Export2SubContentCmd = ReactiveCommand.Create(() =>
-            {
-                Export2SubContent();
             }, canEditRemove);
 
             //Subscription
@@ -612,6 +614,10 @@ namespace v2rayN.ViewModels
 
         private void UpdateHandler(bool notify, string msg)
         {
+            if (!_showInTaskbar)
+            {
+                return;
+            }
             _noticeHandler?.SendMessage(msg);
             if (notify)
             {
@@ -1160,6 +1166,28 @@ namespace v2rayN.ViewModels
             await DialogHost.Show(dialog, "RootDialog");
         }
 
+        private void SetDefaultMultipleServer()
+        {
+            if (GetProfileItems(out List<ProfileItem> lstSelecteds, true) < 0)
+            {
+                return;
+            }
+
+            if (ConfigHandler.AddCustomServer4Multiple(_config, lstSelecteds, out string indexId) != 0)
+            {
+                _noticeHandler?.Enqueue(ResUI.OperationFailed);
+                return;
+            }
+            if (indexId == _config.indexId)
+            {
+                Reload();
+            }
+            else
+            {
+                SetDefaultServer(indexId);
+            }
+        }
+
         public void SortServer(string colName)
         {
             if (Utils.IsNullOrEmpty(colName))
@@ -1286,7 +1314,7 @@ namespace v2rayN.ViewModels
             StringBuilder sb = new();
             foreach (var it in lstSelecteds)
             {
-                string url = FmtHandler.GetShareUri(it);
+                var url = FmtHandler.GetShareUri(it);
                 if (Utils.IsNullOrEmpty(url))
                 {
                     continue;
@@ -1298,31 +1326,6 @@ namespace v2rayN.ViewModels
             {
                 Utils.SetClipboardData(sb.ToString());
                 _noticeHandler?.SendMessage(ResUI.BatchExportURLSuccessfully);
-            }
-        }
-
-        private void Export2SubContent()
-        {
-            if (GetProfileItems(out List<ProfileItem> lstSelecteds, true) < 0)
-            {
-                return;
-            }
-
-            StringBuilder sb = new();
-            foreach (var it in lstSelecteds)
-            {
-                string? url = FmtHandler.GetShareUri(it);
-                if (Utils.IsNullOrEmpty(url))
-                {
-                    continue;
-                }
-                sb.Append(url);
-                sb.AppendLine();
-            }
-            if (sb.Length > 0)
-            {
-                Utils.SetClipboardData(Utils.Base64Encode(sb.ToString()));
-                _noticeHandler?.SendMessage(ResUI.BatchExportSubscriptionSuccessfully);
             }
         }
 
@@ -1513,12 +1516,12 @@ namespace v2rayN.ViewModels
                 Application.Current?.Dispatcher.Invoke((Action)(() =>
                 {
                     BlReloadEnabled = true;
-                    ShowCalshUI = (_config.runningCoreType is ECoreType.clash or ECoreType.clash_meta or ECoreType.mihomo);
-                    if (ShowCalshUI) {
+                    ShowCalshUI = (_config.runningCoreType is ECoreType.sing_box or ECoreType.clash or ECoreType.clash_meta or ECoreType.mihomo);
+                    if (ShowCalshUI)
+                    {
                         Locator.Current.GetService<ClashProxiesViewModel>()?.ProxiesReload();
                     }
                 }));
-                
             });
         }
 
@@ -1526,7 +1529,8 @@ namespace v2rayN.ViewModels
         {
             await Task.Run(() =>
             {
-                _coreHandler.LoadCore();
+                var node = ConfigHandler.GetDefaultServer(_config);
+                _coreHandler.LoadCore(node);
 
                 //ConfigHandler.SaveConfig(_config, false);
 

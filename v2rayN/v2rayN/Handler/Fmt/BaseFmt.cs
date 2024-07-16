@@ -59,6 +59,10 @@ namespace v2rayN.Handler.Fmt
             {
                 dicQuery.Add("spx", Utils.UrlEncode(item.spiderX));
             }
+            if (item.allowInsecure.Equals("true"))
+            {
+                dicQuery.Add("allowInsecure", "1");
+            }
 
             dicQuery.Add("type", !Utils.IsNullOrEmpty(item.network) ? item.network : nameof(ETransport.tcp));
 
@@ -137,6 +141,7 @@ namespace v2rayN.Handler.Fmt
             item.publicKey = Utils.UrlDecode(query["pbk"] ?? "");
             item.shortId = Utils.UrlDecode(query["sid"] ?? "");
             item.spiderX = Utils.UrlDecode(query["spx"] ?? "");
+            item.allowInsecure = (query["allowInsecure"] ?? "") == "1" ? "true" : "";
 
             item.network = query["type"] ?? nameof(ETransport.tcp);
             switch (item.network)

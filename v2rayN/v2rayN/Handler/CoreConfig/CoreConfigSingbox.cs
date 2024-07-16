@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
 using v2rayN.Enums;
@@ -15,6 +16,8 @@ namespace v2rayN.Handler.CoreConfig
         {
             _config = config;
         }
+
+        #region public gen function
 
         public int GenerateClientConfigContent(ProfileItem node, out SingboxConfig? singboxConfig, out string msg)
         {
@@ -75,6 +78,347 @@ namespace v2rayN.Handler.CoreConfig
             }
             return 0;
         }
+
+        public int GenerateClientSpeedtestConfig(List<ServerTestItem> selecteds, out SingboxConfig? singboxConfig, out string msg)
+        {
+            singboxConfig = null;
+            try
+            {
+                if (_config == null)
+                {
+                    msg = ResUI.CheckServerSettings;
+                    return -1;
+                }
+
+                msg = ResUI.InitialConfiguration;
+
+                string result = Utils.GetEmbedText(Global.SingboxSampleClient);
+                string txtOutbound = Utils.GetEmbedText(Global.SingboxSampleOutbound);
+                if (Utils.IsNullOrEmpty(result) || txtOutbound.IsNullOrEmpty())
+                {
+                    msg = ResUI.FailedGetDefaultConfiguration;
+                    return -1;
+                }
+
+                singboxConfig = JsonUtils.Deserialize<SingboxConfig>(result);
+                if (singboxConfig == null)
+                {
+                    msg = ResUI.FailedGenDefaultConfiguration;
+                    return -1;
+                }
+                List<IPEndPoint> lstIpEndPoints = new();
+                List<TcpConnectionInformation> lstTcpConns = new();
+                try
+                {
+                    lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners());
+                    lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners());
+                    lstTcpConns.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections());
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog(ex.Message, ex);
+                }
+
+                GenLog(singboxConfig);
+                //GenDns(new(), singboxConfig);
+                singboxConfig.inbounds.Clear(); // Remove "proxy" service for speedtest, avoiding port conflicts.
+                singboxConfig.outbounds.RemoveAt(0);
+
+                int httpPort = LazyConfig.Instance.GetLocalPort(EInboundProtocol.speedtest);
+
+                foreach (var it in selecteds)
+                {
+                    if (it.configType == EConfigType.Custom)
+                    {
+                        continue;
+                    }
+                    if (it.port <= 0)
+                    {
+                        continue;
+                    }
+                    if (it.configType is EConfigType.VMess or EConfigType.VLESS)
+                    {
+                        var item2 = LazyConfig.Instance.GetProfileItem(it.indexId);
+                        if (item2 is null || Utils.IsNullOrEmpty(item2.id) || !Utils.IsGuidByParse(item2.id))
+                        {
+                            continue;
+                        }
+                    }
+
+                    //find unused port
+                    var port = httpPort;
+                    for (int k = httpPort; k < Global.MaxPort; k++)
+                    {
+                        if (lstIpEndPoints?.FindIndex(_it => _it.Port == k) >= 0)
+                        {
+                            continue;
+                        }
+                        if (lstTcpConns?.FindIndex(_it => _it.LocalEndPoint.Port == k) >= 0)
+                        {
+                            continue;
+                        }
+                        //found
+                        port = k;
+                        httpPort = port + 1;
+                        break;
+                    }
+
+                    //Port In Used
+                    if (lstIpEndPoints?.FindIndex(_it => _it.Port == port) >= 0)
+                    {
+                        continue;
+                    }
+                    it.port = port;
+                    it.allowTest = true;
+
+                    //inbound
+                    Inbound4Sbox inbound = new()
+                    {
+                        listen = Global.Loopback,
+                        listen_port = port,
+                        type = EInboundProtocol.http.ToString(),
+                    };
+                    inbound.tag = inbound.type + inbound.listen_port.ToString();
+                    singboxConfig.inbounds.Add(inbound);
+
+                    //outbound
+                    var item = LazyConfig.Instance.GetProfileItem(it.indexId);
+                    if (item is null)
+                    {
+                        continue;
+                    }
+                    if (item.configType == EConfigType.Shadowsocks
+                        && !Global.SsSecuritiesInSingbox.Contains(item.security))
+                    {
+                        continue;
+                    }
+                    if (item.configType == EConfigType.VLESS
+                     && !Global.Flows.Contains(item.flow))
+                    {
+                        continue;
+                    }
+
+                    var outbound = JsonUtils.Deserialize<Outbound4Sbox>(txtOutbound);
+                    GenOutbound(item, outbound);
+                    outbound.tag = Global.ProxyTag + inbound.listen_port.ToString();
+                    singboxConfig.outbounds.Add(outbound);
+
+                    //rule
+                    Rule4Sbox rule = new()
+                    {
+                        inbound = new List<string> { inbound.tag },
+                        outbound = outbound.tag
+                    };
+                    singboxConfig.route.rules.Add(rule);
+                }
+
+                GenDnsDomains(null, singboxConfig, null);
+                //var dnsServer = singboxConfig.dns?.servers.FirstOrDefault();
+                //if (dnsServer != null)
+                //{
+                //    dnsServer.detour = singboxConfig.route.rules.LastOrDefault()?.outbound;
+                //}
+                //var dnsRule = singboxConfig.dns?.rules.Where(t => t.outbound != null).FirstOrDefault();
+                //if (dnsRule != null)
+                //{
+                //    singboxConfig.dns.rules = [];
+                //    singboxConfig.dns.rules.Add(dnsRule);
+                //}
+
+                //msg = string.Format(ResUI.SuccessfulConfiguration"), node.getSummary());
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(ex.Message, ex);
+                msg = ResUI.FailedGenDefaultConfiguration;
+                return -1;
+            }
+        }
+
+        public int GenerateClientMultipleLoadConfig(List<ProfileItem> selecteds, out SingboxConfig? singboxConfig, out string msg)
+        {
+            singboxConfig = null;
+            try
+            {
+                if (_config == null)
+                {
+                    msg = ResUI.CheckServerSettings;
+                    return -1;
+                }
+
+                msg = ResUI.InitialConfiguration;
+
+                string result = Utils.GetEmbedText(Global.SingboxSampleClient);
+                string txtOutbound = Utils.GetEmbedText(Global.SingboxSampleOutbound);
+                if (Utils.IsNullOrEmpty(result) || txtOutbound.IsNullOrEmpty())
+                {
+                    msg = ResUI.FailedGetDefaultConfiguration;
+                    return -1;
+                }
+
+                singboxConfig = JsonUtils.Deserialize<SingboxConfig>(result);
+                if (singboxConfig == null)
+                {
+                    msg = ResUI.FailedGenDefaultConfiguration;
+                    return -1;
+                }
+
+                GenLog(singboxConfig);
+                GenInbounds(singboxConfig);
+                GenRouting(singboxConfig);
+                GenExperimental(singboxConfig);
+                singboxConfig.outbounds.RemoveAt(0);
+
+                var tagProxy = new List<string>();
+                foreach (var it in selecteds)
+                {
+                    if (it.configType == EConfigType.Custom)
+                    {
+                        continue;
+                    }
+                    if (it.port <= 0)
+                    {
+                        continue;
+                    }
+                    var item = LazyConfig.Instance.GetProfileItem(it.indexId);
+                    if (item is null)
+                    {
+                        continue;
+                    }
+                    if (it.configType is EConfigType.VMess or EConfigType.VLESS)
+                    {
+                        if (Utils.IsNullOrEmpty(item.id) || !Utils.IsGuidByParse(item.id))
+                        {
+                            continue;
+                        }
+                    }
+                    if (item.configType == EConfigType.Shadowsocks
+                      && !Global.SsSecuritiesInSingbox.Contains(item.security))
+                    {
+                        continue;
+                    }
+                    if (item.configType == EConfigType.VLESS && !Global.Flows.Contains(item.flow))
+                    {
+                        continue;
+                    }
+
+                    //outbound
+                    var outbound = JsonUtils.Deserialize<Outbound4Sbox>(txtOutbound);
+                    GenOutbound(item, outbound);
+                    outbound.tag = $"{Global.ProxyTag}-{tagProxy.Count + 1}";
+                    singboxConfig.outbounds.Add(outbound);
+                    tagProxy.Add(outbound.tag);
+                }
+                if (tagProxy.Count <= 0)
+                {
+                    msg = ResUI.FailedGenDefaultConfiguration;
+                    return -1;
+                }
+
+                GenDns(null, singboxConfig);
+                ConvertGeo2Ruleset(singboxConfig);
+
+                //add urltest outbound
+                var outUrltest = new Outbound4Sbox
+                {
+                    type = "urltest",
+                    tag = $"{Global.ProxyTag}-auto",
+                    outbounds = tagProxy,
+                    interrupt_exist_connections = false,
+                };
+                singboxConfig.outbounds.Add(outUrltest);
+
+                //add selector outbound
+                var outSelector = new Outbound4Sbox
+                {
+                    type = "selector",
+                    tag = Global.ProxyTag,
+                    outbounds = JsonUtils.DeepCopy(tagProxy),
+                    interrupt_exist_connections = false,
+                };
+                outSelector.outbounds.Insert(0, outUrltest.tag);
+                singboxConfig.outbounds.Add(outSelector);
+
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(ex.Message, ex);
+                msg = ResUI.FailedGenDefaultConfiguration;
+                return -1;
+            }
+        }
+
+        public int GenerateClientCustomConfig(ProfileItem node, string? fileName, out string msg)
+        {
+            if (node == null || fileName is null)
+            {
+                msg = ResUI.CheckServerSettings;
+                return -1;
+            }
+
+            msg = ResUI.InitialConfiguration;
+
+            try
+            {
+                if (node == null)
+                {
+                    msg = ResUI.CheckServerSettings;
+                    return -1;
+                }
+
+                if (File.Exists(fileName))
+                {
+                    File.Delete(fileName);
+                }
+
+                string addressFileName = node.address;
+                if (string.IsNullOrEmpty(addressFileName))
+                {
+                    msg = ResUI.FailedGetDefaultConfiguration;
+                    return -1;
+                }
+                if (!File.Exists(addressFileName))
+                {
+                    addressFileName = Path.Combine(Utils.GetConfigPath(), addressFileName);
+                }
+                if (!File.Exists(addressFileName))
+                {
+                    msg = ResUI.FailedReadConfiguration + "1";
+                    return -1;
+                }
+
+                var txtFile = File.ReadAllText(addressFileName);
+                var singboxConfig = JsonUtils.Deserialize<SingboxConfig>(txtFile);
+                if (singboxConfig == null)
+                {
+                    msg = ResUI.FailedConversionConfiguration;
+                    return -1;
+                }
+
+                GenExperimental(singboxConfig);
+                JsonUtils.ToFile(singboxConfig, fileName, false);
+
+                //check again
+                if (!File.Exists(fileName))
+                {
+                    msg = ResUI.FailedReadConfiguration + "2";
+                    return -1;
+                }
+
+                msg = string.Format(ResUI.SuccessfulConfiguration, $"{node.GetSummary()}");
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(ex.Message, ex);
+                msg = ResUI.FailedGenDefaultConfiguration;
+                return -1;
+            }
+            return 0;
+        }
+
+        #endregion public gen function
 
         #region private gen function
 
@@ -559,6 +903,17 @@ namespace v2rayN.Handler.CoreConfig
                     });
                 }
 
+                singboxConfig.route.rules.Insert(0, new()
+                {
+                    outbound = Global.DirectTag,
+                    clash_mode = ERuleMode.Direct.ToString()
+                });
+                singboxConfig.route.rules.Insert(0, new()
+                {
+                    outbound = Global.ProxyTag,
+                    clash_mode = ERuleMode.Global.ToString()
+                });
+
                 if (_config.tunModeItem.enableTun)
                 {
                     singboxConfig.route.auto_detect_interface = true;
@@ -803,7 +1158,7 @@ namespace v2rayN.Handler.CoreConfig
             return true;
         }
 
-        private int GenDns(ProfileItem node, SingboxConfig singboxConfig)
+        private int GenDns(ProfileItem? node, SingboxConfig singboxConfig)
         {
             try
             {
@@ -825,7 +1180,7 @@ namespace v2rayN.Handler.CoreConfig
                 }
                 singboxConfig.dns = dns4Sbox;
 
-                GenDnsDomains(node, singboxConfig);
+                GenDnsDomains(node, singboxConfig, item?.domainStrategy4Freedom);
             }
             catch (Exception ex)
             {
@@ -834,7 +1189,7 @@ namespace v2rayN.Handler.CoreConfig
             return 0;
         }
 
-        private int GenDnsDomains(ProfileItem? node, SingboxConfig singboxConfig)
+        private int GenDnsDomains(ProfileItem? node, SingboxConfig singboxConfig, string? strategy)
         {
             var dns4Sbox = singboxConfig.dns ?? new();
             dns4Sbox.servers ??= [];
@@ -846,12 +1201,23 @@ namespace v2rayN.Handler.CoreConfig
                 tag = tag,
                 address = "8.8.8.8",
                 detour = Global.DirectTag,
-                //strategy = strategy
+                strategy = Utils.IsNullOrEmpty(strategy) ? null : strategy,
+            });
+            dns4Sbox.rules.Insert(0, new()
+            {
+                server = tag,
+                clash_mode = ERuleMode.Direct.ToString()
+            });
+            dns4Sbox.rules.Insert(0, new()
+            {
+                server = dns4Sbox.servers.Where(t => t.detour == Global.ProxyTag).Select(t => t.tag).FirstOrDefault() ?? "remote",
+                clash_mode = ERuleMode.Global.ToString()
             });
 
             var lstDomain = singboxConfig.outbounds
                            .Where(t => !Utils.IsNullOrEmpty(t.server) && Utils.IsDomain(t.server))
                            .Select(t => t.server)
+                           .Distinct()
                            .ToList();
             if (lstDomain != null && lstDomain.Count > 0)
             {
@@ -966,193 +1332,46 @@ namespace v2rayN.Handler.CoreConfig
                 }
             }
 
+            //Local srs files address
+            var localSrss = Utils.GetBinPath("srss");
+
             //Add ruleset srs
             singboxConfig.route.rule_set = [];
             foreach (var item in new HashSet<string>(ruleSets))
             {
                 if (Utils.IsNullOrEmpty(item)) { continue; }
                 var customRuleset = customRulesets.FirstOrDefault(t => t.tag != null && t.tag.Equals(item));
-                if (customRuleset != null)
+                if (customRuleset is null)
                 {
-                    singboxConfig.route.rule_set.Add(customRuleset);
-                }
-                else
-                {
-                    singboxConfig.route.rule_set.Add(new()
+                    var pathSrs = Path.Combine(localSrss, $"{item}.srs");
+                    if (File.Exists(pathSrs))
                     {
-                        type = "remote",
-                        format = "binary",
-                        tag = item,
-                        url = string.Format(Global.SingboxRulesetUrl, item.StartsWith(geosite) ? geosite : geoip, item),                       
-                        download_detour = Global.ProxyTag
-                    });
+                        customRuleset = new()
+                        {
+                            type = "local",
+                            format = "binary",
+                            tag = item,
+                            path = pathSrs
+                        };
+                    }
+                    else
+                    {
+                        customRuleset = new()
+                        {
+                            type = "remote",
+                            format = "binary",
+                            tag = item,
+                            url = string.Format(Global.SingboxRulesetUrl, item.StartsWith(geosite) ? geosite : geoip, item),
+                            download_detour = Global.ProxyTag
+                        };
+                    }
                 }
+                singboxConfig.route.rule_set.Add(customRuleset);
             }
 
             return 0;
         }
 
         #endregion private gen function
-
-        #region Gen speedtest config
-
-        public int GenerateClientSpeedtestConfig(List<ServerTestItem> selecteds, out SingboxConfig? singboxConfig, out string msg)
-        {
-            singboxConfig = null;
-            try
-            {
-                if (_config == null)
-                {
-                    msg = ResUI.CheckServerSettings;
-                    return -1;
-                }
-
-                msg = ResUI.InitialConfiguration;
-
-                string result = Utils.GetEmbedText(Global.SingboxSampleClient);
-                string txtOutbound = Utils.GetEmbedText(Global.SingboxSampleOutbound);
-                if (Utils.IsNullOrEmpty(result) || txtOutbound.IsNullOrEmpty())
-                {
-                    msg = ResUI.FailedGetDefaultConfiguration;
-                    return -1;
-                }
-
-                singboxConfig = JsonUtils.Deserialize<SingboxConfig>(result);
-                if (singboxConfig == null)
-                {
-                    msg = ResUI.FailedGenDefaultConfiguration;
-                    return -1;
-                }
-                List<IPEndPoint> lstIpEndPoints = new();
-                List<TcpConnectionInformation> lstTcpConns = new();
-                try
-                {
-                    lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners());
-                    lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners());
-                    lstTcpConns.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections());
-                }
-                catch (Exception ex)
-                {
-                    Logging.SaveLog(ex.Message, ex);
-                }
-
-                GenLog(singboxConfig);
-                //GenDns(new(), singboxConfig);
-                singboxConfig.inbounds.Clear(); // Remove "proxy" service for speedtest, avoiding port conflicts.
-                singboxConfig.outbounds.RemoveAt(0);
-
-                int httpPort = LazyConfig.Instance.GetLocalPort(EInboundProtocol.speedtest);
-
-                foreach (var it in selecteds)
-                {
-                    if (it.configType == EConfigType.Custom)
-                    {
-                        continue;
-                    }
-                    if (it.port <= 0)
-                    {
-                        continue;
-                    }
-                    if (it.configType is EConfigType.VMess or EConfigType.VLESS)
-                    {
-                        var item2 = LazyConfig.Instance.GetProfileItem(it.indexId);
-                        if (item2 is null || Utils.IsNullOrEmpty(item2.id) || !Utils.IsGuidByParse(item2.id))
-                        {
-                            continue;
-                        }
-                    }
-
-                    //find unused port
-                    var port = httpPort;
-                    for (int k = httpPort; k < Global.MaxPort; k++)
-                    {
-                        if (lstIpEndPoints?.FindIndex(_it => _it.Port == k) >= 0)
-                        {
-                            continue;
-                        }
-                        if (lstTcpConns?.FindIndex(_it => _it.LocalEndPoint.Port == k) >= 0)
-                        {
-                            continue;
-                        }
-                        //found
-                        port = k;
-                        httpPort = port + 1;
-                        break;
-                    }
-
-                    //Port In Used
-                    if (lstIpEndPoints?.FindIndex(_it => _it.Port == port) >= 0)
-                    {
-                        continue;
-                    }
-                    it.port = port;
-                    it.allowTest = true;
-
-                    //inbound
-                    Inbound4Sbox inbound = new()
-                    {
-                        listen = Global.Loopback,
-                        listen_port = port,
-                        type = EInboundProtocol.http.ToString(),
-                    };
-                    inbound.tag = inbound.type + inbound.listen_port.ToString();
-                    singboxConfig.inbounds.Add(inbound);
-
-                    //outbound
-                    var item = LazyConfig.Instance.GetProfileItem(it.indexId);
-                    if (item is null)
-                    {
-                        continue;
-                    }
-                    if (item.configType == EConfigType.Shadowsocks
-                        && !Global.SsSecuritiesInSingbox.Contains(item.security))
-                    {
-                        continue;
-                    }
-                    if (item.configType == EConfigType.VLESS
-                     && !Global.Flows.Contains(item.flow))
-                    {
-                        continue;
-                    }
-
-                    var outbound = JsonUtils.Deserialize<Outbound4Sbox>(txtOutbound);
-                    GenOutbound(item, outbound);
-                    outbound.tag = Global.ProxyTag + inbound.listen_port.ToString();
-                    singboxConfig.outbounds.Add(outbound);
-
-                    //rule
-                    Rule4Sbox rule = new()
-                    {
-                        inbound = new List<string> { inbound.tag },
-                        outbound = outbound.tag
-                    };
-                    singboxConfig.route.rules.Add(rule);
-                }
-
-                GenDnsDomains(null, singboxConfig);
-                //var dnsServer = singboxConfig.dns?.servers.FirstOrDefault();
-                //if (dnsServer != null)
-                //{
-                //    dnsServer.detour = singboxConfig.route.rules.LastOrDefault()?.outbound;
-                //}
-                //var dnsRule = singboxConfig.dns?.rules.Where(t => t.outbound != null).FirstOrDefault();
-                //if (dnsRule != null)
-                //{
-                //    singboxConfig.dns.rules = [];
-                //    singboxConfig.dns.rules.Add(dnsRule);
-                //}
-
-                //msg = string.Format(ResUI.SuccessfulConfiguration"), node.getSummary());
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog(ex.Message, ex);
-                msg = ResUI.FailedGenDefaultConfiguration;
-                return -1;
-            }
-        }
-
-        #endregion Gen speedtest config
     }
 }
