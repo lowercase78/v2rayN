@@ -1249,7 +1249,16 @@ namespace v2rayN.Resx {
         }
         
         /// <summary>
-        ///   查找类似 Multi-server set to active 的本地化字符串。
+        ///   查找类似 Multi-server load balancing 的本地化字符串。
+        /// </summary>
+        public static string menuSetDefaultLoadBalanceServer {
+            get {
+                return ResourceManager.GetString("menuSetDefaultLoadBalanceServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Multi-Server Preferred Latency 的本地化字符串。
         /// </summary>
         public static string menuSetDefaultMultipleServer {
             get {
@@ -2879,6 +2888,15 @@ namespace v2rayN.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Main layout orientation(Require restart) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsMainGirdOrientation {
+            get {
+                return ResourceManager.GetString("TbSettingsMainGirdOrientation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 sing-box Mux Protocol 的本地化字符串。
         /// </summary>
         public static string TbSettingsMux4SboxProtocol {
@@ -2938,6 +2956,15 @@ namespace v2rayN.Resx {
         public static string TbSettingsRouteOnly {
             get {
                 return ResourceManager.GetString("TbSettingsRouteOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 NotProxyLocalAddress 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsNotProxyLocalAddress {
+            get {
+                return ResourceManager.GetString("TbSettingsNotProxyLocalAddress", resourceCulture);
             }
         }
         

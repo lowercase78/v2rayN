@@ -187,7 +187,7 @@ namespace v2rayN.ViewModels
         {
             ClashApiHandler.Instance.GetClashProxies(_config, (it, it2) =>
             {
-                UpdateHandler(false, "Refresh Clash Proxies");
+                //UpdateHandler(false, "Refresh Clash Proxies");
                 proxies = it?.proxies;
                 providers = it2?.providers;
 
@@ -413,7 +413,7 @@ namespace v2rayN.ViewModels
 
         private void ProxiesDelayTest(bool blAll)
         {
-            UpdateHandler(false, "Clash Proxies Latency Test");
+            //UpdateHandler(false, "Clash Proxies Latency Test");
 
             ClashApiHandler.Instance.ClashProxiesDelayTest(blAll, _proxyDetails.ToList(), (item, result) =>
             {
@@ -465,7 +465,7 @@ namespace v2rayN.ViewModels
             Observable.Interval(TimeSpan.FromSeconds(60))
               .Subscribe(x =>
               {
-                  if (!(AutoRefresh && _config.clashUIItem.showInTaskbar))
+                  if (!(AutoRefresh && _config.uiItem.showInTaskbar && _config.IsRunningCore(ECoreType.clash)))
                   {
                       return;
                   }

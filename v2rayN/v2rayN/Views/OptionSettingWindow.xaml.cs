@@ -4,6 +4,7 @@ using System.IO;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Media;
+using v2rayN.Enums;
 using v2rayN.Handler;
 using v2rayN.Models;
 using v2rayN.ViewModels;
@@ -17,16 +18,6 @@ namespace v2rayN.Views
         public OptionSettingWindow()
         {
             InitializeComponent();
-
-            // 设置窗口的尺寸不大于屏幕的尺寸
-            if (this.Width > SystemParameters.WorkArea.Width)
-            {
-                this.Width = SystemParameters.WorkArea.Width;
-            }
-            if (this.Height > SystemParameters.WorkArea.Height)
-            {
-                this.Height = SystemParameters.WorkArea.Height;
-            }
 
             this.Owner = Application.Current.MainWindow;
             _config = LazyConfig.Instance.GetConfig();
@@ -98,6 +89,10 @@ namespace v2rayN.Views
             {
                 cmbSubConvertUrl.Items.Add(it);
             });
+            foreach (EGirdOrientation it in Enum.GetValues(typeof(EGirdOrientation)))
+            {
+                cmbMainGirdOrientation.Items.Add(it.ToString());
+            }
 
             lstFonts.ForEach(it => { cmbcurrentFontFamily.Items.Add(it); });
             cmbcurrentFontFamily.Items.Add(string.Empty);
@@ -153,7 +148,9 @@ namespace v2rayN.Views
                 this.Bind(ViewModel, vm => vm.SpeedPingTestUrl, v => v.cmbSpeedPingTestUrl.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableHWA, v => v.togEnableHWA.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.MainGirdOrientation, v => v.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
 
+                this.Bind(ViewModel, vm => vm.notProxyLocalAddress, v => v.tognotProxyLocalAddress.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.systemProxyAdvancedProtocol, v => v.cmbsystemProxyAdvancedProtocol.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.systemProxyExceptions, v => v.txtsystemProxyExceptions.Text).DisposeWith(disposables);
 

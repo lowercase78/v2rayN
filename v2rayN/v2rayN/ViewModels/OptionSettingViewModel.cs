@@ -74,11 +74,13 @@ namespace v2rayN.ViewModels
         [Reactive] public string SpeedPingTestUrl { get; set; }
         [Reactive] public bool EnableHWA { get; set; }
         [Reactive] public string SubConvertUrl { get; set; }
+        [Reactive] public int MainGirdOrientation { get; set; }
 
         #endregion UI
 
         #region System proxy
 
+        [Reactive] public bool notProxyLocalAddress { get; set; }
         [Reactive] public string systemProxyAdvancedProtocol { get; set; }
         [Reactive] public string systemProxyExceptions { get; set; }
 
@@ -171,11 +173,13 @@ namespace v2rayN.ViewModels
             SpeedPingTestUrl = _config.speedTestItem.speedPingTestUrl;
             EnableHWA = _config.guiItem.enableHWA;
             SubConvertUrl = _config.constItem.subConvertUrl;
+            MainGirdOrientation = (int)_config.uiItem.mainGirdOrientation;
 
             #endregion UI
 
             #region System proxy
 
+            notProxyLocalAddress = _config.notProxyLocalAddress;
             systemProxyAdvancedProtocol = _config.systemProxyAdvancedProtocol;
             systemProxyExceptions = _config.systemProxyExceptions;
 
@@ -333,9 +337,11 @@ namespace v2rayN.ViewModels
             _config.speedTestItem.speedPingTestUrl = SpeedPingTestUrl;
             _config.guiItem.enableHWA = EnableHWA;
             _config.constItem.subConvertUrl = SubConvertUrl;
+            _config.uiItem.mainGirdOrientation = (EGirdOrientation)MainGirdOrientation;
 
             //systemProxy
             _config.systemProxyExceptions = systemProxyExceptions;
+            _config.notProxyLocalAddress = notProxyLocalAddress;
             _config.systemProxyAdvancedProtocol = systemProxyAdvancedProtocol;
 
             //tun mode
