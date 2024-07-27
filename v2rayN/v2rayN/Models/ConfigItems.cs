@@ -119,7 +119,7 @@ namespace v2rayN.Models
         public double mainHeight { get; set; }
         public double mainGirdHeight1 { get; set; }
         public double mainGirdHeight2 { get; set; }
-        public EGirdOrientation mainGirdOrientation { get; set; }
+        public EGirdOrientation mainGirdOrientation { get; set; } = EGirdOrientation.Vertical;
         public bool colorModeDark { get; set; }
         public bool followSystemTheme { get; set; }
         public string? colorPrimaryName { get; set; }
@@ -226,5 +226,14 @@ namespace v2rayN.Models
         public int connectionsSorting { get; set; }
         public bool connectionsAutoRefresh { get; set; }
         public int connectionsRefreshInterval { get; set; } = 2;
+    }
+
+    [Serializable]
+    public class SystemProxyItem
+    {
+        public ESysProxyType sysProxyType { get; set; }
+        public string systemProxyExceptions { get; set; }
+        public bool notProxyLocalAddress { get; set; } = true;
+        public string systemProxyAdvancedProtocol { get; set; }
     }
 }
