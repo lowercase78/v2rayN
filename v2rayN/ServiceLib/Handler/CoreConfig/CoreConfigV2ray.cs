@@ -1173,7 +1173,7 @@ namespace ServiceLib.Handler.CoreConfig
                         fragment = new()
                         {
                             packets = "tlshello",
-                            length = "100-200",
+                            length = "10-20",
                             interval = "10-20"
                         }
                     }

@@ -149,7 +149,6 @@ namespace ServiceLib.Handler
                     config.uiItem.currentLanguage = Global.Languages[2];
                 }
             }
-
             if (config.constItem == null)
             {
                 config.constItem = new ConstItem();
