@@ -43,6 +43,6 @@ jobs:
             should be updated manually soon
 
 
-            ## 更新日志
+            ## tag
 
-            * 这是 GitHub Actions 自动化部署，更新日志应该很快会手动更新
+            * GitHub Actions
