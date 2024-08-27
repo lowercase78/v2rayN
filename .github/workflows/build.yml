@@ -43,16 +43,17 @@ jobs:
         path: |
           .\v2rayN\v2rayN.zip
           .\v2rayN\v2rayN-32.zip
-          
-    # - name: Release
-    #   uses: softprops/action-gh-release@v1
-    #   env:
-    #       GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-    #   with:
-    #     prerelease: ${{ contains(github.ref, '-') }}
-    #     draft: false
-    #     files: |
-    #         .\v2rayN\v2rayN.zip
+                    
+     - name: Release
+       uses: softprops/action-gh-release@v1
+       env:
+           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+       with:
+         prerelease: ${{ contains(github.ref, '-') }}
+         draft: false
+         files: |
+             .\v2rayN\v2rayN.zip
+             .\v2rayN\v2rayN-32.zip
     #     body: |
     #         [![](https://img.shields.io/badge/Telegram-Channel-blue)](https://t.me/netch_channel) [![](https://img.shields.io/badge/Telegram-Group-green)](https://t.me/netch_group)
     #         ## Changelogs
