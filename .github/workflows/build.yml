@@ -1,57 +1,48 @@
 name: release
-
-on:
+'on':
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
-
+    branches:
+      - master
 jobs:
   build:
     strategy:
       matrix:
-        configuration: [Release]
-
-    runs-on: windows-latest 
-
+        configuration:
+          - Release
+    runs-on: windows-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: cd v2rayN && .\build.ps1 && .\build-32.ps1
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2rayN
+          path: |
+            .\v2rayN\v2rayN.zip
+            .\v2rayN\v2rayN-32.zip
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.ACCESS_TOKEN }}'
+        with:
+          files: ''
+          prerelease: '${{ contains(github.ref, ''-'') }}'
+          draft: true .\v2rayN\v2rayN.zip .\v2rayN\v2rayN-32.zip
+          body: >
+            [![](https://img.shields.io/badge/Telegram-Channel-blue)](https://t.me/netch_channel)
+            [![](https://img.shields.io/badge/Telegram-Group-green)](https://t.me/netch_group)
 
-    - name: Build
-      run: |
-        cd v2rayN 
-        .\build.ps1
-        .\build-32.ps1
-        
-    - name: Package
-      shell: pwsh
-      run: |
-        Compress-Archive -Path .\v2rayN\dist\* -DestinationPath .\v2rayN\v2rayN.zip
-        Compress-Archive -Path .\v2rayN\dist32\* -DestinationPath .\v2rayN\v2rayN-32.zip
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: v2rayN
-        path: |
-          .\v2rayN\v2rayN.zip
-          .\v2rayN\v2rayN-32.zip
-                    
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      with:
-        files: |
-          .\v2rayN\v2rayN.zip
-          .\v2rayN\v2rayN-32.zip
-        prerelease: ${{ contains(github.ref, '-') }}
-        draft: true
-        body: |
-            [![](https://img.shields.io/badge/Telegram-Channel-blue)](https://t.me/netch_channel) [![](https://img.shields.io/badge/Telegram-Group-green)](https://t.me/netch_group)
             ## Changelogs
-            * This is an automated deployment of GitHub Actions, the change log should be updated manually soon
-          
+
+            * This is an automated deployment of GitHub Actions, the change log
+            should be updated manually soon
+
+
             ## 更新日志
+
             * 这是 GitHub Actions 自动化部署，更新日志应该很快会手动更新
