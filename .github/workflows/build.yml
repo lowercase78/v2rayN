@@ -18,23 +18,17 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # - name: 删除工作流运行
-    #   uses: Mattraks/delete-workflow-runs@v2
-    #   with:
-    #     token: ${{ github.token }}
-    #     repository: ${{ github.repository }}
-    #     retain_days: 0
-    #     keep_minimum_runs: 1
-
     - name: Build
-      run:  cd v2rayN && 
-        .\build.ps1 &&
+      run: |
+        cd v2rayN 
+        .\build.ps1
         .\build-32.ps1
         
-    # - name: Package
-    #   shell: pwsh
-    #   run: |
-    #     7z a -mx9 ..\v2rayN.7z $env:Wap_Project_Directory
+    - name: Package
+      shell: pwsh
+      run: |
+        Compress-Archive -Path .\v2rayN\dist\* -DestinationPath .\v2rayN\v2rayN.zip
+        Compress-Archive -Path .\v2rayN\dist32\* -DestinationPath .\v2rayN\v2rayN-32.zip
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -44,16 +38,16 @@ jobs:
           .\v2rayN\v2rayN.zip
           .\v2rayN\v2rayN-32.zip
                     
-    - name: Release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       with:
+        files: |
+          .\v2rayN\v2rayN.zip
+          .\v2rayN\v2rayN-32.zip
         prerelease: ${{ contains(github.ref, '-') }}
         draft: true
-        files: |
-            .\v2rayN\v2rayN.zip
-            .\v2rayN\v2rayN-32.zip
         body: |
             [![](https://img.shields.io/badge/Telegram-Channel-blue)](https://t.me/netch_channel) [![](https://img.shields.io/badge/Telegram-Group-green)](https://t.me/netch_group)
             ## Changelogs
