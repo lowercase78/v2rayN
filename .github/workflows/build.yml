@@ -25,11 +25,6 @@ jobs:
           path: |
             .\v2rayN\v2rayN.zip
             .\v2rayN\v2rayN-32.zip
-      - name: Generate release tag
-        id: tag
-        run: >
-          echo "::set-output name=release_tag::UserBuild_$(date
-          +"%Y.%m.%d_%H-%M")"
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
@@ -38,7 +33,7 @@ jobs:
           files: |
             .\v2rayN\v2rayN.zip          
             .\v2rayN\v2rayN-32.zip
-          tag_name: '${{ steps.tag.outputs.release_tag }}'
+          tag_name: 'draft'
           prerelease: '${{ contains(github.ref, ''-'') }}'
           draft: true
           body: >
