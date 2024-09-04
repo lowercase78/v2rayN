@@ -770,7 +770,9 @@ namespace ServiceLib.Handler.CoreConfig
                 if (enabled)
                 {
                     outbound.mux.enabled = true;
-                    outbound.mux.concurrency = 8;
+                    outbound.mux.concurrency = _config.mux4RayItem.concurrency;
+                    outbound.mux.xudpConcurrency = _config.mux4RayItem.xudpConcurrency;
+                    outbound.mux.xudpProxyUDP443 = _config.mux4RayItem.xudpProxyUDP443;
                 }
                 else
                 {
@@ -1095,7 +1097,7 @@ namespace ServiceLib.Handler.CoreConfig
                         address = Utils.IsNullOrEmpty(dNSItem?.domainDNSAddress) ? Global.DomainDNSAddress.FirstOrDefault() : dNSItem?.domainDNSAddress,
                         domains = [node.address]
                     };
-                    servers.AsArray().Insert(0, JsonUtils.SerializeToNode(dnsServer));
+                    servers.AsArray().Add(JsonUtils.SerializeToNode(dnsServer));
                 }
             }
             return 0;

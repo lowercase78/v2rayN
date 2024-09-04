@@ -19,6 +19,9 @@ namespace v2rayN.Views
             _config = LazyConfig.Instance.Config;
             _config.globalHotkeys ??= new List<KeyEventItem>();
 
+            btnReset.Click += btnReset_Click;
+            btnSave.Click += btnSave_Click;
+
             txtGlobalHotkey0.KeyDown += TxtGlobalHotkey_PreviewKeyDown;
             txtGlobalHotkey1.KeyDown += TxtGlobalHotkey_PreviewKeyDown;
             txtGlobalHotkey2.KeyDown += TxtGlobalHotkey_PreviewKeyDown;

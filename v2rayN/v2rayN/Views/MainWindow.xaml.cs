@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using MaterialDesignThemes.Wpf;
+using ReactiveUI;
 using Splat;
 using System.ComponentModel;
 using System.Reactive.Disposables;
@@ -15,6 +16,7 @@ namespace v2rayN.Views
     public partial class MainWindow
     {
         private static Config _config;
+        private CheckUpdateView? _checkUpdateView;
 
         public MainWindow()
         {
@@ -26,6 +28,11 @@ namespace v2rayN.Views
             App.Current.SessionEnding += Current_SessionEnding;
             this.Closing += MainWindow_Closing;
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+            menuSettingsSetUWP.Click += menuSettingsSetUWP_Click;
+            menuPromotion.Click += menuPromotion_Click;
+            menuClose.Click += menuClose_Click;
+            menuExit.Click += menuExit_Click;
+            menuCheckUpdate.Click += MenuCheckUpdate_Click;
 
             MessageBus.Current.Listen<string>(Global.CommandSendSnackMsg).Subscribe(x => DelegateSnackMsg(x));
             ViewModel = new MainWindowViewModel(UpdateViewHandler);
@@ -67,11 +74,11 @@ namespace v2rayN.Views
                 //this.BindCommand(ViewModel, vm => vm.ImportOldGuiConfigCmd, v => v.menuImportOldGuiConfig).DisposeWith(disposables);
 
                 //check update
-                this.BindCommand(ViewModel, vm => vm.CheckUpdateNCmd, v => v.menuCheckUpdateN).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.CheckUpdateXrayCoreCmd, v => v.menuCheckUpdateXrayCore).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.CheckUpdateClashMetaCoreCmd, v => v.menuCheckUpdateMihomoCore).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.CheckUpdateSingBoxCoreCmd, v => v.menuCheckUpdateSingBoxCore).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.CheckUpdateGeoCmd, v => v.menuCheckUpdateGeo).DisposeWith(disposables);
+                //this.BindCommand(ViewModel, vm => vm.CheckUpdateNCmd, v => v.menuCheckUpdateN).DisposeWith(disposables);
+                //this.BindCommand(ViewModel, vm => vm.CheckUpdateXrayCoreCmd, v => v.menuCheckUpdateXrayCore).DisposeWith(disposables);
+                //this.BindCommand(ViewModel, vm => vm.CheckUpdateClashMetaCoreCmd, v => v.menuCheckUpdateMihomoCore).DisposeWith(disposables);
+                //this.BindCommand(ViewModel, vm => vm.CheckUpdateSingBoxCoreCmd, v => v.menuCheckUpdateSingBoxCore).DisposeWith(disposables);
+                //this.BindCommand(ViewModel, vm => vm.CheckUpdateGeoCmd, v => v.menuCheckUpdateGeo).DisposeWith(disposables);
 
                 this.BindCommand(ViewModel, vm => vm.ReloadCmd, v => v.menuReload).DisposeWith(disposables);
                 this.OneWayBind(ViewModel, vm => vm.BlReloadEnabled, v => v.menuReload.IsEnabled).DisposeWith(disposables);
@@ -189,11 +196,20 @@ namespace v2rayN.Views
             AddHelpMenuItem();
         }
 
+        private void MenuCheckUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            _checkUpdateView ??= new CheckUpdateView();
+            DialogHost.Show(_checkUpdateView, "RootDialog");
+        }
+
         #region Event
 
         private void OnProgramStarted(object state, bool timeout)
         {
-            ShowHideWindow(true);
+            Application.Current?.Dispatcher.Invoke((Action)(() =>
+            {
+                ShowHideWindow(true);
+            }));
         }
 
         private void DelegateSnackMsg(string content)
@@ -277,7 +293,10 @@ namespace v2rayN.Views
                     break;
 
                 case EViewAction.Shutdown:
-                    Application.Current.Shutdown();
+                    Application.Current?.Dispatcher.Invoke((() =>
+                    {
+                        Application.Current.Shutdown();
+                    }), DispatcherPriority.Normal);
                     break;
 
                 case EViewAction.ScanScreenTask:
@@ -292,6 +311,13 @@ namespace v2rayN.Views
                 case EViewAction.AddServerViaClipboard:
                     var clipboardData = WindowsUtils.GetClipboardData();
                     ViewModel?.AddServerViaClipboardAsync(clipboardData);
+                    break;
+
+                case EViewAction.AdjustMainLvColWidth:
+                    Application.Current?.Dispatcher.Invoke((() =>
+                    {
+                        Locator.Current.GetService<ProfilesViewModel>()?.AutofitColumnWidthAsync();
+                    }), DispatcherPriority.Normal);
                     break;
             }
 

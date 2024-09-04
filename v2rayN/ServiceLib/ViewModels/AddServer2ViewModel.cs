@@ -9,6 +9,7 @@ namespace ServiceLib.ViewModels
     {
         [Reactive]
         public ProfileItem SelectedSource { get; set; }
+
         [Reactive]
         public string? CoreType { get; set; }
 
@@ -63,7 +64,7 @@ namespace ServiceLib.ViewModels
                 _noticeHandler?.Enqueue(ResUI.FillServerAddressCustom);
                 return;
             }
-            SelectedSource.coreType = (ECoreType)Enum.Parse(typeof(ECoreType), CoreType);
+            SelectedSource.coreType = CoreType.IsNullOrEmpty() ? null : (ECoreType)Enum.Parse(typeof(ECoreType), CoreType);
 
             if (ConfigHandler.EditCustomServer(_config, SelectedSource) == 0)
             {

@@ -124,20 +124,16 @@ namespace ServiceLib.Handler
                     mtu = 9000,
                 };
             }
-            if (config.guiItem == null)
+            config.guiItem ??= new()
             {
-                config.guiItem = new()
-                {
-                    enableStatistics = false,
-                };
-            }
-            if (config.uiItem == null)
+                enableStatistics = false,
+            };
+            config.msgUIItem ??= new();
+
+            config.uiItem ??= new UIItem()
             {
-                config.uiItem = new UIItem()
-                {
-                    enableAutoAdjustMainLvColWidth = true
-                };
-            }
+                enableAutoAdjustMainLvColWidth = true
+            };
             if (config.uiItem.mainColumnItem == null)
             {
                 config.uiItem.mainColumnItem = new();
@@ -172,6 +168,13 @@ namespace ServiceLib.Handler
             {
                 config.speedTestItem.speedPingTestUrl = Global.SpeedPingTestUrl;
             }
+
+            config.mux4RayItem ??= new()
+            {
+                concurrency = 8,
+                xudpConcurrency = 16,
+                xudpProxyUDP443 = "reject"
+            };
 
             if (config.mux4SboxItem == null)
             {
@@ -1282,7 +1285,10 @@ namespace ServiceLib.Handler
             {
                 return -1;
             }
-            var subRemarks = LazyConfig.Instance.GetSubItem(subid)?.remarks;
+
+            var subItem = LazyConfig.Instance.GetSubItem(subid);
+            var subRemarks = subItem?.remarks;
+            var preSocksPort = subItem?.preSocksPort;
 
             List<ProfileItem>? lstProfiles = null;
             //Is sing-box array configuration
@@ -1306,6 +1312,7 @@ namespace ServiceLib.Handler
                 {
                     it.subid = subid;
                     it.isSub = isSub;
+                    it.preSocksPort = preSocksPort;
                     if (AddCustomServer(config, it, true) == 0)
                     {
                         count++;
@@ -1362,6 +1369,7 @@ namespace ServiceLib.Handler
             }
             profileItem.subid = subid;
             profileItem.isSub = isSub;
+            profileItem.preSocksPort = preSocksPort;
             if (AddCustomServer(config, profileItem, true) == 0)
             {
                 return 1;
@@ -1498,9 +1506,11 @@ namespace ServiceLib.Handler
                 item.userAgent = subItem.userAgent;
                 item.sort = subItem.sort;
                 item.filter = subItem.filter;
+                item.updateTime = subItem.updateTime;
                 item.convertTarget = subItem.convertTarget;
                 item.prevProfile = subItem.prevProfile;
                 item.nextProfile = subItem.nextProfile;
+                item.preSocksPort = subItem.preSocksPort;
             }
 
             if (Utils.IsNullOrEmpty(item.id))

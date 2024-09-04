@@ -168,11 +168,15 @@ namespace ServiceLib.Common
                     {
                         progress.Report(101);
                     }
+                    else if (value.Error != null)
+                    {
+                        throw value.Error;
+                    }
                 }
             };
 
             using var cts = new CancellationTokenSource();
-            await downloader.DownloadFileTaskAsync(url, fileName, cts.Token).WaitAsync(TimeSpan.FromSeconds(timeout), cts.Token);
+            await downloader.DownloadFileTaskAsync(url, fileName, cts.Token);
 
             downloadOpt = null;
         }
