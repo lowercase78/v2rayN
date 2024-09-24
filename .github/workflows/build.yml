@@ -31,8 +31,8 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.ACCESS_TOKEN }}'
         with:
           files: |
-            .\v2rayN\v2rayN.zip          
-            .\v2rayN\v2rayN-32.zip
+            D:\a\v2rayN\v2rayN\v2rayN\v2rayN.zip          
+            D:\a\v2rayN\v2rayN\v2rayN\v2rayN-32.zip
           tag_name: 'draft'
           prerelease: '${{ contains(github.ref, ''-'') }}'
           draft: true
