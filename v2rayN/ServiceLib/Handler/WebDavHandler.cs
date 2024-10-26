@@ -12,21 +12,21 @@ namespace ServiceLib.Handler
         private WebDavClient? _client;
         private string? _lastDescription;
         private string _webDir = Global.AppName + "_backup";
-        private string _webFileName = "backup.zip";
+        private readonly string _webFileName = "backup.zip";
         private string _logTitle = "WebDav--";
 
         public WebDavHandler()
         {
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
         }
 
         private async Task<bool> GetClient()
         {
             try
             {
-                if (_config.webDavItem.url.IsNullOrEmpty()
-                || _config.webDavItem.userName.IsNullOrEmpty()
-                || _config.webDavItem.password.IsNullOrEmpty())
+                if (_config.WebDavItem.Url.IsNullOrEmpty()
+                || _config.WebDavItem.UserName.IsNullOrEmpty()
+                || _config.WebDavItem.Password.IsNullOrEmpty())
                 {
                     throw new ArgumentException("webdav parameter error or null");
                 }
@@ -35,19 +35,19 @@ namespace ServiceLib.Handler
                     _client?.Dispose();
                     _client = null;
                 }
-                if (_config.webDavItem.dirName.IsNullOrEmpty())
+                if (_config.WebDavItem.DirName.IsNullOrEmpty())
                 {
                     _webDir = Global.AppName + "_backup";
                 }
                 else
                 {
-                    _webDir = _config.webDavItem.dirName.TrimEx();
+                    _webDir = _config.WebDavItem.DirName.TrimEx();
                 }
 
                 var clientParams = new WebDavClientParams
                 {
-                    BaseAddress = new Uri(_config.webDavItem.url),
-                    Credentials = new NetworkCredential(_config.webDavItem.userName, _config.webDavItem.password)
+                    BaseAddress = new Uri(_config.WebDavItem.Url),
+                    Credentials = new NetworkCredential(_config.WebDavItem.UserName, _config.WebDavItem.Password)
                 };
                 _client = new WebDavClient(clientParams);
             }
@@ -98,19 +98,26 @@ namespace ServiceLib.Handler
             }
             await TryCreateDir();
 
-            var testName = "readme_test";
-            var myContent = new StringContent(testName);
-            var result = await _client.PutFile($"{_webDir}/{testName}", myContent);
-            if (result.IsSuccessful)
+            try
             {
-                await _client.Delete($"{_webDir}/{testName}");
-                return true;
+                var testName = "readme_test";
+                var myContent = new StringContent(testName);
+                var result = await _client.PutFile($"{_webDir}/{testName}", myContent);
+                if (result.IsSuccessful)
+                {
+                    await _client.Delete($"{_webDir}/{testName}");
+                    return true;
+                }
+                else
+                {
+                    SaveLog(result.Description);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                SaveLog(result.Description);
-                return false;
+                SaveLog(ex);
             }
+            return false;
         }
 
         public async Task<bool> PutFile(string fileName)
@@ -123,7 +130,7 @@ namespace ServiceLib.Handler
 
             try
             {
-                using var fs = File.OpenRead(fileName);
+                await using var fs = File.OpenRead(fileName);
                 var result = await _client.PutFile($"{_webDir}/{_webFileName}", fs); // upload a resource
                 if (result.IsSuccessful)
                 {
@@ -155,8 +162,9 @@ namespace ServiceLib.Handler
                     SaveLog(response.Description);
                     return false;
                 }
-                using var outputFileStream = new FileStream(fileName, FileMode.Create);
-                response.Stream.CopyTo(outputFileStream);
+
+                await using var outputFileStream = new FileStream(fileName, FileMode.Create);
+                await response.Stream.CopyToAsync(outputFileStream);
                 return true;
             }
             catch (Exception ex)

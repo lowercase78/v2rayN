@@ -16,7 +16,7 @@ namespace v2rayN.Views
             InitializeComponent();
 
             this.Owner = Application.Current.MainWindow;
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             var lstFonts = GetFonts(Utils.GetFontsPath());
 
             ViewModel = new OptionSettingViewModel(UpdateViewHandler);
@@ -26,7 +26,7 @@ namespace v2rayN.Views
             {
                 clbdestOverride.Items.Add(it);
             });
-            _config.inbound[0].destOverride?.ForEach(it =>
+            _config.Inbound[0].DestOverride?.ForEach(it =>
             {
                 clbdestOverride.SelectedItems.Add(it);
             });
@@ -84,6 +84,18 @@ namespace v2rayN.Views
             Global.SubConvertUrls.ForEach(it =>
             {
                 cmbSubConvertUrl.Items.Add(it);
+            });
+            Global.GeoFilesSources.ForEach(it =>
+            {
+                cmbGetFilesSourceUrl.Items.Add(it);
+            });
+            Global.SingboxRulesetSources.ForEach(it =>
+            {
+                cmbSrsFilesSourceUrl.Items.Add(it);
+            });
+            Global.RoutingRulesSources.ForEach(it =>
+            {
+                cmbRoutingRulesSourceUrl.Items.Add(it);
             });
             foreach (EGirdOrientation it in Enum.GetValues(typeof(EGirdOrientation)))
             {
@@ -145,6 +157,9 @@ namespace v2rayN.Views
                 this.Bind(ViewModel, vm => vm.EnableHWA, v => v.togEnableHWA.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.MainGirdOrientation, v => v.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.GeoFileSourceUrl, v => v.cmbGetFilesSourceUrl.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SrsFileSourceUrl, v => v.cmbSrsFilesSourceUrl.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.RoutingRulesSourceUrl, v => v.cmbRoutingRulesSourceUrl.Text).DisposeWith(disposables);
 
                 this.Bind(ViewModel, vm => vm.notProxyLocalAddress, v => v.tognotProxyLocalAddress.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.systemProxyAdvancedProtocol, v => v.cmbsystemProxyAdvancedProtocol.Text).DisposeWith(disposables);
@@ -165,7 +180,7 @@ namespace v2rayN.Views
 
                 this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
             });
-            WindowsUtils.SetDarkBorder(this, LazyConfig.Instance.Config.uiItem.followSystemTheme ? !WindowsUtils.IsLightTheme() : LazyConfig.Instance.Config.uiItem.colorModeDark);
+            WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.FollowSystemTheme ? !WindowsUtils.IsLightTheme() : AppHandler.Instance.Config.UiItem.ColorModeDark);
         }
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -191,7 +206,7 @@ namespace v2rayN.Views
                 {
                     files.AddRange(Directory.GetFiles(path, pattern));
                 }
-                var culture = _config.uiItem.currentLanguage == Global.Languages[0] ? "zh-cn" : "en-us";
+                var culture = _config.UiItem.CurrentLanguage == Global.Languages[0] ? "zh-cn" : "en-us";
                 var culture2 = "en-us";
                 foreach (var ttf in files)
                 {

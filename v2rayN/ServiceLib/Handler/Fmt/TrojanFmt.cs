@@ -8,15 +8,16 @@
 
             ProfileItem item = new()
             {
-                configType = EConfigType.Trojan
+                ConfigType = EConfigType.Trojan
             };
 
-            Uri url = new(str);
+            var url = Utils.TryUri(str);
+            if (url == null) return null;
 
-            item.address = url.IdnHost;
-            item.port = url.Port;
-            item.remarks = url.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
-            item.id = Utils.UrlDecode(url.UserInfo);
+            item.Address = url.IdnHost;
+            item.Port = url.Port;
+            item.Remarks = url.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
+            item.Id = Utils.UrlDecode(url.UserInfo);
 
             var query = Utils.ParseQueryString(url.Query);
             ResolveStdTransport(query, ref item);
@@ -30,20 +31,14 @@
             string url = string.Empty;
 
             string remark = string.Empty;
-            if (Utils.IsNotEmpty(item.remarks))
+            if (Utils.IsNotEmpty(item.Remarks))
             {
-                remark = "#" + Utils.UrlEncode(item.remarks);
+                remark = "#" + Utils.UrlEncode(item.Remarks);
             }
             var dicQuery = new Dictionary<string, string>();
             GetStdTransport(item, null, ref dicQuery);
-            string query = "?" + string.Join("&", dicQuery.Select(x => x.Key + "=" + x.Value).ToArray());
 
-            url = string.Format("{0}@{1}:{2}",
-            item.id,
-            GetIpv6(item.address),
-            item.port);
-            url = $"{Global.ProtocolShares[EConfigType.Trojan]}{url}{query}{remark}";
-            return url;
+            return ToUri(EConfigType.Trojan, item.Address, item.Port, item.Id, dicQuery, remark);
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive;
 
 namespace ServiceLib.ViewModels
@@ -29,15 +28,19 @@ namespace ServiceLib.ViewModels
 
         public RoutingRuleDetailsViewModel(RulesItem rulesItem, Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
 
-            if (rulesItem.id.IsNullOrEmpty())
+            SaveCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                rulesItem.id = Utils.GetGUID(false);
-                rulesItem.outboundTag = Global.ProxyTag;
-                rulesItem.enabled = true;
+                await SaveRulesAsync();
+            });
+
+            if (rulesItem.Id.IsNullOrEmpty())
+            {
+                rulesItem.Id = Utils.GetGuid(false);
+                rulesItem.OutboundTag = Global.ProxyTag;
+                rulesItem.Enabled = true;
                 SelectedSource = rulesItem;
             }
             else
@@ -45,14 +48,9 @@ namespace ServiceLib.ViewModels
                 SelectedSource = rulesItem;
             }
 
-            Domain = Utils.List2String(SelectedSource.domain, true);
-            IP = Utils.List2String(SelectedSource.ip, true);
-            Process = Utils.List2String(SelectedSource.process, true);
-
-            SaveCmd = ReactiveCommand.Create(() =>
-            {
-                SaveRulesAsync();
-            });
+            Domain = Utils.List2String(SelectedSource.Domain, true);
+            IP = Utils.List2String(SelectedSource.Ip, true);
+            Process = Utils.List2String(SelectedSource.Process, true);
         }
 
         private async Task SaveRulesAsync()
@@ -63,32 +61,32 @@ namespace ServiceLib.ViewModels
 
             if (AutoSort)
             {
-                SelectedSource.domain = Utils.String2ListSorted(Domain);
-                SelectedSource.ip = Utils.String2ListSorted(IP);
-                SelectedSource.process = Utils.String2ListSorted(Process);
+                SelectedSource.Domain = Utils.String2ListSorted(Domain);
+                SelectedSource.Ip = Utils.String2ListSorted(IP);
+                SelectedSource.Process = Utils.String2ListSorted(Process);
             }
             else
             {
-                SelectedSource.domain = Utils.String2List(Domain);
-                SelectedSource.ip = Utils.String2List(IP);
-                SelectedSource.process = Utils.String2List(Process);
+                SelectedSource.Domain = Utils.String2List(Domain);
+                SelectedSource.Ip = Utils.String2List(IP);
+                SelectedSource.Process = Utils.String2List(Process);
             }
-            SelectedSource.protocol = ProtocolItems?.ToList();
-            SelectedSource.inboundTag = InboundTagItems?.ToList();
+            SelectedSource.Protocol = ProtocolItems?.ToList();
+            SelectedSource.InboundTag = InboundTagItems?.ToList();
 
-            bool hasRule = SelectedSource.domain?.Count > 0
-              || SelectedSource.ip?.Count > 0
-              || SelectedSource.protocol?.Count > 0
-              || SelectedSource.process?.Count > 0
-              || Utils.IsNotEmpty(SelectedSource.port);
+            bool hasRule = SelectedSource.Domain?.Count > 0
+              || SelectedSource.Ip?.Count > 0
+              || SelectedSource.Protocol?.Count > 0
+              || SelectedSource.Process?.Count > 0
+              || Utils.IsNotEmpty(SelectedSource.Port);
 
             if (!hasRule)
             {
-                _noticeHandler?.Enqueue(string.Format(ResUI.RoutingRuleDetailRequiredTips, "Port/Protocol/Domain/IP/Process"));
+                NoticeHandler.Instance.Enqueue(string.Format(ResUI.RoutingRuleDetailRequiredTips, "Port/Protocol/Domain/IP/Process"));
                 return;
             }
-            //_noticeHandler?.Enqueue(ResUI.OperationSuccess);
-            await _updateView?.Invoke(EViewAction.CloseWindow, null);
+            //NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
+            _updateView?.Invoke(EViewAction.CloseWindow, null);
         }
     }
 }

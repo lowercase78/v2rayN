@@ -8,22 +8,23 @@
 
             ProfileItem item = new()
             {
-                configType = EConfigType.WireGuard
+                ConfigType = EConfigType.WireGuard
             };
 
-            Uri url = new(str);
+            var url = Utils.TryUri(str);
+            if (url == null) return null;
 
-            item.address = url.IdnHost;
-            item.port = url.Port;
-            item.remarks = url.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
-            item.id = Utils.UrlDecode(url.UserInfo);
+            item.Address = url.IdnHost;
+            item.Port = url.Port;
+            item.Remarks = url.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
+            item.Id = Utils.UrlDecode(url.UserInfo);
 
             var query = Utils.ParseQueryString(url.Query);
 
-            item.publicKey = Utils.UrlDecode(query["publickey"] ?? "");
-            item.path = Utils.UrlDecode(query["reserved"] ?? "");
-            item.requestHost = Utils.UrlDecode(query["address"] ?? "");
-            item.shortId = Utils.UrlDecode(query["mtu"] ?? "");
+            item.PublicKey = Utils.UrlDecode(query["publickey"] ?? "");
+            item.Path = Utils.UrlDecode(query["reserved"] ?? "");
+            item.RequestHost = Utils.UrlDecode(query["address"] ?? "");
+            item.ShortId = Utils.UrlDecode(query["mtu"] ?? "");
 
             return item;
         }
@@ -34,36 +35,29 @@
             string url = string.Empty;
 
             string remark = string.Empty;
-            if (Utils.IsNotEmpty(item.remarks))
+            if (Utils.IsNotEmpty(item.Remarks))
             {
-                remark = "#" + Utils.UrlEncode(item.remarks);
+                remark = "#" + Utils.UrlEncode(item.Remarks);
             }
 
             var dicQuery = new Dictionary<string, string>();
-            if (Utils.IsNotEmpty(item.publicKey))
+            if (Utils.IsNotEmpty(item.PublicKey))
             {
-                dicQuery.Add("publickey", Utils.UrlEncode(item.publicKey));
+                dicQuery.Add("publickey", Utils.UrlEncode(item.PublicKey));
             }
-            if (Utils.IsNotEmpty(item.path))
+            if (Utils.IsNotEmpty(item.Path))
             {
-                dicQuery.Add("reserved", Utils.UrlEncode(item.path));
+                dicQuery.Add("reserved", Utils.UrlEncode(item.Path));
             }
-            if (Utils.IsNotEmpty(item.requestHost))
+            if (Utils.IsNotEmpty(item.RequestHost))
             {
-                dicQuery.Add("address", Utils.UrlEncode(item.requestHost));
+                dicQuery.Add("address", Utils.UrlEncode(item.RequestHost));
             }
-            if (Utils.IsNotEmpty(item.shortId))
+            if (Utils.IsNotEmpty(item.ShortId))
             {
-                dicQuery.Add("mtu", Utils.UrlEncode(item.shortId));
+                dicQuery.Add("mtu", Utils.UrlEncode(item.ShortId));
             }
-            string query = "?" + string.Join("&", dicQuery.Select(x => x.Key + "=" + x.Value).ToArray());
-
-            url = string.Format("{0}@{1}:{2}",
-            Utils.UrlEncode(item.id),
-            GetIpv6(item.address),
-            item.port);
-            url = $"{Global.ProtocolShares[EConfigType.WireGuard]}{url}/{query}{remark}";
-            return url;
+            return ToUri(EConfigType.WireGuard, item.Address, item.Port, item.Id, dicQuery, remark);
         }
     }
 }

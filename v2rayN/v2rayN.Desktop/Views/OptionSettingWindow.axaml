@@ -23,16 +23,18 @@
                 x:Name="btnSave"
                 Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsDefault="True" />
             <Button
                 x:Name="btnCancel"
                 Width="100"
                 Margin="8,0"
                 Content="{x:Static resx:ResUI.TbCancel}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsCancel="True" />
         </StackPanel>
 
-        <TabControl HorizontalContentAlignment="Left">
+        <TabControl HorizontalContentAlignment="Stretch">
             <TabItem Header="{x:Static resx:ResUI.TbSettingsCore}">
                 <ScrollViewer VerticalScrollBarVisibility="Visible">
                     <Grid Classes="Margin8">
@@ -80,7 +82,8 @@
                             Grid.Column="2"
                             VerticalAlignment="Center"
                             Classes="Margin8"
-                            Text="{x:Static resx:ResUI.TbSettingsSocksPortTip}" />
+                            Text="{x:Static resx:ResUI.TbSettingsSocksPortTip}"
+                            TextWrapping="Wrap" />
 
                         <TextBlock
                             Grid.Row="1"
@@ -331,9 +334,10 @@
                             Classes="Margin8" />
                         <TextBlock
                             Grid.Row="17"
-                            Grid.Column="3"
+                            Grid.Column="2"
                             Classes="Margin8"
-                            Text="{x:Static resx:ResUI.TbSettingsEnableFragmentTips}" />
+                            Text="{x:Static resx:ResUI.TbSettingsEnableFragmentTips}"
+                            TextWrapping="Wrap" />
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -364,13 +368,16 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-
+                        <!--
                         <TextBlock
                             Grid.Row="1"
                             Grid.Column="0"
@@ -389,8 +396,7 @@
                             VerticalAlignment="Center"
                             Classes="Margin8"
                             Text="{x:Static resx:ResUI.TbSettingsStartBootTip}"
-                            TextWrapping="Wrap" />
-
+                            TextWrapping="Wrap" />-->
                         <TextBlock
                             Grid.Row="2"
                             Grid.Column="0"
@@ -491,19 +497,6 @@
                         <ToggleSwitch
                             x:Name="togEnableCheckPreReleaseUpdate"
                             Grid.Row="9"
-                            Grid.Column="1"
-                            HorizontalAlignment="Left"
-                            Classes="Margin8" />
-
-                        <TextBlock
-                            Grid.Row="10"
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            Classes="Margin8"
-                            Text="{x:Static resx:ResUI.TbSettingsEnableDragDropSort}" />
-                        <ToggleSwitch
-                            x:Name="togEnableDragDropSort"
-                            Grid.Row="10"
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             Classes="Margin8" />
@@ -624,6 +617,67 @@
                             Grid.Column="1"
                             Width="300"
                             Classes="Margin8" />
+
+                        <TextBlock
+                            Grid.Row="22"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsGeoFilesSource}" />
+                        <ComboBox
+                            x:Name="cmbGetFilesSourceUrl"
+                            Grid.Row="22"
+                            Grid.Column="1"
+                            Width="300"
+                            Classes="Margin8" />
+                        <TextBlock
+                            Grid.Row="22"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsChinaUserTip}"
+                            TextWrapping="Wrap" />
+
+                        <TextBlock
+                            Grid.Row="23"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsSrsFilesSource}" />
+                        <ComboBox
+                            x:Name="cmbSrsFilesSourceUrl"
+                            Grid.Row="23"
+                            Grid.Column="1"
+                            Width="300"
+                            Classes="Margin8" />
+                        <TextBlock
+                            Grid.Row="23"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsChinaUserTip}"
+                            TextWrapping="Wrap" />
+
+                        <TextBlock
+                            Grid.Row="24"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsRoutingRulesSource}" />
+                        <ComboBox
+                            x:Name="cmbRoutingRulesSourceUrl"
+                            Grid.Row="24"
+                            Grid.Column="1"
+                            Width="300"
+                            Classes="Margin8" />
+                        <TextBlock
+                            Grid.Row="24"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsChinaUserTip}"
+                            TextWrapping="Wrap" />
+
                     </Grid>
                 </ScrollViewer>
             </TabItem>

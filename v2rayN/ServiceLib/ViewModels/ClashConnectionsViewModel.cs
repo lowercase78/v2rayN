@@ -10,7 +10,6 @@ namespace ServiceLib.ViewModels
     public class ClashConnectionsViewModel : MyReactiveObject
     {
         private IObservableCollection<ClashConnectionModel> _connectionItems = new ObservableCollectionExtended<ClashConnectionModel>();
-
         public IObservableCollection<ClashConnectionModel> ConnectionItems => _connectionItems;
 
         [Reactive]
@@ -30,69 +29,54 @@ namespace ServiceLib.ViewModels
 
         public ClashConnectionsViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-            SortingSelected = _config.clashUIItem.connectionsSorting;
-            AutoRefresh = _config.clashUIItem.connectionsAutoRefresh;
+            SortingSelected = _config.ClashUIItem.ConnectionsSorting;
+            AutoRefresh = _config.ClashUIItem.ConnectionsAutoRefresh;
 
             var canEditRemove = this.WhenAnyValue(
              x => x.SelectedSource,
-             selectedSource => selectedSource != null && Utils.IsNotEmpty(selectedSource.id));
+             selectedSource => selectedSource != null && Utils.IsNotEmpty(selectedSource.Id));
 
             this.WhenAnyValue(
               x => x.SortingSelected,
               y => y >= 0)
-                  .Subscribe(c => DoSortingSelected(c));
+                  .Subscribe(async c => await DoSortingSelected(c));
 
             this.WhenAnyValue(
                x => x.AutoRefresh,
                y => y == true)
-                   .Subscribe(c => { _config.clashUIItem.connectionsAutoRefresh = AutoRefresh; });
-
-            ConnectionCloseCmd = ReactiveCommand.Create(() =>
+                   .Subscribe(c => { _config.ClashUIItem.ConnectionsAutoRefresh = AutoRefresh; });
+            ConnectionCloseCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                ClashConnectionClose(false);
+                await ClashConnectionClose(false);
             }, canEditRemove);
 
-            ConnectionCloseAllCmd = ReactiveCommand.Create(() =>
+            ConnectionCloseAllCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                ClashConnectionClose(true);
+                await ClashConnectionClose(true);
             });
 
             Init();
         }
 
-        private void DoSortingSelected(bool c)
-        {
-            if (!c)
-            {
-                return;
-            }
-            if (SortingSelected != _config.clashUIItem.connectionsSorting)
-            {
-                _config.clashUIItem.connectionsSorting = SortingSelected;
-            }
-
-            GetClashConnections();
-        }
-
-        private void Init()
+        private async Task Init()
         {
             var lastTime = DateTime.Now;
 
             Observable.Interval(TimeSpan.FromSeconds(5))
-              .Subscribe(x =>
+              .Subscribe(async x =>
               {
-                  if (!(AutoRefresh && _config.uiItem.showInTaskbar && _config.IsRunningCore(ECoreType.clash)))
+                  if (!(AutoRefresh && _config.UiItem.ShowInTaskbar && _config.IsRunningCore(ECoreType.sing_box)))
                   {
                       return;
                   }
                   var dtNow = DateTime.Now;
-                  if (_config.clashUIItem.connectionsRefreshInterval > 0)
+                  if (_config.ClashUIItem.ConnectionsRefreshInterval > 0)
                   {
-                      if ((dtNow - lastTime).Minutes % _config.clashUIItem.connectionsRefreshInterval == 0)
+                      if ((dtNow - lastTime).Minutes % _config.ClashUIItem.ConnectionsRefreshInterval == 0)
                       {
-                          GetClashConnections();
+                          await GetClashConnections();
                           lastTime = dtNow;
                       }
                       Task.Delay(1000).Wait();
@@ -100,17 +84,29 @@ namespace ServiceLib.ViewModels
               });
         }
 
-        private void GetClashConnections()
+        private async Task DoSortingSelected(bool c)
         {
-            ClashApiHandler.Instance.GetClashConnections(_config, async (it) =>
+            if (!c)
             {
-                if (it == null)
-                {
-                    return;
-                }
+                return;
+            }
+            if (SortingSelected != _config.ClashUIItem.ConnectionsSorting)
+            {
+                _config.ClashUIItem.ConnectionsSorting = SortingSelected;
+            }
 
-                await _updateView?.Invoke(EViewAction.DispatcherRefreshConnections, it?.connections);
-            });
+            await GetClashConnections();
+        }
+
+        private async Task GetClashConnections()
+        {
+            var ret = await ClashApiHandler.Instance.GetClashConnectionsAsync(_config);
+            if (ret == null)
+            {
+                return;
+            }
+
+            _updateView?.Invoke(EViewAction.DispatcherRefreshConnections, ret?.connections);
         }
 
         public void RefreshConnections(List<ConnectionItem>? connections)
@@ -129,18 +125,18 @@ namespace ServiceLib.ViewModels
 
                 ClashConnectionModel model = new();
 
-                model.id = item.id;
-                model.network = item.metadata.network;
-                model.type = item.metadata.type;
-                model.host = host;
+                model.Id = item.id;
+                model.Network = item.metadata.network;
+                model.Type = item.metadata.type;
+                model.Host = host;
                 var sp = (dtNow - item.start);
-                model.time = sp.TotalSeconds < 0 ? 1 : sp.TotalSeconds;
-                model.upload = item.upload;
-                model.download = item.download;
-                model.uploadTraffic = $"{Utils.HumanFy((long)item.upload)}";
-                model.downloadTraffic = $"{Utils.HumanFy((long)item.download)}";
-                model.elapsed = sp.ToString(@"hh\:mm\:ss");
-                model.chain = item.chains?.Count > 0 ? item.chains[0] : String.Empty;
+                model.Time = sp.TotalSeconds < 0 ? 1 : sp.TotalSeconds;
+                model.Upload = item.upload;
+                model.Download = item.download;
+                model.UploadTraffic = $"{Utils.HumanFy((long)item.upload)}";
+                model.DownloadTraffic = $"{Utils.HumanFy((long)item.download)}";
+                model.Elapsed = sp.ToString(@"hh\:mm\:ss");
+                model.Chain = item.chains?.Count > 0 ? item.chains[0] : string.Empty;
 
                 lstModel.Add(model);
             }
@@ -150,34 +146,34 @@ namespace ServiceLib.ViewModels
             switch (SortingSelected)
             {
                 case 0:
-                    lstModel = lstModel.OrderBy(t => t.upload / t.time).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Upload / t.Time).ToList();
                     break;
 
                 case 1:
-                    lstModel = lstModel.OrderBy(t => t.download / t.time).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Download / t.Time).ToList();
                     break;
 
                 case 2:
-                    lstModel = lstModel.OrderBy(t => t.upload).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Upload).ToList();
                     break;
 
                 case 3:
-                    lstModel = lstModel.OrderBy(t => t.download).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Download).ToList();
                     break;
 
                 case 4:
-                    lstModel = lstModel.OrderBy(t => t.time).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Time).ToList();
                     break;
 
                 case 5:
-                    lstModel = lstModel.OrderBy(t => t.host).ToList();
+                    lstModel = lstModel.OrderBy(t => t.Host).ToList();
                     break;
             }
 
             _connectionItems.AddRange(lstModel);
         }
 
-        public void ClashConnectionClose(bool all)
+        public async Task ClashConnectionClose(bool all)
         {
             var id = string.Empty;
             if (!all)
@@ -187,14 +183,14 @@ namespace ServiceLib.ViewModels
                 {
                     return;
                 }
-                id = item.id;
+                id = item.Id;
             }
             else
             {
                 _connectionItems.Clear();
             }
-            ClashApiHandler.Instance.ClashConnectionClose(id);
-            GetClashConnections();
+            await ClashApiHandler.Instance.ClashConnectionClose(id);
+            await GetClashConnections();
         }
     }
 }

@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
+using DialogHostAvalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using Splat;
@@ -20,12 +21,13 @@ namespace v2rayN.Desktop.Views
         {
             InitializeComponent();
 
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             _window = window;
 
             menuSelectAll.Click += menuSelectAll_Click;
             btnAutofitColumnWidth.Click += BtnAutofitColumnWidth_Click;
             txtServerFilter.KeyDown += TxtServerFilter_KeyDown;
+            menuStorageUI.Click += MenuStorageUI_Click;
             lstProfiles.KeyDown += LstProfiles_KeyDown;
             lstProfiles.SelectionChanged += lstProfiles_SelectionChanged;
             lstProfiles.DoubleTapped += LstProfiles_DoubleTapped;
@@ -64,7 +66,7 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.SetDefaultLoadBalanceServerCmd, v => v.menuSetDefaultLoadBalanceServer).DisposeWith(disposables);
 
                 //servers move
-                this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
+                //this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SelectedMoveToGroup, v => v.cmbMoveToGroup.SelectedItem).DisposeWith(disposables);
 
                 this.BindCommand(ViewModel, vm => vm.MoveTopCmd, v => v.menuMoveTop).DisposeWith(disposables);
@@ -86,7 +88,7 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.Export2ShareUrlBase64Cmd, v => v.menuExport2ShareUrlBase64).DisposeWith(disposables);
             });
 
-            //RestoreUI();
+            RestoreUI();
             ViewModel?.RefreshServers();
         }
 
@@ -170,8 +172,9 @@ namespace v2rayN.Desktop.Views
             {
                 return;
             }
+
             var dialog = new QrcodeView(url);
-            await dialog.ShowDialog(_window);
+            await DialogHost.Show(dialog);
         }
 
         private void lstProfiles_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -186,7 +189,7 @@ namespace v2rayN.Desktop.Views
 
         private void LstProfiles_DoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
         {
-            if (_config.uiItem.doubleClick2Activate)
+            if (_config.UiItem.DoubleClick2Activate)
             {
                 ViewModel?.SetDefaultServer();
             }
@@ -311,65 +314,70 @@ namespace v2rayN.Desktop.Views
             }
         }
 
+        private void MenuStorageUI_Click(object? sender, RoutedEventArgs e)
+        {
+            StorageUI();
+        }
+
         //#endregion Event
 
         //#region UI
 
-        //private void RestoreUI()
-        //{
-        //    var lvColumnItem = _config.uiItem.mainColumnItem.OrderBy(t => t.Index).ToList();
-        //    var displayIndex = 0;
-        //    foreach (var item in lvColumnItem)
-        //    {
-        //        foreach (MyDGTextColumn item2 in lstProfiles.Columns)
-        //        {
-        //            if (item2.ExName == item.Name)
-        //            {
-        //                if (item.Width < 0)
-        //                {
-        //                    item2.IsVisible = false;
-        //                }
-        //                else
-        //                {
-        //                    item2.Width = item.Width;
-        //                    item2.DisplayIndex = displayIndex++;
-        //                }
-        //            }
-        //        }
-        //    }
+        private void RestoreUI()
+        {
+            var lvColumnItem = _config.UiItem.MainColumnItem.OrderBy(t => t.Index).ToList();
+            var displayIndex = 0;
+            foreach (var item in lvColumnItem)
+            {
+                foreach (var item2 in lstProfiles.Columns)
+                {
+                    if (item2.Tag == null)
+                    {
+                        continue;
+                    }
+                    if (item2.Tag.Equals(item.Name))
+                    {
+                        if (item.Width < 0)
+                        {
+                            item2.IsVisible = false;
+                        }
+                        else
+                        {
+                            item2.Width = new DataGridLength(item.Width, DataGridLengthUnitType.Pixel); ;
+                            item2.DisplayIndex = displayIndex++;
+                        }
+                        if (item.Name.StartsWith("to"))
+                        {
+                            if (!_config.GuiItem.EnableStatistics)
+                            {
+                                item2.IsVisible = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        //    if (!_config.guiItem.enableStatistics)
-        //    {
-        //        colTodayUp.IsVisible =
-        //        colTodayDown.IsVisible =
-        //        colTotalUp.IsVisible =
-        //        colTotalDown.IsVisible = false;
-        //    }
-        //    else
-        //    {
-        //        colTodayUp.IsVisible =
-        //        colTodayDown.IsVisible =
-        //        colTotalUp.IsVisible =
-        //        colTotalDown.IsVisible = true;
-        //    }
-        //}
-
-        //private void StorageUI()
-        //{
-        //    List<ColumnItem> lvColumnItem = new();
-        //    for (int k = 0; k < lstProfiles.Columns.Count; k++)
-        //    {
-        //        var item2 = (MyDGTextColumn)lstProfiles.Columns[k];
-        //        lvColumnItem.Add(new()
-        //        {
-        //            Name = item2.ExName,
-        //            Width = item2.IsVisible == true ? Utils.ToInt(item2.ActualWidth) : -1,
-        //            Index = item2.DisplayIndex
-        //        });
-        //    }
-        //    _config.uiItem.mainColumnItem = lvColumnItem;
-        //    ConfigHandler.SaveConfig(_config);
-        //}
+        private void StorageUI()
+        {
+            List<ColumnItem> lvColumnItem = new();
+            for (int k = 0; k < lstProfiles.Columns.Count; k++)
+            {
+                var item2 = lstProfiles.Columns[k];
+                if (item2.Tag == null)
+                {
+                    continue;
+                }
+                lvColumnItem.Add(new()
+                {
+                    Name = (string)item2.Tag,
+                    Width = item2.IsVisible == true ? Utils.ToInt(item2.ActualWidth) : -1,
+                    Index = item2.DisplayIndex
+                });
+            }
+            _config.UiItem.MainColumnItem = lvColumnItem;
+            ConfigHandler.SaveConfig(_config);
+        }
 
         //#endregion UI
 

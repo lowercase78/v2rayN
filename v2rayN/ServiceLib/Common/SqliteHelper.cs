@@ -10,8 +10,7 @@ namespace ServiceLib.Common
         private string _connstr;
         private SQLiteConnection _db;
         private SQLiteAsyncConnection _dbAsync;
-        private static readonly object objLock = new();
-        public readonly string _configDB = "guiNDB.db";
+        private readonly string _configDB = "guiNDB.db";
 
         public SQLiteHelper()
         {
@@ -25,17 +24,9 @@ namespace ServiceLib.Common
             return _db.CreateTable<T>();
         }
 
-        public int Insert(object model)
+        public async Task<int> InsertAllAsync(IEnumerable models)
         {
-            return _db.Insert(model);
-        }
-
-        public int InsertAll(IEnumerable models)
-        {
-            lock (objLock)
-            {
-                return _db.InsertAll(models);
-            }
+            return await _dbAsync.InsertAllAsync(models);
         }
 
         public async Task<int> InsertAsync(object model)
@@ -43,25 +34,9 @@ namespace ServiceLib.Common
             return await _dbAsync.InsertAsync(model);
         }
 
-        public int Replace(object model)
-        {
-            lock (objLock)
-            {
-                return _db.InsertOrReplace(model);
-            }
-        }
-
         public async Task<int> ReplaceAsync(object model)
         {
             return await _dbAsync.InsertOrReplaceAsync(model);
-        }
-
-        public int Update(object model)
-        {
-            lock (objLock)
-            {
-                return _db.Update(model);
-            }
         }
 
         public async Task<int> UpdateAsync(object model)
@@ -69,20 +44,9 @@ namespace ServiceLib.Common
             return await _dbAsync.UpdateAsync(model);
         }
 
-        public int UpdateAll(IEnumerable models)
+        public async Task<int> UpdateAllAsync(IEnumerable models)
         {
-            lock (objLock)
-            {
-                return _db.UpdateAll(models);
-            }
-        }
-
-        public int Delete(object model)
-        {
-            lock (objLock)
-            {
-                return _db.Delete(model);
-            }
+            return await _dbAsync.UpdateAllAsync(models);
         }
 
         public async Task<int> DeleteAsync(object model)
@@ -90,19 +54,9 @@ namespace ServiceLib.Common
             return await _dbAsync.DeleteAsync(model);
         }
 
-        public List<T> Query<T>(string sql) where T : new()
+        public async Task<int> DeleteAllAsync<T>()
         {
-            return _db.Query<T>(sql);
-        }
-
-        public async Task<List<T>> QueryAsync<T>(string sql) where T : new()
-        {
-            return await _dbAsync.QueryAsync<T>(sql);
-        }
-
-        public int Execute(string sql)
-        {
-            return _db.Execute(sql);
+            return await _dbAsync.DeleteAllAsync<T>();
         }
 
         public async Task<int> ExecuteAsync(string sql)
@@ -110,9 +64,9 @@ namespace ServiceLib.Common
             return await _dbAsync.ExecuteAsync(sql);
         }
 
-        public TableQuery<T> Table<T>() where T : new()
+        public async Task<List<T>> QueryAsync<T>(string sql) where T : new()
         {
-            return _db.Table<T>();
+            return await _dbAsync.QueryAsync<T>(sql);
         }
 
         public AsyncTableQuery<T> TableAsync<T>() where T : new()

@@ -8,21 +8,48 @@ namespace ServiceLib.Handler
     /// </summary>
     public class CoreHandler
     {
+        private static readonly Lazy<CoreHandler> _instance = new(() => new());
+        public static CoreHandler Instance => _instance.Value;
         private Config _config;
         private Process? _process;
         private Process? _processPre;
-        private Action<bool, string> _updateFunc;
+        private Action<bool, string>? _updateFunc;
 
-        public CoreHandler(Config config, Action<bool, string> update)
+        public async Task Init(Config config, Action<bool, string> updateFunc)
         {
             _config = config;
-            _updateFunc = update;
+            _updateFunc = updateFunc;
 
-            Environment.SetEnvironmentVariable("v2ray.location.asset", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("xray.location.asset", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("V2RAY_LOCATION_ASSET", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("XRAY_LOCATION_ASSET", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
+
+            if (Utils.IsLinux())
+            {
+                var coreInfo = CoreInfoHandler.Instance.GetCoreInfo();
+                foreach (var it in coreInfo)
+                {
+                    if (it.CoreType == ECoreType.v2rayN)
+                    {
+                        if (Utils.UpgradeAppExists(out var fileName))
+                        {
+                            await Utils.SetLinuxChmod(fileName);
+                        }
+                        continue;
+                    }
+
+                    foreach (var vName in it.CoreExes)
+                    {
+                        var exe = Utils.GetExeName(Utils.GetBinPath(vName, it.CoreType.ToString()));
+                        if (File.Exists(exe))
+                        {
+                            await Utils.SetLinuxChmod(exe);
+                        }
+                    }
+                }
+            }
         }
 
-        public void LoadCore(ProfileItem? node)
+        public async Task LoadCore(ProfileItem? node)
         {
             if (node == null)
             {
@@ -30,18 +57,18 @@ namespace ServiceLib.Handler
                 return;
             }
 
-            string fileName = Utils.GetConfigPath(Global.CoreConfigFileName);
-            if (CoreConfigHandler.GenerateClientConfig(node, fileName, out string msg, out string content) != 0)
+            var fileName = Utils.GetConfigPath(Global.CoreConfigFileName);
+            var result = await CoreConfigHandler.GenerateClientConfig(node, fileName);
+            ShowMsg(false, result.Msg);
+            if (result.Success != true)
             {
-                ShowMsg(false, msg);
                 return;
             }
             else
             {
-                ShowMsg(false, msg);
                 ShowMsg(true, $"{node.GetSummary()}");
-                CoreStop();
-                CoreStart(node);
+                await CoreStop();
+                await CoreStart(node);
 
                 //In tun mode, do a delay check and restart the core
                 //if (_config.tunModeItem.enableTun)
@@ -63,31 +90,28 @@ namespace ServiceLib.Handler
             }
         }
 
-        public int LoadCoreConfigSpeedtest(List<ServerTestItem> selecteds)
+        public async Task<int> LoadCoreConfigSpeedtest(List<ServerTestItem> selecteds)
         {
-            int pid = -1;
-            var coreType = selecteds.Exists(t => t.configType == EConfigType.Hysteria2 || t.configType == EConfigType.TUIC || t.configType == EConfigType.WireGuard) ? ECoreType.sing_box : ECoreType.Xray;
-            string configPath = Utils.GetConfigPath(Global.CoreSpeedtestConfigFileName);
-            if (CoreConfigHandler.GenerateClientSpeedtestConfig(_config, configPath, selecteds, coreType, out string msg) != 0)
+            var pid = -1;
+            var coreType = selecteds.Exists(t => t.ConfigType is EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard) ? ECoreType.sing_box : ECoreType.Xray;
+            var configPath = Utils.GetConfigPath(Global.CoreSpeedtestConfigFileName);
+            var result = await CoreConfigHandler.GenerateClientSpeedtestConfig(_config, configPath, selecteds, coreType);
+            ShowMsg(false, result.Msg);
+            if (result.Success)
             {
-                ShowMsg(false, msg);
-            }
-            else
-            {
-                ShowMsg(false, msg);
-                pid = CoreStartSpeedtest(configPath, coreType);
+                pid = await CoreStartSpeedtest(configPath, coreType);
             }
             return pid;
         }
 
-        public void CoreStop()
+        public async Task CoreStop()
         {
             try
             {
                 bool hasProc = false;
                 if (_process != null)
                 {
-                    KillProcess(_process);
+                    await KillProcess(_process);
                     _process.Dispose();
                     _process = null;
                     hasProc = true;
@@ -95,7 +119,7 @@ namespace ServiceLib.Handler
 
                 if (_processPre != null)
                 {
-                    KillProcess(_processPre);
+                    await KillProcess(_processPre);
                     _processPre.Dispose();
                     _processPre = null;
                     hasProc = true;
@@ -106,19 +130,19 @@ namespace ServiceLib.Handler
                     var coreInfo = CoreInfoHandler.Instance.GetCoreInfo();
                     foreach (var it in coreInfo)
                     {
-                        if (it.coreType == ECoreType.v2rayN)
+                        if (it.CoreType == ECoreType.v2rayN)
                         {
                             continue;
                         }
-                        foreach (string vName in it.coreExes)
+                        foreach (string vName in it.CoreExes)
                         {
                             var existing = Process.GetProcessesByName(vName);
                             foreach (Process p in existing)
                             {
                                 string? path = p.MainModule?.FileName;
-                                if (path == Utils.GetExeName(Utils.GetBinPath(vName, it.coreType.ToString())))
+                                if (path == Utils.GetExeName(Utils.GetBinPath(vName, it.CoreType.ToString())))
                                 {
-                                    KillProcess(p);
+                                    await KillProcess(p);
                                 }
                             }
                         }
@@ -131,12 +155,12 @@ namespace ServiceLib.Handler
             }
         }
 
-        public void CoreStopPid(int pid)
+        public async Task CoreStopPid(int pid)
         {
             try
             {
                 var _p = Process.GetProcessById(pid);
-                KillProcess(_p);
+                await KillProcess(_p);
             }
             catch (Exception ex)
             {
@@ -149,10 +173,10 @@ namespace ServiceLib.Handler
         private string CoreFindExe(CoreInfo coreInfo)
         {
             string fileName = string.Empty;
-            foreach (string name in coreInfo.coreExes)
+            foreach (string name in coreInfo.CoreExes)
             {
                 string vName = Utils.GetExeName(name);
-                vName = Utils.GetBinPath(vName, coreInfo.coreType.ToString());
+                vName = Utils.GetBinPath(vName, coreInfo.CoreType.ToString());
                 if (File.Exists(vName))
                 {
                     fileName = vName;
@@ -161,14 +185,14 @@ namespace ServiceLib.Handler
             }
             if (Utils.IsNullOrEmpty(fileName))
             {
-                string msg = string.Format(ResUI.NotFoundCore, Utils.GetBinPath("", coreInfo.coreType.ToString()), string.Join(", ", coreInfo.coreExes.ToArray()), coreInfo.coreUrl);
+                string msg = string.Format(ResUI.NotFoundCore, Utils.GetBinPath("", coreInfo.CoreType.ToString()), string.Join(", ", coreInfo.CoreExes.ToArray()), coreInfo.Url);
                 Logging.SaveLog(msg);
                 ShowMsg(false, msg);
             }
             return fileName;
         }
 
-        private void CoreStart(ProfileItem node)
+        private async Task CoreStart(ProfileItem node)
         {
             ShowMsg(false, $"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
             ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
@@ -182,12 +206,12 @@ namespace ServiceLib.Handler
             //{
             //    coreType = LazyConfig.Instance.GetCoreType(node, node.configType);
             //}
-            var coreType = LazyConfig.Instance.GetCoreType(node, node.configType);
-            _config.runningCoreType = coreType;
+            var coreType = AppHandler.Instance.GetCoreType(node, node.ConfigType);
+            _config.RunningCoreType = coreType;
             var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(coreType);
 
-            var displayLog = node.configType != EConfigType.Custom || node.displayLog;
-            var proc = RunProcess(node, coreInfo, "", displayLog);
+            var displayLog = node.ConfigType != EConfigType.Custom || node.DisplayLog;
+            var proc = await RunProcess(node, coreInfo, "", displayLog);
             if (proc is null)
             {
                 return;
@@ -199,36 +223,37 @@ namespace ServiceLib.Handler
             {
                 ProfileItem? itemSocks = null;
                 var preCoreType = ECoreType.sing_box;
-                if (node.configType != EConfigType.Custom && coreType != ECoreType.sing_box && _config.tunModeItem.enableTun)
+                if (node.ConfigType != EConfigType.Custom && coreType != ECoreType.sing_box && _config.TunModeItem.EnableTun)
                 {
                     itemSocks = new ProfileItem()
                     {
-                        coreType = preCoreType,
-                        configType = EConfigType.SOCKS,
-                        address = Global.Loopback,
-                        sni = node.address, //Tun2SocksAddress
-                        port = LazyConfig.Instance.GetLocalPort(EInboundProtocol.socks)
+                        CoreType = preCoreType,
+                        ConfigType = EConfigType.SOCKS,
+                        Address = Global.Loopback,
+                        Sni = node.Address, //Tun2SocksAddress
+                        Port = AppHandler.Instance.GetLocalPort(EInboundProtocol.socks)
                     };
                 }
-                else if ((node.configType == EConfigType.Custom && node.preSocksPort > 0))
+                else if ((node.ConfigType == EConfigType.Custom && node.PreSocksPort > 0))
                 {
-                    preCoreType = _config.tunModeItem.enableTun ? ECoreType.sing_box : ECoreType.Xray;
+                    preCoreType = _config.TunModeItem.EnableTun ? ECoreType.sing_box : ECoreType.Xray;
                     itemSocks = new ProfileItem()
                     {
-                        coreType = preCoreType,
-                        configType = EConfigType.SOCKS,
-                        address = Global.Loopback,
-                        port = node.preSocksPort.Value,
+                        CoreType = preCoreType,
+                        ConfigType = EConfigType.SOCKS,
+                        Address = Global.Loopback,
+                        Port = node.PreSocksPort.Value,
                     };
-                    _config.runningCoreType = preCoreType;
+                    _config.RunningCoreType = preCoreType;
                 }
                 if (itemSocks != null)
                 {
                     string fileName2 = Utils.GetConfigPath(Global.CorePreConfigFileName);
-                    if (CoreConfigHandler.GenerateClientConfig(itemSocks, fileName2, out string msg2, out string configStr) == 0)
+                    var result = await CoreConfigHandler.GenerateClientConfig(itemSocks, fileName2);
+                    if (result.Success)
                     {
                         var coreInfo2 = CoreInfoHandler.Instance.GetCoreInfo(preCoreType);
-                        var proc2 = RunProcess(node, coreInfo2, $" -c {Global.CorePreConfigFileName}", true);
+                        var proc2 = await RunProcess(node, coreInfo2, $" -c {Global.CorePreConfigFileName}", true);
                         if (proc2 is not null)
                         {
                             _processPre = proc2;
@@ -238,7 +263,7 @@ namespace ServiceLib.Handler
             }
         }
 
-        private int CoreStartSpeedtest(string configPath, ECoreType coreType)
+        private async Task<int> CoreStartSpeedtest(string configPath, ECoreType coreType)
         {
             ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
 
@@ -246,7 +271,7 @@ namespace ServiceLib.Handler
             try
             {
                 var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(coreType);
-                var proc = RunProcess(new(), coreInfo, $" -c {Global.CoreSpeedtestConfigFileName}", true);
+                var proc = await RunProcess(new(), coreInfo, $" -c {Global.CoreSpeedtestConfigFileName}", true);
                 if (proc is null)
                 {
                     return -1;
@@ -265,14 +290,14 @@ namespace ServiceLib.Handler
 
         private void ShowMsg(bool notify, string msg)
         {
-            _updateFunc(notify, msg);
+            _updateFunc?.Invoke(notify, msg);
         }
 
         #endregion Private
 
         #region Process
 
-        private Process? RunProcess(ProfileItem node, CoreInfo coreInfo, string configPath, bool displayLog)
+        private async Task<Process?> RunProcess(ProfileItem node, CoreInfo coreInfo, string configPath, bool displayLog)
         {
             try
             {
@@ -286,7 +311,7 @@ namespace ServiceLib.Handler
                     StartInfo = new()
                     {
                         FileName = fileName,
-                        Arguments = string.Format(coreInfo.arguments, configPath),
+                        Arguments = string.Format(coreInfo.Arguments, configPath),
                         WorkingDirectory = Utils.GetConfigPath(),
                         UseShellExecute = false,
                         RedirectStandardOutput = displayLog,
@@ -339,7 +364,7 @@ namespace ServiceLib.Handler
                     startUpSuccessful = true;
                 }
 
-                LazyConfig.Instance.AddProcess(proc.Handle);
+                AppHandler.Instance.AddProcess(proc.Handle);
                 return proc;
             }
             catch (Exception ex)
@@ -351,7 +376,7 @@ namespace ServiceLib.Handler
             }
         }
 
-        private void KillProcess(Process? proc)
+        private async Task KillProcess(Process? proc)
         {
             if (proc is null)
             {

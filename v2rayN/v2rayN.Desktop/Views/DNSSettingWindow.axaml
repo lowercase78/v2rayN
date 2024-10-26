@@ -23,17 +23,18 @@
                 x:Name="btnSave"
                 Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsDefault="True" />
             <Button
                 x:Name="btnCancel"
                 Width="100"
                 Margin="8,0"
                 Content="{x:Static resx:ResUI.TbCancel}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsCancel="True" />
         </StackPanel>
 
         <TabControl HorizontalContentAlignment="Left">
-
             <TabItem Header="{x:Static resx:ResUI.TbSettingsCoreDns}">
                 <DockPanel Classes="Margin8">
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -89,13 +90,15 @@
                         </StackPanel>
                     </WrapPanel>
 
-                    <TextBox
-                        x:Name="txtnormalDNS"
-                        VerticalAlignment="Stretch"
-                        BorderThickness="1"
-                        Classes="TextArea Margin8"
-                        TextWrapping="Wrap"
-                        Watermark="HTTP/SOCKS" />
+                    <Grid Classes="Margin8">
+                        <TextBox
+                            x:Name="txtnormalDNS"
+                            VerticalAlignment="Stretch"
+                            BorderThickness="1"
+                            Classes="TextArea Margin8"
+                            TextWrapping="Wrap"
+                            Watermark="HTTP/SOCKS" />
+                    </Grid>
                 </DockPanel>
             </TabItem>
 
@@ -148,6 +151,7 @@
                         <TextBox
                             x:Name="txtnormalDNS2"
                             Grid.Column="0"
+                            Width="400"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             BorderThickness="1"
@@ -160,6 +164,7 @@
                         <TextBox
                             x:Name="txttunDNS2"
                             Grid.Column="2"
+                            Width="400"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             BorderThickness="1"

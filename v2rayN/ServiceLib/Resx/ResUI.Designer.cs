@@ -295,6 +295,24 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Please do not use the insecure HTTP protocol subscription address 的本地化字符串。
+        /// </summary>
+        public static string InsecureUrlProtocol {
+            get {
+                return ResourceManager.GetString("InsecureUrlProtocol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid address (Url) 的本地化字符串。
+        /// </summary>
+        public static string InvalidUrlTip {
+            get {
+                return ResourceManager.GetString("InvalidUrlTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 {0} {1} already up to date. 的本地化字符串。
         /// </summary>
         public static string IsLatestCore {
@@ -673,11 +691,20 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 Importing Share Links from clipboard (Ctrl+V) 的本地化字符串。
+        ///   查找类似 Import Share Links from clipboard (Ctrl+V) 的本地化字符串。
         /// </summary>
         public static string menuAddServerViaClipboard {
             get {
                 return ResourceManager.GetString("menuAddServerViaClipboard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Scan QR code in the image 的本地化字符串。
+        /// </summary>
+        public static string menuAddServerViaImage {
+            get {
+                return ResourceManager.GetString("menuAddServerViaImage", resourceCulture);
             }
         }
         
@@ -1186,6 +1213,33 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Regional presets setting 的本地化字符串。
+        /// </summary>
+        public static string menuRegionalPresets {
+            get {
+                return ResourceManager.GetString("menuRegionalPresets", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Default 的本地化字符串。
+        /// </summary>
+        public static string menuRegionalPresetsDefault {
+            get {
+                return ResourceManager.GetString("menuRegionalPresetsDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Russia 的本地化字符串。
+        /// </summary>
+        public static string menuRegionalPresetsRussia {
+            get {
+                return ResourceManager.GetString("menuRegionalPresetsRussia", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Reload 的本地化字符串。
         /// </summary>
         public static string menuReload {
@@ -1474,6 +1528,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Save Interface Layout 的本地化字符串。
+        /// </summary>
+        public static string menuStorageUI {
+            get {
+                return ResourceManager.GetString("menuStorageUI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Add 的本地化字符串。
         /// </summary>
         public static string menuSubAdd {
@@ -1717,7 +1780,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 Servers Filter, press Enter to execute 的本地化字符串。
+        ///   查找类似 Server filter, press Enter to execute 的本地化字符串。
         /// </summary>
         public static string MsgServerTitle {
             get {
@@ -2717,6 +2780,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Users in China region can ignore this item 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsChinaUserTip {
+            get {
+                return ResourceManager.GetString("TbSettingsChinaUserTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Color 的本地化字符串。
         /// </summary>
         public static string TbSettingsColor {
@@ -2996,6 +3068,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Geo files source (optional) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsGeoFilesSource {
+            get {
+                return ResourceManager.GetString("TbSettingsGeoFilesSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 HTTP Port 的本地化字符串。
         /// </summary>
         public static string TbSettingsHttpPort {
@@ -3149,6 +3230,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Routing rules source (optional) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsRoutingRulesSource {
+            get {
+                return ResourceManager.GetString("TbSettingsRoutingRulesSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Set Win10 UWP Loopback 的本地化字符串。
         /// </summary>
         public static string TbSettingsSetUWP {
@@ -3208,6 +3298,15 @@ namespace ServiceLib.Resx {
         public static string TbSettingsSpeedTestUrl {
             get {
                 return ResourceManager.GetString("TbSettingsSpeedTestUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 sing-box ruleset files source (optional) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsSrsFilesSource {
+            get {
+                return ResourceManager.GetString("TbSettingsSrsFilesSource", resourceCulture);
             }
         }
         
@@ -3482,6 +3581,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Active 的本地化字符串。
+        /// </summary>
+        public static string TipActiveServer {
+            get {
+                return ResourceManager.GetString("TipActiveServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Routing setting is changed 的本地化字符串。
         /// </summary>
         public static string TipChangeRouting {
@@ -3667,6 +3775,15 @@ namespace ServiceLib.Resx {
         public static string UpdateStandalonePackageTip {
             get {
                 return ResourceManager.GetString("UpdateStandalonePackageTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 UpgradeApp does not exist 的本地化字符串。
+        /// </summary>
+        public static string UpgradeAppNotExistTip {
+            get {
+                return ResourceManager.GetString("UpgradeAppNotExistTip", resourceCulture);
             }
         }
     }

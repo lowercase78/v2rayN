@@ -410,7 +410,7 @@
     <value>Local</value>
   </data>
   <data name="MsgServerTitle" xml:space="preserve">
-    <value>Servers Filter, press Enter to execute</value>
+    <value>Server filter, press Enter to execute</value>
   </data>
   <data name="menuCheckUpdate" xml:space="preserve">
     <value>Check Update</value>
@@ -491,7 +491,7 @@
     <value>Language (Restart)</value>
   </data>
   <data name="menuAddServerViaClipboard" xml:space="preserve">
-    <value>Importing Share Links from clipboard (Ctrl+V)</value>
+    <value>Import Share Links from clipboard (Ctrl+V)</value>
   </data>
   <data name="menuAddServerViaScan" xml:space="preserve">
     <value>Scan QR code on the screen (Ctrl+S)</value>
@@ -1320,5 +1320,44 @@
   </data>
   <data name="ConnectionsHostFilterTitle" xml:space="preserve">
     <value>Host filter</value>
+  </data>
+  <data name="TipActiveServer" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="menuStorageUI" xml:space="preserve">
+    <value>Save Interface Layout</value>
+  </data>
+  <data name="TbSettingsGeoFilesSource" xml:space="preserve">
+    <value>Geo files source (optional)</value>
+  </data>
+  <data name="TbSettingsSrsFilesSource" xml:space="preserve">
+    <value>sing-box ruleset files source (optional)</value>
+  </data>
+  <data name="UpgradeAppNotExistTip" xml:space="preserve">
+    <value>UpgradeApp does not exist</value>
+  </data>
+  <data name="TbSettingsRoutingRulesSource" xml:space="preserve">
+    <value>Routing rules source (optional)</value>
+  </data>
+  <data name="menuRegionalPresets" xml:space="preserve">
+    <value>Regional presets setting</value>
+  </data>
+  <data name="menuRegionalPresetsDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="menuRegionalPresetsRussia" xml:space="preserve">
+    <value>Russia</value>
+  </data>
+  <data name="TbSettingsChinaUserTip" xml:space="preserve">
+    <value>Users in China region can ignore this item</value>
+  </data>
+  <data name="menuAddServerViaImage" xml:space="preserve">
+    <value>Scan QR code in the image</value>
+  </data>
+  <data name="InvalidUrlTip" xml:space="preserve">
+    <value>Invalid address (Url)</value>
+  </data>
+  <data name="InsecureUrlProtocol" xml:space="preserve">
+    <value>Please do not use the insecure HTTP protocol subscription address</value>
   </data>
 </root>

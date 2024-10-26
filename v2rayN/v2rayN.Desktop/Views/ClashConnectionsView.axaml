@@ -43,17 +43,18 @@
 
             <Button
                 x:Name="btnConnectionCloseAll"
-                Width="24"
-                Height="24"
+                Width="30"
+                Height="30"
                 Margin="8,0"
                 Classes="Success"
-                Theme="{DynamicResource SolidButton}"
+                Theme="{DynamicResource BorderlessButton}"
                 ToolTip.Tip="{x:Static resx:ResUI.menuConnectionCloseAll}">
                 <Button.Content>
-                    <Image
-                        Width="16"
-                        Height="16"
-                        Source="/Assets/delete.png" />
+                    <PathIcon
+                        Width="20"
+                        Height="20"
+                        Data="{StaticResource building_delete}"
+                        Foreground="{DynamicResource ButtonDefaultTertiaryForeground}" />
                 </Button.Content>
             </Button>
 
@@ -85,31 +86,31 @@
             <DataGrid.Columns>
                 <DataGridTextColumn
                     Width="240"
-                    Binding="{Binding host}"
+                    Binding="{Binding Host}"
                     Header="{x:Static resx:ResUI.TbSortingHost}" />
                 <DataGridTextColumn
                     Width="160"
-                    Binding="{Binding chain}"
+                    Binding="{Binding Chain}"
                     Header="{x:Static resx:ResUI.TbSortingChain}" />
                 <DataGridTextColumn
                     Width="80"
-                    Binding="{Binding network}"
+                    Binding="{Binding Network}"
                     Header="{x:Static resx:ResUI.TbSortingNetwork}" />
                 <DataGridTextColumn
                     Width="100"
-                    Binding="{Binding type}"
+                    Binding="{Binding Type}"
                     Header="{x:Static resx:ResUI.TbSortingType}" />
                 <DataGridTextColumn
                     Width="100"
-                    Binding="{Binding uploadTraffic}"
+                    Binding="{Binding UploadTraffic}"
                     Header="{x:Static resx:ResUI.TbSortingUpTraffic}" />
                 <DataGridTextColumn
                     Width="100"
-                    Binding="{Binding downloadTraffic}"
+                    Binding="{Binding DownloadTraffic}"
                     Header="{x:Static resx:ResUI.TbSortingDownTraffic}" />
                 <DataGridTextColumn
                     Width="100"
-                    Binding="{Binding elapsed}"
+                    Binding="{Binding Elapsed}"
                     Header="{x:Static resx:ResUI.TbSortingTime}" />
             </DataGrid.Columns>
         </DataGrid>

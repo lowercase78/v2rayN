@@ -1,14 +1,14 @@
 ﻿<reactiveui:ReactiveWindow
     x:Class="v2rayN.Views.RoutingRuleSettingWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:conv="clr-namespace:v2rayN.Converters"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:reactiveui="http://reactiveui.net"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     xmlns:vms="clr-namespace:ServiceLib.ViewModels;assembly=ServiceLib"
+    xmlns:conv="clr-namespace:v2rayN.Converters"
     Title="{x:Static resx:ResUI.menuRoutingRuleSetting}"
     Width="960"
     Height="700"
@@ -32,7 +32,7 @@
                 <Button x:Name="menuRuleAdd">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon
-                            Margin="0,0,8,0"
+                            Margin="{StaticResource MarginRight8}"
                             VerticalAlignment="Center"
                             Kind="Plus" />
                         <TextBlock Style="{StaticResource ToolbarTextBlock}" Text="{x:Static resx:ResUI.menuRuleAdd}" />
@@ -42,7 +42,7 @@
                 <Button x:Name="menuImportRulesFromFile">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon
-                            Margin="0,0,8,0"
+                            Margin="{StaticResource MarginRight8}"
                             VerticalAlignment="Center"
                             Kind="Import" />
                         <TextBlock Style="{StaticResource ToolbarTextBlock}" Text="{x:Static resx:ResUI.menuImportRulesFromFile}" />
@@ -52,7 +52,7 @@
                 <Button x:Name="menuImportRulesFromClipboard">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon
-                            Margin="0,0,8,0"
+                            Margin="{StaticResource MarginRight8}"
                             VerticalAlignment="Center"
                             Kind="Import" />
                         <TextBlock Style="{StaticResource ToolbarTextBlock}" Text="{x:Static resx:ResUI.menuImportRulesFromClipboard}" />
@@ -62,7 +62,7 @@
                 <Button x:Name="menuImportRulesFromUrl">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon
-                            Margin="0,0,8,0"
+                            Margin="{StaticResource MarginRight8}"
                             VerticalAlignment="Center"
                             Kind="Import" />
                         <TextBlock Style="{StaticResource ToolbarTextBlock}" Text="{x:Static resx:ResUI.menuImportRulesFromUrl}" />
@@ -72,7 +72,7 @@
         </ToolBarTray>
 
         <StackPanel
-            Margin="8"
+            Margin="{StaticResource Margin8}"
             HorizontalAlignment="Right"
             DockPanel.Dock="Bottom"
             Orientation="Horizontal">
@@ -81,18 +81,19 @@
                 Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
                 Cursor="Hand"
+                IsDefault="True"
                 Style="{StaticResource DefButton}" />
             <Button
                 x:Name="btnCancel"
                 Width="100"
-                Margin="8,0"
+                Margin="{StaticResource MarginLeftRight8}"
                 Content="{x:Static resx:ResUI.TbCancel}"
                 Cursor="Hand"
                 IsCancel="true"
                 Style="{StaticResource DefButton}" />
         </StackPanel>
 
-        <Grid Margin="8" DockPanel.Dock="Top">
+        <Grid Margin="{StaticResource Margin8}" DockPanel.Dock="Top">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -109,7 +110,7 @@
             <TextBlock
                 Grid.Row="0"
                 Grid.Column="0"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}"
                 Text="{x:Static resx:ResUI.LvRemarks}" />
@@ -123,7 +124,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Width="300"
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     AcceptsReturn="True"
@@ -131,14 +132,14 @@
                     TextWrapping="Wrap" />
 
                 <TextBlock
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     VerticalAlignment="Center"
                     Style="{StaticResource ToolbarTextBlock}"
                     Text="{x:Static resx:ResUI.LvSort}" />
                 <TextBox
                     x:Name="txtSort"
                     Width="100"
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     HorizontalAlignment="Left"
                     AcceptsReturn="True"
                     Style="{StaticResource DefTextBox}" />
@@ -147,7 +148,7 @@
             <TextBlock
                 Grid.Row="1"
                 Grid.Column="0"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}"
                 Text="{x:Static resx:ResUI.TbdomainStrategy}" />
@@ -158,24 +159,24 @@
                 <ComboBox
                     x:Name="cmbdomainStrategy"
                     Width="200"
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     Style="{StaticResource DefComboBox}" />
                 <TextBlock
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     VerticalAlignment="Center"
                     Style="{StaticResource ToolbarTextBlock}"
                     Text="{x:Static resx:ResUI.TbdomainStrategy4Singbox}" />
                 <ComboBox
                     x:Name="cmbdomainStrategy4Singbox"
                     Width="200"
-                    Margin="4"
+                    Margin="{StaticResource Margin4}"
                     Style="{StaticResource DefComboBox}" />
             </StackPanel>
 
             <TextBlock
                 Grid.Row="2"
                 Grid.Column="0"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}"
                 Text="{x:Static resx:ResUI.LvUrl}" />
@@ -184,7 +185,7 @@
                 Grid.Row="2"
                 Grid.Column="1"
                 Width="600"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Top"
                 AcceptsReturn="True"
                 Style="{StaticResource DefTextBox}"
@@ -193,7 +194,7 @@
             <TextBlock
                 Grid.Row="3"
                 Grid.Column="0"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}"
                 Text="{x:Static resx:ResUI.LvCustomIcon}" />
@@ -202,7 +203,7 @@
                 Grid.Row="3"
                 Grid.Column="1"
                 Width="600"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Top"
                 AcceptsReturn="True"
                 Style="{StaticResource DefTextBox}"
@@ -211,14 +212,14 @@
                 x:Name="btnBrowseCustomIcon"
                 Grid.Row="3"
                 Grid.Column="2"
-                Margin="2,0,8,0"
+                Margin="{StaticResource MarginLeftRight4}"
                 Content="{x:Static resx:ResUI.TbBrowse}"
                 Style="{StaticResource DefButton}" />
 
             <TextBlock
                 Grid.Row="4"
                 Grid.Column="0"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}">
                 <Hyperlink Click="linkCustomRulesetPath4Singbox">
@@ -231,7 +232,7 @@
                 Grid.Row="4"
                 Grid.Column="1"
                 Width="600"
-                Margin="4"
+                Margin="{StaticResource Margin4}"
                 VerticalAlignment="Top"
                 AcceptsReturn="True"
                 Style="{StaticResource DefTextBox}"
@@ -240,7 +241,7 @@
                 x:Name="btnBrowseCustomRulesetPath4Singbox"
                 Grid.Row="4"
                 Grid.Column="2"
-                Margin="2,0,8,0"
+                Margin="{StaticResource MarginLeftRight4}"
                 Content="{x:Static resx:ResUI.TbBrowse}"
                 Style="{StaticResource DefButton}" />
         </Grid>
@@ -297,38 +298,42 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                     <DataGrid.Columns>
+                        <DataGridCheckBoxColumn
+                            Width="60"
+                            Binding="{Binding Enabled}"
+                            Header="" />
                         <DataGridTextColumn
-                            Width="110"
-                            Binding="{Binding outboundTag}"
+                            Width="150"
+                            Binding="{Binding Remarks}"
+                            Header="{x:Static resx:ResUI.LvRemarks}" />
+                        <DataGridTextColumn
+                            Width="120"
+                            Binding="{Binding OutboundTag}"
                             Header="outboundTag" />
                         <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding port}"
+                            Width="100"
+                            Binding="{Binding Port}"
                             Header="port" />
                         <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding protocols}"
+                            Width="100"
+                            Binding="{Binding Protocols}"
                             Header="protocol" />
                         <DataGridTextColumn
-                            Width="110"
-                            Binding="{Binding inboundTags}"
+                            Width="120"
+                            Binding="{Binding InboundTags}"
                             Header="inboundTag" />
                         <DataGridTextColumn
                             Width="90"
-                            Binding="{Binding network}"
+                            Binding="{Binding Network}"
                             Header="network" />
                         <DataGridTextColumn
-                            Width="190"
-                            Binding="{Binding domains}"
+                            Width="200"
+                            Binding="{Binding Domains}"
                             Header="domain" />
                         <DataGridTextColumn
-                            Width="190"
-                            Binding="{Binding ips}"
+                            Width="200"
+                            Binding="{Binding Ips}"
                             Header="ip" />
-                        <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding enabled}"
-                            Header="enabled" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>

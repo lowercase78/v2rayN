@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Styling;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive.Linq;
 
 namespace v2rayN.Desktop.ViewModels
@@ -21,8 +20,7 @@ namespace v2rayN.Desktop.ViewModels
 
         public ThemeSettingViewModel()
         {
-            _config = LazyConfig.Instance.Config;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
+            _config = AppHandler.Instance.Config;
 
             BindingUI();
             RestoreUI();
@@ -30,21 +28,21 @@ namespace v2rayN.Desktop.ViewModels
 
         private void RestoreUI()
         {
-            ModifyTheme(_config.uiItem.colorModeDark);
+            ModifyTheme(_config.UiItem.ColorModeDark);
         }
 
         private void BindingUI()
         {
-            ColorModeDark = _config.uiItem.colorModeDark;
-            CurrentFontSize = _config.uiItem.currentFontSize;
-            CurrentLanguage = _config.uiItem.currentLanguage;
+            ColorModeDark = _config.UiItem.ColorModeDark;
+            CurrentFontSize = _config.UiItem.CurrentFontSize;
+            CurrentLanguage = _config.UiItem.CurrentLanguage;
 
             this.WhenAnyValue(x => x.ColorModeDark)
                       .Subscribe(c =>
                       {
-                          if (_config.uiItem.colorModeDark != ColorModeDark)
+                          if (_config.UiItem.ColorModeDark != ColorModeDark)
                           {
-                              _config.uiItem.colorModeDark = ColorModeDark;
+                              _config.UiItem.ColorModeDark = ColorModeDark;
                               ModifyTheme(ColorModeDark);
                               ConfigHandler.SaveConfig(_config);
                           }
@@ -57,7 +55,7 @@ namespace v2rayN.Desktop.ViewModels
                   {
                       if (CurrentFontSize >= Global.MinFontSize)
                       {
-                          _config.uiItem.currentFontSize = CurrentFontSize;
+                          _config.UiItem.CurrentFontSize = CurrentFontSize;
                           double size = CurrentFontSize;
                           ModifyFontSize(size);
 
@@ -70,12 +68,12 @@ namespace v2rayN.Desktop.ViewModels
              y => y != null && !y.IsNullOrEmpty())
                 .Subscribe(c =>
                 {
-                    if (Utils.IsNotEmpty(CurrentLanguage) && _config.uiItem.currentLanguage != CurrentLanguage)
+                    if (Utils.IsNotEmpty(CurrentLanguage) && _config.UiItem.CurrentLanguage != CurrentLanguage)
                     {
-                        _config.uiItem.currentLanguage = CurrentLanguage;
+                        _config.UiItem.CurrentLanguage = CurrentLanguage;
                         Thread.CurrentThread.CurrentUICulture = new(CurrentLanguage);
                         ConfigHandler.SaveConfig(_config);
-                        _noticeHandler?.Enqueue(ResUI.NeedRebootTips);
+                        NoticeHandler.Instance.Enqueue(ResUI.NeedRebootTips);
                     }
                 });
         }

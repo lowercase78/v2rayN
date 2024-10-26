@@ -1,5 +1,4 @@
 ﻿using ReactiveUI;
-using Splat;
 using System.Reactive.Disposables;
 using System.Windows;
 
@@ -7,8 +6,6 @@ namespace v2rayN.Views
 {
     public partial class BackupAndRestoreView
     {
-        private NoticeHandler? _noticeHandler;
-
         public BackupAndRestoreView()
         {
             InitializeComponent();
@@ -17,26 +14,20 @@ namespace v2rayN.Views
 
             ViewModel = new BackupAndRestoreViewModel(UpdateViewHandler);
 
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
             this.WhenActivated(disposables =>
             {
                 this.Bind(ViewModel, vm => vm.OperationMsg, v => v.txtMsg.Text).DisposeWith(disposables);
 
-                this.Bind(ViewModel, vm => vm.SelectedSource.url, v => v.txtWebDavUrl.Text).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.SelectedSource.userName, v => v.txtWebDavUserName.Text).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.SelectedSource.password, v => v.txtWebDavPassword.Text).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.SelectedSource.dirName, v => v.txtWebDavDirName.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SelectedSource.Url, v => v.txtWebDavUrl.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SelectedSource.UserName, v => v.txtWebDavUserName.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SelectedSource.Password, v => v.txtWebDavPassword.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SelectedSource.DirName, v => v.txtWebDavDirName.Text).DisposeWith(disposables);
 
                 this.BindCommand(ViewModel, vm => vm.WebDavCheckCmd, v => v.menuWebDavCheck).DisposeWith(disposables);
 
                 this.BindCommand(ViewModel, vm => vm.RemoteBackupCmd, v => v.menuRemoteBackup).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.RemoteRestoreCmd, v => v.menuRemoteRestore).DisposeWith(disposables);
             });
-        }
-
-        private void MenuRemoteRestore_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         private void MenuLocalBackup_Click(object sender, RoutedEventArgs e)

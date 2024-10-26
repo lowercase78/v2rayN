@@ -1,6 +1,5 @@
 ﻿using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive;
 
 namespace ServiceLib.ViewModels
@@ -14,42 +13,51 @@ namespace ServiceLib.ViewModels
 
         public SubEditViewModel(SubItem subItem, Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
 
-            if (subItem.id.IsNullOrEmpty())
+            SaveCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                SelectedSource = subItem;
-            }
-            else
-            {
-                SelectedSource = JsonUtils.DeepCopy(subItem);
-            }
-
-            SaveCmd = ReactiveCommand.Create(() =>
-            {
-                SaveSubAsync();
+                await SaveSubAsync();
             });
+
+            SelectedSource = subItem.Id.IsNullOrEmpty() ? subItem : JsonUtils.DeepCopy(subItem);
         }
 
         private async Task SaveSubAsync()
         {
-            string remarks = SelectedSource.remarks;
+            var remarks = SelectedSource.Remarks;
             if (Utils.IsNullOrEmpty(remarks))
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseFillRemarks);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseFillRemarks);
                 return;
             }
 
-            if (ConfigHandler.AddSubItem(_config, SelectedSource) == 0)
+            var url = SelectedSource.Url;
+            if (url.IsNotEmpty())
             {
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
-                await _updateView?.Invoke(EViewAction.CloseWindow, null);
+                var uri = Utils.TryUri(url);
+                if (uri == null)
+                {
+                    NoticeHandler.Instance.Enqueue(ResUI.InvalidUrlTip);
+                    return;
+                }
+                //Do not allow http protocol
+                if (url.StartsWith(Global.HttpProtocol) && !Utils.IsPrivateNetwork(uri.IdnHost))
+                {
+                    NoticeHandler.Instance.Enqueue(ResUI.InsecureUrlProtocol);
+                    //return;
+                }
+            }
+
+            if (await ConfigHandler.AddSubItem(_config, SelectedSource) == 0)
+            {
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
+                _updateView?.Invoke(EViewAction.CloseWindow, null);
             }
             else
             {
-                _noticeHandler?.Enqueue(ResUI.OperationFailed);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationFailed);
             }
         }
     }

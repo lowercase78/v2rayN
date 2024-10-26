@@ -2,7 +2,6 @@
 using DynamicData.Binding;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive;
 
 namespace ServiceLib.ViewModels
@@ -25,25 +24,20 @@ namespace ServiceLib.ViewModels
 
         public SubSettingViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-
-            SelectedSource = new();
-
-            RefreshSubItems();
 
             var canEditRemove = this.WhenAnyValue(
                x => x.SelectedSource,
-               selectedSource => selectedSource != null && !selectedSource.id.IsNullOrEmpty());
+               selectedSource => selectedSource != null && !selectedSource.Id.IsNullOrEmpty());
 
-            SubAddCmd = ReactiveCommand.Create(() =>
+            SubAddCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                EditSubAsync(true);
+                await EditSubAsync(true);
             });
-            SubDeleteCmd = ReactiveCommand.Create(() =>
+            SubDeleteCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                DeleteSubAsync();
+                await DeleteSubAsync();
             }, canEditRemove);
             SubEditCmd = ReactiveCommand.CreateFromTask(async () =>
             {
@@ -51,14 +45,23 @@ namespace ServiceLib.ViewModels
             }, canEditRemove);
             SubShareCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                await _updateView?.Invoke(EViewAction.ShareSub, SelectedSource?.url);
+                await _updateView?.Invoke(EViewAction.ShareSub, SelectedSource?.Url);
             }, canEditRemove);
+
+            Init();
         }
 
-        public void RefreshSubItems()
+        private async Task Init()
+        {
+            SelectedSource = new();
+
+            await RefreshSubItems();
+        }
+
+        public async Task RefreshSubItems()
         {
             _subItems.Clear();
-            _subItems.AddRange(LazyConfig.Instance.SubItems().OrderBy(t => t.sort));
+            _subItems.AddRange(await AppHandler.Instance.SubItems());
         }
 
         public async Task EditSubAsync(bool blNew)
@@ -70,7 +73,7 @@ namespace ServiceLib.ViewModels
             }
             else
             {
-                item = LazyConfig.Instance.GetSubItem(SelectedSource?.id);
+                item = await AppHandler.Instance.GetSubItem(SelectedSource?.Id);
                 if (item is null)
                 {
                     return;
@@ -78,7 +81,7 @@ namespace ServiceLib.ViewModels
             }
             if (await _updateView?.Invoke(EViewAction.SubEditWindow, item) == true)
             {
-                RefreshSubItems();
+                await RefreshSubItems();
                 IsModified = true;
             }
         }
@@ -92,10 +95,10 @@ namespace ServiceLib.ViewModels
 
             foreach (var it in SelectedSources ?? [SelectedSource])
             {
-                ConfigHandler.DeleteSubItem(_config, it.id);
+                await ConfigHandler.DeleteSubItem(_config, it.Id);
             }
-            RefreshSubItems();
-            _noticeHandler?.Enqueue(ResUI.OperationSuccess);
+            await RefreshSubItems();
+            NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
             IsModified = true;
         }
     }

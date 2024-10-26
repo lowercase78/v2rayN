@@ -9,10 +9,7 @@
         public const string GithubApiUrl = "https://api.github.com/repos";
         public const string V2flyCoreUrl = "https://github.com/v2fly/v2ray-core/releases";
         public const string XrayCoreUrl = "https://github.com/GFW-knocker/Xray-core/releases";
-        public const string SagerNetCoreUrl = "https://github.com/SagerNet/v2ray-core/releases";
         public const string NUrl = @"https://github.com/lowercase78/v2rayN/releases";
-        public const string ClashCoreUrl = "https://github.com/Dreamacro/clash/releases";
-        public const string ClashMetaCoreUrl = "https://github.com/MetaCubeX/Clash.Meta/releases";
         public const string MihomoCoreUrl = "https://github.com/MetaCubeX/mihomo/releases";
         public const string HysteriaCoreUrl = "https://github.com/apernet/hysteria/releases";
         public const string NaiveproxyCoreUrl = "https://github.com/klzgrad/naiveproxy/releases";
@@ -70,11 +67,6 @@
         public const string GrpcGunMode = "gun";
         public const string GrpcMultiMode = "multi";
         public const int MaxPort = 65536;
-        public const string CommandClearMsg = "CommandClearMsg";
-        public const string CommandSendMsgView = "CommandSendMsgView";
-        public const string CommandSendSnackMsg = "CommandSendSnackMsg";
-        public const string CommandStopSpeedTest = "CommandStopSpeedTest";
-        public const string CommandRefreshProfiles = "CommandRefreshProfiles";
         public const string DelayUnit = "";
         public const string SpeedUnit = "";
         public const int MinFontSize = 10;
@@ -121,6 +113,26 @@
             @"http://www.msftconnecttest.com/connecttest.txt",
         };
 
+        public static readonly List<string> GeoFilesSources = new() {
+            "",
+            @"https://github.com/runetfreedom/russia-v2ray-rules-dat/releases/latest/download/{0}.dat",
+        };
+
+        public static readonly List<string> SingboxRulesetSources = new() {
+            "",
+            @"https://cdn.jsdelivr.net/gh/runetfreedom/russia-v2ray-rules-dat@release/sing-box/rule-set-{0}/{1}.srs",
+        };
+
+        public static readonly List<string> RoutingRulesSources = new() {
+            "",
+            @"https://cdn.jsdelivr.net/gh/runetfreedom/russia-v2ray-custom-routing-list@main/v2rayN/template.json",
+        };
+
+        public static readonly List<string> DNSTemplateSources = new() {
+            "",
+            @"https://cdn.jsdelivr.net/gh/runetfreedom/russia-v2ray-custom-routing-list@main/v2rayN/",
+        };
+
         public static readonly Dictionary<string, string> UserAgentTexts = new()
         {
             {"chrome","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36" },
@@ -165,7 +177,7 @@
         public static readonly List<string> Flows = new() { "", "xtls-rprx-vision", "xtls-rprx-vision-udp443" };
         public static readonly List<string> Networks = new() { "tcp", "kcp", "ws", "httpupgrade", "splithttp", "h2", "quic", "grpc" };
         public static readonly List<string> KcpHeaderTypes = new() { "srtp", "utp", "wechat-video", "dtls", "wireguard" };
-        public static readonly List<string> CoreTypes = new() { "v2fly", "Xray", "sing_box" };//TODO
+        public static readonly List<string> CoreTypes = new() { "v2fly", "Xray", "sing_box" };
         public static readonly List<string> CoreTypes4VLESS = new() { "Xray", "sing_box" };
         public static readonly List<string> DomainStrategies = new() { "AsIs", "IPIfNonMatch", "IPOnDemand" };
         public static readonly List<string> DomainStrategies4Singbox = new() { "ipv4_only", "ipv6_only", "prefer_ipv4", "prefer_ipv6", "" };

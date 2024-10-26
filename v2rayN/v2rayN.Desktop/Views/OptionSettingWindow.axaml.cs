@@ -14,7 +14,7 @@ namespace v2rayN.Desktop.Views
             InitializeComponent();
 
             btnCancel.Click += (s, e) => this.Close();
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             // var lstFonts = GetFonts(Utils.GetFontsPath());
 
             ViewModel = new OptionSettingViewModel(UpdateViewHandler);
@@ -24,7 +24,7 @@ namespace v2rayN.Desktop.Views
             {
                 clbdestOverride.Items.Add(it);
             });
-            _config.inbound[0].destOverride?.ForEach(it =>
+            _config.Inbound[0].DestOverride?.ForEach(it =>
             {
                 clbdestOverride.SelectedItems.Add(it);
             });
@@ -83,6 +83,18 @@ namespace v2rayN.Desktop.Views
             {
                 cmbSubConvertUrl.Items.Add(it);
             });
+            Global.GeoFilesSources.ForEach(it =>
+            {
+                cmbGetFilesSourceUrl.Items.Add(it);
+            });
+            Global.SingboxRulesetSources.ForEach(it =>
+            {
+                cmbSrsFilesSourceUrl.Items.Add(it);
+            });
+            Global.RoutingRulesSources.ForEach(it =>
+            {
+                cmbRoutingRulesSourceUrl.Items.Add(it);
+            });
             foreach (EGirdOrientation it in Enum.GetValues(typeof(EGirdOrientation)))
             {
                 cmbMainGirdOrientation.Items.Add(it.ToString());
@@ -115,7 +127,7 @@ namespace v2rayN.Desktop.Views
                 this.Bind(ViewModel, vm => vm.hyDownMbps, v => v.txtDownMbps.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.enableFragment, v => v.togenableFragment.IsChecked).DisposeWith(disposables);
 
-                this.Bind(ViewModel, vm => vm.AutoRun, v => v.togAutoRun.IsChecked).DisposeWith(disposables);
+                //this.Bind(ViewModel, vm => vm.AutoRun, v => v.togAutoRun.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableStatistics, v => v.togEnableStatistics.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.KeepOlderDedupl, v => v.togKeepOlderDedupl.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.IgnoreGeoUpdateCore, v => v.togIgnoreGeoUpdateCore.IsChecked).DisposeWith(disposables);
@@ -124,7 +136,6 @@ namespace v2rayN.Desktop.Views
                 this.Bind(ViewModel, vm => vm.EnableSecurityProtocolTls13, v => v.togEnableSecurityProtocolTls13.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.AutoHideStartup, v => v.togAutoHideStartup.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableCheckPreReleaseUpdate, v => v.togEnableCheckPreReleaseUpdate.IsChecked).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.EnableDragDropSort, v => v.togEnableDragDropSort.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.DoubleClick2Activate, v => v.togDoubleClick2Activate.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.AutoUpdateInterval, v => v.txtautoUpdateInterval.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.CurrentFontFamily, v => v.cmbcurrentFontFamily.SelectedValue).DisposeWith(disposables);
@@ -133,6 +144,9 @@ namespace v2rayN.Desktop.Views
                 this.Bind(ViewModel, vm => vm.SpeedPingTestUrl, v => v.cmbSpeedPingTestUrl.SelectedValue).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.SelectedValue).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.MainGirdOrientation, v => v.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.GeoFileSourceUrl, v => v.cmbGetFilesSourceUrl.SelectedValue).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SrsFileSourceUrl, v => v.cmbSrsFilesSourceUrl.SelectedValue).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.RoutingRulesSourceUrl, v => v.cmbRoutingRulesSourceUrl.SelectedValue).DisposeWith(disposables);
 
                 this.Bind(ViewModel, vm => vm.notProxyLocalAddress, v => v.tognotProxyLocalAddress.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.systemProxyAdvancedProtocol, v => v.cmbsystemProxyAdvancedProtocol.SelectedValue).DisposeWith(disposables);
@@ -154,13 +168,10 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
             });
 
-            //if (Utils.IsWindows())
-            //{
-            //}
-            //else
-            //{
-            tabSystemproxy.IsVisible = false;
-            //}
+            if (!Utils.IsWindows())
+            {
+                tabSystemproxy.IsVisible = false;
+            }
         }
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)

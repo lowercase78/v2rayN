@@ -4,13 +4,16 @@ namespace ServiceLib.Handler
 {
     public class NoticeHandler
     {
+        private static readonly Lazy<NoticeHandler> _instance = new(() => new());
+        public static NoticeHandler Instance => _instance.Value;
+
         public void Enqueue(string? content)
         {
             if (content.IsNullOrEmpty())
             {
                 return;
             }
-            MessageBus.Current.SendMessage(content, Global.CommandSendSnackMsg);
+            MessageBus.Current.SendMessage(content, EMsgCommand.SendSnackMsg.ToString());
         }
 
         public void SendMessage(string? content)
@@ -19,7 +22,7 @@ namespace ServiceLib.Handler
             {
                 return;
             }
-            MessageBus.Current.SendMessage(content, Global.CommandSendMsgView);
+            MessageBus.Current.SendMessage(content, EMsgCommand.SendMsgView.ToString());
         }
 
         public void SendMessageEx(string? content)

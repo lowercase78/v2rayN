@@ -22,15 +22,13 @@ namespace ServiceLib.ViewModels
 
         public BackupAndRestoreViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
 
             WebDavCheckCmd = ReactiveCommand.CreateFromTask(async () =>
             {
                 await WebDavCheck();
             });
-
             RemoteBackupCmd = ReactiveCommand.CreateFromTask(async () =>
             {
                 await RemoteBackup();
@@ -40,7 +38,7 @@ namespace ServiceLib.ViewModels
                 await RemoteRestore();
             });
 
-            SelectedSource = JsonUtils.DeepCopy(_config.webDavItem);
+            SelectedSource = JsonUtils.DeepCopy(_config.WebDavItem);
         }
 
         private void DisplayOperationMsg(string msg = "")
@@ -51,8 +49,8 @@ namespace ServiceLib.ViewModels
         private async Task WebDavCheck()
         {
             DisplayOperationMsg();
-            _config.webDavItem = SelectedSource;
-            ConfigHandler.SaveConfig(_config);
+            _config.WebDavItem = SelectedSource;
+            await ConfigHandler.SaveConfig(_config);
 
             var result = await WebDavHandler.Instance.CheckConnection();
             if (result)
@@ -86,7 +84,7 @@ namespace ServiceLib.ViewModels
         private async Task RemoteRestore()
         {
             DisplayOperationMsg();
-            var fileName = Utils.GetTempPath(Utils.GetGUID());
+            var fileName = Utils.GetTempPath(Utils.GetGuid());
             var result = await WebDavHandler.Instance.GetRawFile(fileName);
             if (result)
             {
@@ -127,9 +125,14 @@ namespace ServiceLib.ViewModels
             }
             //check
             var lstFiles = FileManager.GetFilesFromZip(fileName);
-            if (lstFiles is null || !lstFiles.Where(t => t.Contains(_guiConfigs)).Any())
+            if (lstFiles is null || !lstFiles.Any(t => t.Contains(_guiConfigs)))
             {
                 DisplayOperationMsg(ResUI.LocalRestoreInvalidZipTips);
+                return;
+            }
+            if (!Utils.UpgradeAppExists(out _))
+            {
+                DisplayOperationMsg(ResUI.UpgradeAppNotExistTip);
                 return;
             }
 
@@ -138,7 +141,7 @@ namespace ServiceLib.ViewModels
             var result = await CreateZipFileFromDirectory(fileBackup);
             if (result)
             {
-                Locator.Current.GetService<MainWindowViewModel>()?.V2rayUpgrade(fileName);
+                Locator.Current.GetService<MainWindowViewModel>()?.UpgradeApp(fileName);
             }
             else
             {

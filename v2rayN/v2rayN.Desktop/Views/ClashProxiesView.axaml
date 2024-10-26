@@ -50,33 +50,35 @@
 
             <Button
                 x:Name="menuProxiesReload"
-                Width="24"
-                Height="24"
+                Width="30"
+                Height="30"
                 Margin="8,0"
                 Classes="Success"
-                Theme="{DynamicResource SolidButton}"
+                Theme="{DynamicResource BorderlessButton}"
                 ToolTip.Tip="{x:Static resx:ResUI.menuProxiesReload}">
                 <Button.Content>
-                    <Image
-                        Width="16"
-                        Height="16"
-                        Source="/Assets/refresh.png" />
+                    <PathIcon
+                        Width="20"
+                        Height="20"
+                        Data="{StaticResource building_refresh}"
+                        Foreground="{DynamicResource ButtonDefaultTertiaryForeground}" />
                 </Button.Content>
             </Button>
 
             <Button
                 x:Name="menuProxiesDelaytest"
-                Width="24"
-                Height="24"
+                Width="30"
+                Height="30"
                 Margin="8,0"
                 Classes="Success"
-                Theme="{DynamicResource SolidButton}"
+                Theme="{DynamicResource BorderlessButton}"
                 ToolTip.Tip="{x:Static resx:ResUI.menuProxiesDelaytest}">
                 <Button.Content>
-                    <Image
-                        Width="16"
-                        Height="16"
-                        Source="/Assets/light.png" />
+                    <PathIcon
+                        Width="20"
+                        Height="20"
+                        Data="{StaticResource building_ping}"
+                        Foreground="{DynamicResource ButtonDefaultTertiaryForeground}" />
                 </Button.Content>
             </Button>
 
@@ -114,10 +116,10 @@
                                         <RowDefinition Height="1*" />
                                     </Grid.RowDefinitions>
                                     <DockPanel Grid.Row="0">
-                                        <TextBlock DockPanel.Dock="Right" Text="{Binding type}" />
-                                        <TextBlock Text="{Binding name}" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Type}" />
+                                        <TextBlock Text="{Binding Name}" />
                                     </DockPanel>
-                                    <TextBlock Grid.Row="2" Text="{Binding now}" />
+                                    <TextBlock Grid.Row="2" Text="{Binding Now}" />
                                 </Grid>
                             </DockPanel>
                         </Border>
@@ -152,23 +154,20 @@
                                     Background="YellowGreen"
                                     CornerRadius="4"
                                     DockPanel.Dock="Left"
-                                    IsVisible="{Binding isActive}" />
+                                    IsVisible="{Binding IsActive}" />
                                 <Grid Classes="Margin8">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="1*" />
                                         <RowDefinition Height="8" />
                                         <RowDefinition Height="1*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        Text="{Binding name}"
-                                        TextWrapping="WrapWithOverflow" />
+                                    <TextBlock Grid.Row="0" Text="{Binding Name}" />
                                     <DockPanel Grid.Row="2">
                                         <TextBlock
                                             DockPanel.Dock="Right"
-                                            Foreground="{Binding Path=delay, Converter={StaticResource DelayColorConverter}}"
-                                            Text="{Binding delayName}" />
-                                        <TextBlock Text="{Binding type}" />
+                                            Foreground="{Binding Path=Delay, Converter={StaticResource DelayColorConverter}}"
+                                            Text="{Binding DelayName}" />
+                                        <TextBlock Text="{Binding Type}" />
                                     </DockPanel>
                                 </Grid>
                             </DockPanel>

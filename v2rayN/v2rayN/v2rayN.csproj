@@ -8,35 +8,32 @@
 		<UseWPF>true</UseWPF>  
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<ApplicationIcon>v2rayN.ico</ApplicationIcon>
+		<ApplicationIcon>Resources\v2rayN.ico</ApplicationIcon>
 		<Copyright>Copyright © 2017-2024 (GPLv3)</Copyright>
 		<SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
-		<PackageReference Include="H.NotifyIcon.Wpf" Version="2.1.3" />
+		<PackageReference Include="H.NotifyIcon.Wpf" Version="2.1.4" />
 		<PackageReference Include="TaskScheduler" Version="2.11.0" /> 
-		<PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.12" />
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" /> 
 		<PackageReference Include="ReactiveUI.WPF" Version="20.1.63" />
 	</ItemGroup>
 	
 	<ItemGroup>       
         <AdditionalFiles Include="app.manifest" />       
-        <EmbeddedResource Include="v2rayN.ico">
+        <EmbeddedResource Include="Resources\v2rayN.ico">
           <CopyToOutputDirectory>Never</CopyToOutputDirectory>
         </EmbeddedResource>
         <Resource Include="Resources\NotifyIcon1.ico" />
         <Resource Include="Resources\NotifyIcon2.ico" />
         <Resource Include="Resources\NotifyIcon3.ico" />
-        <Resource Include="v2rayN.ico">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Resource>
+        <Resource Include="Resources\NotifyIcon4.ico" />
+        <Resource Include="Resources\v2rayN.ico" />
     </ItemGroup> 	 
 	
 	<ItemGroup>
-	  <ProjectReference Include="..\PacLib\PacLib.csproj" />
 	  <ProjectReference Include="..\ServiceLib\ServiceLib.csproj" />
 	</ItemGroup>
 

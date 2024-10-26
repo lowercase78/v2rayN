@@ -1,6 +1,5 @@
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive;
 
 namespace ServiceLib.ViewModels
@@ -20,77 +19,67 @@ namespace ServiceLib.ViewModels
 
         public AddServer2ViewModel(ProfileItem profileItem, Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-
-            if (profileItem.indexId.IsNullOrEmpty())
-            {
-                SelectedSource = profileItem;
-            }
-            else
-            {
-                SelectedSource = JsonUtils.DeepCopy(profileItem);
-            }
-            CoreType = SelectedSource?.coreType?.ToString();
 
             BrowseServerCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                await _updateView?.Invoke(EViewAction.BrowseServer, null);
+                _updateView?.Invoke(EViewAction.BrowseServer, null);
+            });
+            EditServerCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await EditServer();
+            });
+            SaveServerCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await SaveServerAsync();
             });
 
-            EditServerCmd = ReactiveCommand.Create(() =>
-            {
-                EditServer();
-            });
-
-            SaveServerCmd = ReactiveCommand.Create(() =>
-            {
-                SaveServerAsync();
-            });
+            SelectedSource = profileItem.IndexId.IsNullOrEmpty() ? profileItem : JsonUtils.DeepCopy(profileItem);
+            CoreType = SelectedSource?.CoreType?.ToString();
         }
 
         private async Task SaveServerAsync()
         {
-            string remarks = SelectedSource.remarks;
+            string remarks = SelectedSource.Remarks;
             if (Utils.IsNullOrEmpty(remarks))
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseFillRemarks);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseFillRemarks);
                 return;
             }
 
-            if (Utils.IsNullOrEmpty(SelectedSource.address))
+            if (Utils.IsNullOrEmpty(SelectedSource.Address))
             {
-                _noticeHandler?.Enqueue(ResUI.FillServerAddressCustom);
+                NoticeHandler.Instance.Enqueue(ResUI.FillServerAddressCustom);
                 return;
             }
-            SelectedSource.coreType = CoreType.IsNullOrEmpty() ? null : (ECoreType)Enum.Parse(typeof(ECoreType), CoreType);
+            SelectedSource.CoreType = CoreType.IsNullOrEmpty() ? null : (ECoreType)Enum.Parse(typeof(ECoreType), CoreType);
 
-            if (ConfigHandler.EditCustomServer(_config, SelectedSource) == 0)
+            if (await ConfigHandler.EditCustomServer(_config, SelectedSource) == 0)
             {
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
-                await _updateView?.Invoke(EViewAction.CloseWindow, null);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
+                _updateView?.Invoke(EViewAction.CloseWindow, null);
             }
             else
             {
-                _noticeHandler?.Enqueue(ResUI.OperationFailed);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationFailed);
             }
         }
 
-        public void BrowseServer(string fileName)
+        public async Task BrowseServer(string fileName)
         {
             if (Utils.IsNullOrEmpty(fileName))
             {
                 return;
             }
 
-            var item = LazyConfig.Instance.GetProfileItem(SelectedSource.indexId);
+            var item = await AppHandler.Instance.GetProfileItem(SelectedSource.IndexId);
             item ??= SelectedSource;
-            item.address = fileName;
-            if (ConfigHandler.AddCustomServer(_config, item, false) == 0)
+            item.Address = fileName;
+            if (await ConfigHandler.AddCustomServer(_config, item, false) == 0)
             {
-                _noticeHandler?.Enqueue(ResUI.SuccessfullyImportedCustomServer);
-                if (Utils.IsNotEmpty(item.indexId))
+                NoticeHandler.Instance.Enqueue(ResUI.SuccessfullyImportedCustomServer);
+                if (Utils.IsNotEmpty(item.IndexId))
                 {
                     SelectedSource = JsonUtils.DeepCopy(item);
                 }
@@ -98,16 +87,16 @@ namespace ServiceLib.ViewModels
             }
             else
             {
-                _noticeHandler?.Enqueue(ResUI.FailedImportedCustomServer);
+                NoticeHandler.Instance.Enqueue(ResUI.FailedImportedCustomServer);
             }
         }
 
-        private void EditServer()
+        private async Task EditServer()
         {
-            var address = SelectedSource.address;
+            var address = SelectedSource.Address;
             if (Utils.IsNullOrEmpty(address))
             {
-                _noticeHandler?.Enqueue(ResUI.FillServerAddressCustom);
+                NoticeHandler.Instance.Enqueue(ResUI.FillServerAddressCustom);
                 return;
             }
 
@@ -118,7 +107,7 @@ namespace ServiceLib.ViewModels
             }
             else
             {
-                _noticeHandler?.Enqueue(ResUI.FailedReadConfiguration);
+                NoticeHandler.Instance.Enqueue(ResUI.FailedReadConfiguration);
             }
         }
     }

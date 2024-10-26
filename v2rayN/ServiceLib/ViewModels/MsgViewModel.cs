@@ -1,6 +1,5 @@
 ﻿using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
@@ -22,23 +21,26 @@ namespace ServiceLib.ViewModels
 
         public MsgViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
-
-            MessageBus.Current.Listen<string>(Global.CommandSendMsgView).Subscribe(async x => await AppendQueueMsg(x));
-
-            MsgFilter = _config.msgUIItem.mainMsgFilter ?? string.Empty;
-            AutoRefresh = _config.msgUIItem.autoRefresh ?? true;
+            MsgFilter = _config.MsgUIItem.MainMsgFilter ?? string.Empty;
+            AutoRefresh = _config.MsgUIItem.AutoRefresh ?? true;
 
             this.WhenAnyValue(
                x => x.MsgFilter)
-                   .Subscribe(c => _config.msgUIItem.mainMsgFilter = MsgFilter);
+                   .Subscribe(c => _config.MsgUIItem.MainMsgFilter = MsgFilter);
 
             this.WhenAnyValue(
               x => x.AutoRefresh,
               y => y == true)
-                  .Subscribe(c => { _config.msgUIItem.autoRefresh = AutoRefresh; });
+                  .Subscribe(c => { _config.MsgUIItem.AutoRefresh = AutoRefresh; });
+
+            MessageBus.Current.Listen<string>(EMsgCommand.SendMsgView.ToString()).Subscribe(OnNext);
+        }
+
+        private async void OnNext(string x)
+        {
+            await AppendQueueMsg(x);
         }
 
         private async Task AppendQueueMsg(string msg)
@@ -60,7 +62,7 @@ namespace ServiceLib.ViewModels
             }
 
             _blLockShow = true;
-            if (!_config.uiItem.showInTaskbar)
+            if (!_config.UiItem.ShowInTaskbar)
             {
                 await Task.Delay(1000);
             }

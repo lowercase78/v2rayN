@@ -953,7 +953,7 @@
     <value>导入旧的配置文件guiNConfig</value>
   </data>
   <data name="TbEnableTunAs" xml:space="preserve">
-    <value>启用Tun模式</value>
+    <value>启用Tun</value>
   </data>
   <data name="TbSettingsNewPort4LAN" xml:space="preserve">
     <value>为局域网开启新的端口</value>
@@ -1317,5 +1317,44 @@
   </data>
   <data name="ConnectionsHostFilterTitle" xml:space="preserve">
     <value>主机过滤器</value>
+  </data>
+  <data name="TipActiveServer" xml:space="preserve">
+    <value>活动</value>
+  </data>
+  <data name="menuStorageUI" xml:space="preserve">
+    <value>保存界面布局</value>
+  </data>
+  <data name="TbSettingsGeoFilesSource" xml:space="preserve">
+    <value>Geo文件来源(可选)</value>
+  </data>
+  <data name="UpgradeAppNotExistTip" xml:space="preserve">
+    <value>升级工具App不存在</value>
+  </data>
+  <data name="TbSettingsSrsFilesSource" xml:space="preserve">
+    <value>sing-box ruleset文件来源(可选)</value>
+  </data>
+  <data name="TbSettingsRoutingRulesSource" xml:space="preserve">
+    <value>路由规则集来源(可选)</value>
+  </data>
+  <data name="TbSettingsChinaUserTip" xml:space="preserve">
+    <value>中国区域用户可忽略此项</value>
+  </data>
+  <data name="menuRegionalPresets" xml:space="preserve">
+    <value>区域预置设置</value>
+  </data>
+  <data name="menuRegionalPresetsDefault" xml:space="preserve">
+    <value>默认区域</value>
+  </data>
+  <data name="menuRegionalPresetsRussia" xml:space="preserve">
+    <value>俄罗斯</value>
+  </data>
+  <data name="menuAddServerViaImage" xml:space="preserve">
+    <value>扫描图片中的二维码</value>
+  </data>
+  <data name="InvalidUrlTip" xml:space="preserve">
+    <value>地址(Url)无效</value>
+  </data>
+  <data name="InsecureUrlProtocol" xml:space="preserve">
+    <value>请不要使用不安全的HTTP协议订阅地址</value>
   </data>
 </root>

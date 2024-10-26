@@ -1,7 +1,6 @@
 ﻿using DynamicData.Binding;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System.Reactive;
 
 namespace ServiceLib.ViewModels
@@ -36,75 +35,66 @@ namespace ServiceLib.ViewModels
 
         public RoutingRuleSettingViewModel(RoutingItem routingItem, Func<EViewAction, object?, Task<bool>>? updateView)
         {
-            _config = LazyConfig.Instance.Config;
-            _noticeHandler = Locator.Current.GetService<NoticeHandler>();
+            _config = AppHandler.Instance.Config;
             _updateView = updateView;
-            SelectedSource = new();
-
-            if (routingItem.id.IsNullOrEmpty())
-            {
-                SelectedRouting = routingItem;
-                _rules = new();
-            }
-            else
-            {
-                SelectedRouting = routingItem;
-                _rules = JsonUtils.Deserialize<List<RulesItem>>(SelectedRouting.ruleSet);
-            }
-
-            RefreshRulesItems();
 
             var canEditRemove = this.WhenAnyValue(
-               x => x.SelectedSource,
-               selectedSource => selectedSource != null && !selectedSource.outboundTag.IsNullOrEmpty());
+                x => x.SelectedSource,
+                selectedSource => selectedSource != null && !selectedSource.OutboundTag.IsNullOrEmpty());
 
-            RuleAddCmd = ReactiveCommand.Create(() =>
+            RuleAddCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                RuleEditAsync(true);
+                await RuleEditAsync(true);
             });
             ImportRulesFromFileCmd = ReactiveCommand.CreateFromTask(async () =>
             {
                 await _updateView?.Invoke(EViewAction.ImportRulesFromFile, null);
             });
-            ImportRulesFromClipboardCmd = ReactiveCommand.Create(() =>
+            ImportRulesFromClipboardCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                ImportRulesFromClipboardAsync(null);
+                await ImportRulesFromClipboardAsync(null);
             });
-            ImportRulesFromUrlCmd = ReactiveCommand.Create(() =>
+            ImportRulesFromUrlCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                ImportRulesFromUrl();
+                await ImportRulesFromUrl();
             });
 
-            RuleRemoveCmd = ReactiveCommand.Create(() =>
+            RuleRemoveCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                RuleRemoveAsync();
+                await RuleRemoveAsync();
             }, canEditRemove);
-            RuleExportSelectedCmd = ReactiveCommand.Create(() =>
+            RuleExportSelectedCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                RuleExportSelectedAsync();
-            }, canEditRemove);
-
-            MoveTopCmd = ReactiveCommand.Create(() =>
-            {
-                MoveRule(EMove.Top);
-            }, canEditRemove);
-            MoveUpCmd = ReactiveCommand.Create(() =>
-            {
-                MoveRule(EMove.Up);
-            }, canEditRemove);
-            MoveDownCmd = ReactiveCommand.Create(() =>
-            {
-                MoveRule(EMove.Down);
-            }, canEditRemove);
-            MoveBottomCmd = ReactiveCommand.Create(() =>
-            {
-                MoveRule(EMove.Bottom);
+                await RuleExportSelectedAsync();
             }, canEditRemove);
 
-            SaveCmd = ReactiveCommand.Create(() =>
+            MoveTopCmd = ReactiveCommand.CreateFromTask(async () =>
             {
-                SaveRoutingAsync();
+                await MoveRule(EMove.Top);
+            }, canEditRemove);
+            MoveUpCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await MoveRule(EMove.Up);
+            }, canEditRemove);
+            MoveDownCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await MoveRule(EMove.Down);
+            }, canEditRemove);
+            MoveBottomCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await MoveRule(EMove.Bottom);
+            }, canEditRemove);
+
+            SaveCmd = ReactiveCommand.CreateFromTask(async () =>
+            {
+                await SaveRoutingAsync();
             });
+
+            SelectedSource = new();
+            SelectedRouting = routingItem;
+            _rules = routingItem.Id.IsNullOrEmpty() ? new() : JsonUtils.Deserialize<List<RulesItem>>(SelectedRouting.RuleSet);
+
+            RefreshRulesItems();
         }
 
         public void RefreshRulesItems()
@@ -115,15 +105,16 @@ namespace ServiceLib.ViewModels
             {
                 var it = new RulesItemModel()
                 {
-                    id = item.id,
-                    outboundTag = item.outboundTag,
-                    port = item.port,
-                    network = item.network,
-                    protocols = Utils.List2String(item.protocol),
-                    inboundTags = Utils.List2String(item.inboundTag),
-                    domains = Utils.List2String(item.domain),
-                    ips = Utils.List2String(item.ip),
-                    enabled = item.enabled,
+                    Id = item.Id,
+                    OutboundTag = item.OutboundTag,
+                    Port = item.Port,
+                    Network = item.Network,
+                    Protocols = Utils.List2String(item.Protocol),
+                    InboundTags = Utils.List2String(item.InboundTag),
+                    Domains = Utils.List2String(item.Domain),
+                    Ips = Utils.List2String(item.Ip),
+                    Enabled = item.Enabled,
+                    Remarks = item.Remarks,
                 };
                 _rulesItems.Add(it);
             }
@@ -138,7 +129,7 @@ namespace ServiceLib.ViewModels
             }
             else
             {
-                item = _rules.FirstOrDefault(t => t.id == SelectedSource?.id);
+                item = _rules.FirstOrDefault(t => t.Id == SelectedSource?.Id);
                 if (item is null)
                 {
                     return;
@@ -156,9 +147,9 @@ namespace ServiceLib.ViewModels
 
         public async Task RuleRemoveAsync()
         {
-            if (SelectedSource is null || SelectedSource.outboundTag.IsNullOrEmpty())
+            if (SelectedSource is null || SelectedSource.OutboundTag.IsNullOrEmpty())
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseSelectRules);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseSelectRules);
                 return;
             }
             if (await _updateView?.Invoke(EViewAction.ShowYesNo, null) == false)
@@ -167,7 +158,7 @@ namespace ServiceLib.ViewModels
             }
             foreach (var it in SelectedSources ?? [SelectedSource])
             {
-                var item = _rules.FirstOrDefault(t => t.id == it?.id);
+                var item = _rules.FirstOrDefault(t => t.Id == it?.Id);
                 if (item != null)
                 {
                     _rules.Remove(item);
@@ -179,19 +170,20 @@ namespace ServiceLib.ViewModels
 
         public async Task RuleExportSelectedAsync()
         {
-            if (SelectedSource is null || SelectedSource.outboundTag.IsNullOrEmpty())
+            if (SelectedSource is null || SelectedSource.OutboundTag.IsNullOrEmpty())
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseSelectRules);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseSelectRules);
                 return;
             }
 
-            var lst = new List<RulesItem4Ray>();
+            var lst = new List<RulesItem>();
             foreach (var it in SelectedSources ?? [SelectedSource])
             {
-                var item = _rules.FirstOrDefault(t => t.id == it?.id);
+                var item = _rules.FirstOrDefault(t => t.Id == it?.Id);
                 if (item != null)
                 {
-                    var item2 = JsonUtils.Deserialize<RulesItem4Ray>(JsonUtils.Serialize(item));
+                    var item2 = JsonUtils.DeepCopy(item); //JsonUtils.Deserialize<RulesItem4Ray>(JsonUtils.Serialize(item));
+                    item2.Id = null;
                     lst.Add(item2 ?? new());
                 }
             }
@@ -201,21 +193,21 @@ namespace ServiceLib.ViewModels
             }
         }
 
-        public void MoveRule(EMove eMove)
+        public async Task MoveRule(EMove eMove)
         {
-            if (SelectedSource is null || SelectedSource.outboundTag.IsNullOrEmpty())
+            if (SelectedSource is null || SelectedSource.OutboundTag.IsNullOrEmpty())
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseSelectRules);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseSelectRules);
                 return;
             }
 
-            var item = _rules.FirstOrDefault(t => t.id == SelectedSource?.id);
+            var item = _rules.FirstOrDefault(t => t.Id == SelectedSource?.Id);
             if (item == null)
             {
                 return;
             }
             var index = _rules.IndexOf(item);
-            if (ConfigHandler.MoveRoutingRule(_rules, index, eMove) == 0)
+            if (await ConfigHandler.MoveRoutingRule(_rules, index, eMove) == 0)
             {
                 RefreshRulesItems();
             }
@@ -223,28 +215,28 @@ namespace ServiceLib.ViewModels
 
         private async Task SaveRoutingAsync()
         {
-            string remarks = SelectedRouting.remarks;
+            string remarks = SelectedRouting.Remarks;
             if (Utils.IsNullOrEmpty(remarks))
             {
-                _noticeHandler?.Enqueue(ResUI.PleaseFillRemarks);
+                NoticeHandler.Instance.Enqueue(ResUI.PleaseFillRemarks);
                 return;
             }
             var item = SelectedRouting;
             foreach (var it in _rules)
             {
-                it.id = Utils.GetGUID(false);
+                it.Id = Utils.GetGuid(false);
             }
-            item.ruleNum = _rules.Count;
-            item.ruleSet = JsonUtils.Serialize(_rules, false);
+            item.RuleNum = _rules.Count;
+            item.RuleSet = JsonUtils.Serialize(_rules, false);
 
-            if (ConfigHandler.SaveRoutingItem(_config, item) == 0)
+            if (await ConfigHandler.SaveRoutingItem(_config, item) == 0)
             {
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
-                await _updateView?.Invoke(EViewAction.CloseWindow, null);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
+                _updateView?.Invoke(EViewAction.CloseWindow, null);
             }
             else
             {
-                _noticeHandler?.Enqueue(ResUI.OperationFailed);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationFailed);
             }
         }
 
@@ -266,7 +258,7 @@ namespace ServiceLib.ViewModels
             if (ret == 0)
             {
                 RefreshRulesItems();
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
             }
         }
 
@@ -281,26 +273,26 @@ namespace ServiceLib.ViewModels
             if (ret == 0)
             {
                 RefreshRulesItems();
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
             }
         }
 
-        private async void ImportRulesFromUrl()
+        private async Task ImportRulesFromUrl()
         {
-            var url = SelectedRouting.url;
+            var url = SelectedRouting.Url;
             if (Utils.IsNullOrEmpty(url))
             {
-                _noticeHandler?.Enqueue(ResUI.MsgNeedUrl);
+                NoticeHandler.Instance.Enqueue(ResUI.MsgNeedUrl);
                 return;
             }
 
-            DownloadHandler downloadHandle = new DownloadHandler();
+            DownloadService downloadHandle = new DownloadService();
             var result = await downloadHandle.TryDownloadString(url, true, "");
             var ret = await AddBatchRoutingRulesAsync(SelectedRouting, result);
             if (ret == 0)
             {
                 RefreshRulesItems();
-                _noticeHandler?.Enqueue(ResUI.OperationSuccess);
+                NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
             }
         }
 
@@ -322,7 +314,7 @@ namespace ServiceLib.ViewModels
             }
             foreach (var rule in lstRules)
             {
-                rule.id = Utils.GetGUID(false);
+                rule.Id = Utils.GetGuid(false);
             }
 
             if (blReplace)

@@ -35,13 +35,15 @@
                 x:Name="btnSave"
                 Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsDefault="True" />
             <Button
                 x:Name="btnCancel"
                 Width="100"
                 Margin="8,0"
                 Content="{x:Static resx:ResUI.TbCancel}"
-                Cursor="Hand" />
+                Cursor="Hand"
+                IsCancel="True" />
         </StackPanel>
 
         <Grid Classes="Margin8" DockPanel.Dock="Top">
@@ -206,38 +208,42 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                     <DataGrid.Columns>
+                        <DataGridCheckBoxColumn
+                            Width="60"
+                            Binding="{Binding Enabled}"
+                            Header="" />
                         <DataGridTextColumn
-                            Width="110"
-                            Binding="{Binding outboundTag}"
+                            Width="150"
+                            Binding="{Binding Remarks}"
+                            Header="{x:Static resx:ResUI.LvRemarks}" />
+                        <DataGridTextColumn
+                            Width="120"
+                            Binding="{Binding OutboundTag}"
                             Header="outboundTag" />
                         <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding port}"
+                            Width="100"
+                            Binding="{Binding Port}"
                             Header="port" />
                         <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding protocols}"
+                            Width="100"
+                            Binding="{Binding Protocols}"
                             Header="protocol" />
                         <DataGridTextColumn
-                            Width="110"
-                            Binding="{Binding inboundTags}"
+                            Width="120"
+                            Binding="{Binding InboundTags}"
                             Header="inboundTag" />
                         <DataGridTextColumn
                             Width="90"
-                            Binding="{Binding network}"
+                            Binding="{Binding Network}"
                             Header="network" />
                         <DataGridTextColumn
-                            Width="190"
-                            Binding="{Binding domains}"
+                            Width="200"
+                            Binding="{Binding Domains}"
                             Header="domain" />
                         <DataGridTextColumn
-                            Width="190"
-                            Binding="{Binding ips}"
+                            Width="200"
+                            Binding="{Binding Ips}"
                             Header="ip" />
-                        <DataGridTextColumn
-                            Width="80"
-                            Binding="{Binding enabled}"
-                            Header="enabled" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>

@@ -9,15 +9,23 @@ namespace v2rayN.Desktop;
 
 public partial class App : Application
 {
-    public static EventWaitHandle ProgramStarted;
-    private static Config _config;
+    //public static EventWaitHandle ProgramStarted;
 
     public override void Initialize()
     {
+        if (!AppHandler.Instance.InitApp())
+        {
+            Environment.Exit(0);
+            return;
+        }
         AvaloniaXamlLoader.Load(this);
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+        var ViewModel = new StatusBarViewModel(null);
+        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(StatusBarViewModel));
+        this.DataContext = ViewModel;
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -35,7 +43,7 @@ public partial class App : Application
 
     private void OnStartup(string[]? Args)
     {
-        var exePathKey = Utils.GetMD5(Utils.GetExePath());
+        var exePathKey = Utils.GetMd5(Utils.GetExePath());
 
         var rebootas = (Args ?? new string[] { }).Any(t => t == Global.RebootAs);
         //ProgramStarted = new EventWaitHandle(false, EventResetMode.AutoReset, exePathKey, out bool bCreatedNew);
@@ -46,32 +54,7 @@ public partial class App : Application
         //    return;
         //}
 
-        Logging.Setup();
-        Init();
-        Logging.LoggingEnabled(_config.guiItem.enableLog);
-        Logging.SaveLog($"v2rayN start up | {Utils.GetVersion()} | {Utils.GetExePath()}");
-        Logging.SaveLog($"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
-        Logging.ClearLogs();
-
-        Thread.CurrentThread.CurrentUICulture = new(_config.uiItem.currentLanguage);
-    }
-
-    private void Init()
-    {
-        if (ConfigHandler.LoadConfig(ref _config) != 0)
-        {
-            Logging.SaveLog($"Loading GUI configuration file is abnormal,please restart the application{Environment.NewLine}加载GUI配置文件异常,请重启应用");
-            Environment.Exit(0);
-            return;
-        }
-        LazyConfig.Instance.SetConfig(_config);
-        Locator.CurrentMutable.RegisterLazySingleton(() => new NoticeHandler(), typeof(NoticeHandler));
-
-        //Under Win10
-        if (Utils.IsWindows() && Environment.OSVersion.Version.Major < 10)
-        {
-            Environment.SetEnvironmentVariable("DOTNET_EnableWriteXorExecute", "0", EnvironmentVariableTarget.User);
-        }
+        AppHandler.Instance.InitComponents();
     }
 
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -91,38 +74,17 @@ public partial class App : Application
     {
     }
 
-    private void TrayIcon_Clicked(object? sender, EventArgs e)
-    {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            if (desktop.MainWindow.IsVisible)
-            {
-                desktop.MainWindow?.Hide();
-            }
-            else
-            {
-                desktop.MainWindow?.Show();
-            }
-        }
-    }
-
     private void MenuAddServerViaClipboardClick(object? sender, EventArgs e)
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var clipboardData = AvaUtils.GetClipboardData(desktop.MainWindow).Result;
-            Locator.Current.GetService<MainWindowViewModel>()?.AddServerViaClipboardAsync(clipboardData);
+            if (desktop.MainWindow != null)
+            {
+                var clipboardData = AvaUtils.GetClipboardData(desktop.MainWindow).Result;
+                var service = Locator.Current.GetService<MainWindowViewModel>();
+                if (service != null) _ = service.AddServerViaClipboardAsync(clipboardData);
+            }
         }
-    }
-
-    private void MenuSubUpdate_Click(object? sender, EventArgs e)
-    {
-        Locator.Current.GetService<MainWindowViewModel>()?.UpdateSubscriptionProcess("", false);
-    }
-
-    private void MenuSubUpdateViaProxy_Click(object? sender, EventArgs e)
-    {
-        Locator.Current.GetService<MainWindowViewModel>()?.UpdateSubscriptionProcess("", true);
     }
 
     private void MenuExit_Click(object? sender, EventArgs e)
