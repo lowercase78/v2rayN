@@ -16,7 +16,6 @@ namespace ServiceLib.ViewModels
         private List<ProfileItem> _lstProfile;
         private string _serverFilter = string.Empty;
         private Dictionary<string, bool> _dicHeaderSort = new();
-        private SpeedtestService? _speedtestHandler;
 
         #endregion private prop
 
@@ -480,7 +479,10 @@ namespace ServiceLib.ViewModels
 
             await ConfigHandler.RemoveServer(_config, lstSelecteds);
             NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
-
+            if (lstSelecteds.Count == _profileItems.Count)
+            {
+                _profileItems.Clear();
+            }
             RefreshServers();
             if (exists)
             {
@@ -686,12 +688,12 @@ namespace ServiceLib.ViewModels
             }
             //ClearTestResult();
 
-            _speedtestHandler = new SpeedtestService(_config, lstSelecteds, actionType, UpdateSpeedtestHandler);
+            _ = new SpeedtestService(_config, lstSelecteds, actionType, UpdateSpeedtestHandler);
         }
 
         public void ServerSpeedtestStop()
         {
-            _speedtestHandler?.ExitLoop();
+            MessageBus.Current.SendMessage("", EMsgCommand.StopSpeedtest.ToString());
         }
 
         private async Task Export2ClientConfigAsync(bool blClipboard)
@@ -727,7 +729,7 @@ namespace ServiceLib.ViewModels
             {
                 return;
             }
-            var result = await CoreConfigHandler.GenerateClientConfig(item, null);
+            var result = await CoreConfigHandler.GenerateClientConfig(item, fileName);
             if (result.Success != true)
             {
                 NoticeHandler.Instance.Enqueue(result.Msg);

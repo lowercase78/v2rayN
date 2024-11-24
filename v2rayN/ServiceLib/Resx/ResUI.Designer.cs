@@ -448,6 +448,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Remarks Memo 的本地化字符串。
+        /// </summary>
+        public static string LvMemo {
+            get {
+                return ResourceManager.GetString("LvMemo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 More URLs, separated by commas; Subscription conversion will be invalid 的本地化字符串。
         /// </summary>
         public static string LvMoreUrl {
@@ -867,6 +876,15 @@ namespace ServiceLib.Resx {
         public static string menuExit {
             get {
                 return ResourceManager.GetString("menuExit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Are you sure to exit? 的本地化字符串。
+        /// </summary>
+        public static string menuExitTips {
+            get {
+                return ResourceManager.GetString("menuExitTips", resourceCulture);
             }
         }
         
@@ -1344,24 +1362,6 @@ namespace ServiceLib.Resx {
         public static string menuRoutingAdvancedSetDefault {
             get {
                 return ResourceManager.GetString("menuRoutingAdvancedSetDefault", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 Basic Function 的本地化字符串。
-        /// </summary>
-        public static string menuRoutingBasic {
-            get {
-                return ResourceManager.GetString("menuRoutingBasic", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 Import Basic Rules 的本地化字符串。
-        /// </summary>
-        public static string menuRoutingBasicImportRules {
-            get {
-                return ResourceManager.GetString("menuRoutingBasicImportRules", resourceCulture);
             }
         }
         
@@ -2861,6 +2861,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Install the font to the system and restart the settings 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsCurrentFontFamilyLinuxTip {
+            get {
+                return ResourceManager.GetString("TbSettingsCurrentFontFamilyLinuxTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Copy the font TTF/TTC file to the directory guiFonts, restart the settings 的本地化字符串。
         /// </summary>
         public static string TbSettingsCurrentFontFamilyTip {
@@ -3077,6 +3086,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Hide to tray when closing the window 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsHide2TrayWhenClose {
+            get {
+                return ResourceManager.GetString("TbSettingsHide2TrayWhenClose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 HTTP Port 的本地化字符串。
         /// </summary>
         public static string TbSettingsHttpPort {
@@ -3118,6 +3136,42 @@ namespace ServiceLib.Resx {
         public static string TbSettingsLanguage {
             get {
                 return ResourceManager.GetString("TbSettingsLanguage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Linux system sudo password 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsLinuxSudoPassword {
+            get {
+                return ResourceManager.GetString("TbSettingsLinuxSudoPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Please set the sudo password in Tun mode settings first 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsLinuxSudoPasswordIsEmpty {
+            get {
+                return ResourceManager.GetString("TbSettingsLinuxSudoPasswordIsEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Please do not run this app with sudo 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsLinuxSudoPasswordNotSudoRunApp {
+            get {
+                return ResourceManager.GetString("TbSettingsLinuxSudoPasswordNotSudoRunApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The password is encrypted and stored only in local files. 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsLinuxSudoPasswordTip {
+            get {
+                return ResourceManager.GetString("TbSettingsLinuxSudoPasswordTip", resourceCulture);
             }
         }
         
@@ -3572,7 +3626,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 The ping of current service: {0} ms 的本地化字符串。
+        ///   查找类似 The delay : {0} ms, {1} 的本地化字符串。
         /// </summary>
         public static string TestMeOutput {
             get {
@@ -3635,6 +3689,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 XHTTP Extra raw JSON, format: { XHTTPObject } 的本地化字符串。
+        /// </summary>
+        public static string TransportExtraTip {
+            get {
+                return ResourceManager.GetString("TransportExtraTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 *tcp camouflage type 的本地化字符串。
         /// </summary>
         public static string TransportHeaderTypeTip1 {
@@ -3671,7 +3734,16 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 *ws/httpupgrade/splithttp path 的本地化字符串。
+        ///   查找类似 *xhttp mode 的本地化字符串。
+        /// </summary>
+        public static string TransportHeaderTypeTip5 {
+            get {
+                return ResourceManager.GetString("TransportHeaderTypeTip5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 *ws/httpupgrade/xhttp path 的本地化字符串。
         /// </summary>
         public static string TransportPathTip1 {
             get {
@@ -3725,7 +3797,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 *ws/httpupgrade/splithttp host 的本地化字符串。
+        ///   查找类似 *ws/httpupgrade/xhttp host 的本地化字符串。
         /// </summary>
         public static string TransportRequestHostTip2 {
             get {

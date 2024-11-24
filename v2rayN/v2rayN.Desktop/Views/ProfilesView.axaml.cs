@@ -32,6 +32,7 @@ namespace v2rayN.Desktop.Views
             lstProfiles.SelectionChanged += lstProfiles_SelectionChanged;
             lstProfiles.DoubleTapped += LstProfiles_DoubleTapped;
             lstProfiles.LoadingRow += LstProfiles_LoadingRow;
+            lstProfiles.Sorting += LstProfiles_Sorting;
             //if (_config.uiItem.enableDragDropSort)
             //{
             //    lstProfiles.AllowDrop = true;
@@ -90,6 +91,13 @@ namespace v2rayN.Desktop.Views
 
             RestoreUI();
             ViewModel?.RefreshServers();
+        }
+
+        private async void LstProfiles_Sorting(object? sender, DataGridColumnEventArgs e)
+        {
+            e.Handled = true;
+            await ViewModel?.SortServer(e.Column.Tag.ToString());
+            e.Handled = false;
         }
 
         //#region Event
@@ -189,6 +197,8 @@ namespace v2rayN.Desktop.Views
 
         private void LstProfiles_DoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
         {
+            var source = e.Source as Border;
+            if (source?.Name == "HeaderBackground") return;
             if (_config.UiItem.DoubleClick2Activate)
             {
                 ViewModel?.SetDefaultServer();
@@ -343,10 +353,10 @@ namespace v2rayN.Desktop.Views
                         }
                         else
                         {
-                            item2.Width = new DataGridLength(item.Width, DataGridLengthUnitType.Pixel); ;
+                            item2.Width = new DataGridLength(item.Width, DataGridLengthUnitType.Pixel);
                             item2.DisplayIndex = displayIndex++;
                         }
-                        if (item.Name.StartsWith("to"))
+                        if (item.Name.ToLower().StartsWith("to"))
                         {
                             if (!_config.GuiItem.EnableStatistics)
                             {

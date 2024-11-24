@@ -8,35 +8,37 @@ namespace AmazTool
     {
         public static void Upgrade(string fileName)
         {
-            Console.WriteLine(fileName);
-            Console.WriteLine("In progress, please wait...(正在进行中，请等待)");
+            Console.WriteLine($"{Resx.Resource.StartUnzipping}\n{fileName}");
 
-            Thread.Sleep(5000);
+            Waiting(9);
 
             if (!File.Exists(fileName))
             {
-                Console.WriteLine("Upgrade Failed, File Not Exist(升级失败,文件不存在).");
+                Console.WriteLine(Resx.Resource.UpgradeFileNotFound);
                 return;
             }
 
-            Console.WriteLine("Try to end the process(尝试结束进程).");
+            Console.WriteLine(Resx.Resource.TryTerminateProcess);
             try
             {
-                var path = GetPath(V2rayN);
-                Console.WriteLine(path);
                 var existing = Process.GetProcessesByName(V2rayN);
-                var pp = existing.FirstOrDefault(p => p.MainModule?.FileName != null && p.MainModule?.FileName == path);
-                pp?.Kill();
-                pp?.WaitForExit(1000);
+                foreach (var pp in existing)
+                {
+                    var path = pp.MainModule?.FileName ?? "";
+                    if (path.StartsWith(GetPath(V2rayN)))
+                    {
+                        pp?.Kill();
+                        pp?.WaitForExit(1000);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 // Access may be denied without admin right. The user may not be an administrator.
-                Console.WriteLine("Failed to close v2rayN(关闭v2rayN失败).\n" +
-                    "Close it manually, or the upgrade may fail.(请手动关闭正在运行的v2rayN，否则可能升级失败。\n\n" + ex.StackTrace);
+                Console.WriteLine(Resx.Resource.FailedTerminateProcess + ex.StackTrace);
             }
 
-            Console.WriteLine("Start extracting files(开始解压文件).");
+            Console.WriteLine(Resx.Resource.StartUnzipping);
             StringBuilder sb = new();
             try
             {
@@ -53,6 +55,8 @@ namespace AmazTool
                         {
                             continue;
                         }
+
+                        Console.WriteLine(entry.FullName);
 
                         var lst = entry.FullName.Split(splitKey);
                         if (lst.Length == 1) continue;
@@ -77,21 +81,22 @@ namespace AmazTool
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Upgrade Failed(升级失败)." + ex.StackTrace);
-                return;
+                Console.WriteLine(Resx.Resource.FailedUpgrade + ex.StackTrace);
+                //return;
             }
             if (sb.Length > 0)
             {
-                Console.WriteLine("Upgrade Failed(升级失败)." + sb.ToString());
-                return;
+                Console.WriteLine(Resx.Resource.FailedUpgrade + sb.ToString());
+                //return;
             }
 
-            Console.WriteLine("Start v2rayN, please wait...(正在重启，请等待)");
-            Thread.Sleep(9000);
+            Console.WriteLine(Resx.Resource.Restartv2rayN);
+            Waiting(9);
             Process process = new()
             {
                 StartInfo = new()
                 {
+                    UseShellExecute = true,
                     FileName = V2rayN,
                     WorkingDirectory = StartupPath()
                 }
@@ -117,6 +122,15 @@ namespace AmazTool
                 return startupPath;
             }
             return Path.Combine(startupPath, fileName);
+        }
+
+        private static void Waiting(int second)
+        {
+            for (var i = second; i > 0; i--)
+            {
+                Console.WriteLine(i);
+                Thread.Sleep(1000);
+            }
         }
 
         private static string V2rayN => "v2rayN";

@@ -71,7 +71,7 @@
         public bool InitComponents()
         {
             Logging.Setup();
-            Logging.LoggingEnabled(true);
+            Logging.LoggingEnabled(_config.GuiItem.EnableLog);
             Logging.SaveLog($"v2rayN start up | {Utils.GetVersion()} | {Utils.GetExePath()}");
             Logging.SaveLog($"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
             Logging.ClearLogs();
@@ -211,12 +211,12 @@
 
         public async Task<List<RoutingItem>?> RoutingItems()
         {
-            return await SQLiteHelper.Instance.TableAsync<RoutingItem>().Where(it => it.Locked == false).OrderBy(t => t.Sort).ToListAsync();
+            return await SQLiteHelper.Instance.TableAsync<RoutingItem>().OrderBy(t => t.Sort).ToListAsync();
         }
 
         public async Task<RoutingItem?> GetRoutingItem(string id)
         {
-            return await SQLiteHelper.Instance.TableAsync<RoutingItem>().FirstOrDefaultAsync(it => it.Locked == false && it.Id == id);
+            return await SQLiteHelper.Instance.TableAsync<RoutingItem>().FirstOrDefaultAsync(it => it.Id == id);
         }
 
         public async Task<List<DNSItem>?> DNSItems()
@@ -247,7 +247,7 @@
                 case ECoreType.sing_box:
                     return Global.SsSecuritiesInSingbox;
             }
-            return Global.SsSecuritiesInSagerNet;
+            return Global.SsSecuritiesInSingbox;
         }
 
         public ECoreType GetCoreType(ProfileItem profileItem, EConfigType eConfigType)

@@ -7,9 +7,9 @@ using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using DialogHostAvalonia;
+using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using Splat;
-using System.ComponentModel;
 using System.Reactive.Disposables;
 using v2rayN.Desktop.Common;
 
@@ -29,15 +29,12 @@ namespace v2rayN.Desktop.Views
             _config = AppHandler.Instance.Config;
             _manager = new WindowNotificationManager(TopLevel.GetTopLevel(this)) { MaxItems = 3, Position = NotificationPosition.BottomRight };
 
-            //ThreadPool.RegisterWaitForSingleObject(App.ProgramStarted, OnProgramStarted, null, -1, false);
-
-            this.Closing += MainWindow_Closing;
             this.KeyDown += MainWindow_KeyDown;
             menuSettingsSetUWP.Click += menuSettingsSetUWP_Click;
             menuPromotion.Click += menuPromotion_Click;
-            menuClose.Click += menuClose_Click;
             menuCheckUpdate.Click += MenuCheckUpdate_Click;
             menuBackupAndRestore.Click += MenuBackupAndRestore_Click;
+            menuClose.Click += MenuClose_Click;
 
             MessageBus.Current.Listen<string>(EMsgCommand.SendSnackMsg.ToString()).Subscribe(DelegateSnackMsg);
             ViewModel = new MainWindowViewModel(UpdateViewHandler);
@@ -114,10 +111,17 @@ namespace v2rayN.Desktop.Views
             this.Title = $"{Utils.GetVersion()} - {(AppHandler.Instance.IsAdministrator ? ResUI.RunAsAdmin : ResUI.NotRunAsAdmin)}";
             if (Utils.IsWindows())
             {
+                ThreadPool.RegisterWaitForSingleObject(Program.ProgramStarted, OnProgramStarted, null, -1, false);
+
                 menuGlobalHotkeySetting.IsVisible = false;
             }
             else
             {
+                if (AppHandler.Instance.IsAdministrator)
+                {
+                    this.Title = $"{Utils.GetVersion()} - {ResUI.TbSettingsLinuxSudoPasswordNotSudoRunApp}";
+                    NoticeHandler.Instance.SendMessageAndEnqueue(ResUI.TbSettingsLinuxSudoPasswordNotSudoRunApp);
+                }
                 menuRebootAsAdmin.IsVisible = false;
                 menuSettingsSetUWP.IsVisible = false;
                 menuGlobalHotkeySetting.IsVisible = false;
@@ -158,7 +162,9 @@ namespace v2rayN.Desktop.Views
 
         private void OnProgramStarted(object state, bool timeout)
         {
-            ShowHideWindow(true);
+            Dispatcher.UIThread.Post(() =>
+                    ShowHideWindow(true),
+                DispatcherPriority.Default);
         }
 
         private void DelegateSnackMsg(string content)
@@ -271,10 +277,23 @@ namespace v2rayN.Desktop.Views
             }
         }
 
-        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        protected override async void OnClosing(WindowClosingEventArgs e)
         {
-            e.Cancel = true;
-            ShowHideWindow(false);
+            Logging.SaveLog("OnClosing -> " + e.CloseReason.ToString());
+
+            switch (e.CloseReason)
+            {
+                case WindowCloseReason.OwnerWindowClosing or WindowCloseReason.WindowClosing:
+                    e.Cancel = true;
+                    ShowHideWindow(false);
+                    break;
+
+                case WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown:
+                    await ViewModel?.MyAppExitAsync(true);
+                    break;
+            }
+
+            base.OnClosing(e);
         }
 
         private async void MainWindow_KeyDown(object? sender, KeyEventArgs e)
@@ -300,12 +319,6 @@ namespace v2rayN.Desktop.Views
                     ViewModel?.Reload();
                 }
             }
-        }
-
-        private void menuClose_Click(object? sender, RoutedEventArgs e)
-        {
-            StorageUI();
-            ShowHideWindow(false);
         }
 
         private void menuPromotion_Click(object? sender, RoutedEventArgs e)
@@ -355,6 +368,17 @@ namespace v2rayN.Desktop.Views
             DialogHost.Show(_backupAndRestoreView);
         }
 
+        private async void MenuClose_Click(object? sender, RoutedEventArgs e)
+        {
+            if (await UI.ShowYesNo(this, ResUI.menuExitTips) == ButtonResult.No)
+            {
+                return;
+            }
+            StorageUI();
+
+            await ViewModel?.MyAppExitAsync(false);
+        }
+
         #endregion Event
 
         #region UI
@@ -374,8 +398,16 @@ namespace v2rayN.Desktop.Views
             }
             else
             {
-                this.Hide();
+                if (_config.UiItem.Hide2TrayWhenClose)
+                {
+                    this.Hide();
+                }
+                else
+                {
+                    this.WindowState = WindowState.Minimized;
+                }
             }
+
             _config.UiItem.ShowInTaskbar = bl;
         }
 

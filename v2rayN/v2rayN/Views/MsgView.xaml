@@ -69,13 +69,17 @@
         </WrapPanel>
         <TextBox
             Name="txtMsg"
+            VerticalAlignment="Stretch"
+            AcceptsReturn="True"
             BorderThickness="0"
             FontSize="{DynamicResource StdFontSize-1}"
             HorizontalScrollBarVisibility="Auto"
             IsReadOnly="True"
             IsReadOnlyCaretVisible="True"
+            IsUndoEnabled="False"
             TextAlignment="Left"
             TextWrapping="Wrap"
+            UndoLimit="0"
             VerticalScrollBarVisibility="Visible">
             <TextBox.ContextMenu>
                 <ContextMenu Style="{StaticResource DefContextMenu}">

@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace ServiceLib.Services
@@ -6,12 +6,10 @@ namespace ServiceLib.Services
     public class UpdateService
     {
         private Action<bool, string>? _updateFunc;
-        private Config _config;
         private int _timeout = 30;
 
         public async Task CheckUpdateGuiN(Config config, Action<bool, string> updateFunc, bool preRelease)
         {
-            _config = config;
             _updateFunc = updateFunc;
             var url = string.Empty;
             var fileName = string.Empty;
@@ -53,7 +51,6 @@ namespace ServiceLib.Services
 
         public async Task CheckUpdateCore(ECoreType type, Config config, Action<bool, string> updateFunc, bool preRelease)
         {
-            _config = config;
             _updateFunc = updateFunc;
             var url = string.Empty;
             var fileName = string.Empty;
@@ -108,13 +105,12 @@ namespace ServiceLib.Services
 
         public async Task UpdateSubscriptionProcess(Config config, string subId, bool blProxy, Action<bool, string> updateFunc)
         {
-            _config = config;
             _updateFunc = updateFunc;
 
             _updateFunc?.Invoke(false, ResUI.MsgUpdateSubscriptionStart);
             var subItem = await AppHandler.Instance.SubItems();
 
-            if (subItem == null || subItem.Count <= 0)
+            if (subItem is not { Count: > 0 })
             {
                 _updateFunc?.Invoke(false, ResUI.MsgNoValidSubscription);
                 return;
@@ -122,11 +118,11 @@ namespace ServiceLib.Services
 
             foreach (var item in subItem)
             {
-                string id = item.Id.TrimEx();
-                string url = item.Url.TrimEx();
-                string userAgent = item.UserAgent.TrimEx();
-                string hashCode = $"{item.Remarks}->";
-                if (Utils.IsNullOrEmpty(id) || Utils.IsNullOrEmpty(url) || Utils.IsNotEmpty(subId) && item.Id != subId)
+                var id = item.Id.TrimEx();
+                var url = item.Url.TrimEx();
+                var userAgent = item.UserAgent.TrimEx();
+                var hashCode = $"{item.Remarks}->";
+                if (Utils.IsNullOrEmpty(id) || Utils.IsNullOrEmpty(url) || (Utils.IsNotEmpty(subId) && item.Id != subId))
                 {
                     //_updateFunc?.Invoke(false, $"{hashCode}{ResUI.MsgNoValidSubscription}");
                     continue;
@@ -219,7 +215,7 @@ namespace ServiceLib.Services
                         _updateFunc?.Invoke(false, $"{hashCode}{result}");
                     }
 
-                    int ret = await ConfigHandler.AddBatchServers(config, result, id, true);
+                    var ret = await ConfigHandler.AddBatchServers(config, result, id, true);
                     if (ret <= 0)
                     {
                         Logging.SaveLog("FailedImportSubscription");
@@ -231,6 +227,8 @@ namespace ServiceLib.Services
                             : $"{hashCode}{ResUI.MsgFailedImportSubscription}");
                 }
                 _updateFunc?.Invoke(false, "-------------------------------------------------------");
+
+                //await ConfigHandler.DedupServerList(config, id);
             }
 
             _updateFunc?.Invoke(true, $"{ResUI.MsgUpdateSubscriptionEnd}");
@@ -246,8 +244,17 @@ namespace ServiceLib.Services
 
         public async Task RunAvailabilityCheck(Action<bool, string> updateFunc)
         {
-            var time = await new DownloadService().RunAvailabilityCheck(null);
-            updateFunc?.Invoke(false, string.Format(ResUI.TestMeOutput, time));
+            var downloadHandle = new DownloadService();
+            var time = await downloadHandle.RunAvailabilityCheck(null);
+            var ip = Global.None;
+            if (time > 0)
+            {
+                var result = await downloadHandle.TryDownloadString(Global.IPAPIUrl, true, "ipapi");
+                var ipInfo = JsonUtils.Deserialize<IPAPIInfo>(result);
+                ip = $"({ipInfo?.country}) {ipInfo?.ip}";
+            }
+
+            updateFunc?.Invoke(false, string.Format(ResUI.TestMeOutput, time, ip));
         }
 
         #region CheckUpdate private
@@ -309,10 +316,9 @@ namespace ServiceLib.Services
             {
                 var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(type);
                 string filePath = string.Empty;
-                foreach (string name in coreInfo.CoreExes)
+                foreach (var name in coreInfo.CoreExes)
                 {
-                    string vName = Utils.GetExeName(name);
-                    vName = Utils.GetBinPath(vName, coreInfo.CoreType.ToString());
+                    var vName = Utils.GetBinPath(Utils.GetExeName(name), coreInfo.CoreType.ToString());
                     if (File.Exists(vName))
                     {
                         filePath = vName;
@@ -453,7 +459,6 @@ namespace ServiceLib.Services
 
         private async Task UpdateGeoFile(string geoName, Config config, Action<bool, string> updateFunc)
         {
-            _config = config;
             _updateFunc = updateFunc;
 
             var geoUrl = string.IsNullOrEmpty(config?.ConstItem.GeoSourceUrl)
@@ -469,7 +474,6 @@ namespace ServiceLib.Services
 
         private async Task UpdateSrsFileAll(Config config, Action<bool, string> updateFunc)
         {
-            _config = config;
             _updateFunc = updateFunc;
 
             var geoipFiles = new List<string>();
@@ -520,9 +524,9 @@ namespace ServiceLib.Services
 
         private async Task UpdateSrsFile(string type, string srsName, Config config, Action<bool, string> updateFunc)
         {
-            var srsUrl = string.IsNullOrEmpty(_config.ConstItem.SrsSourceUrl)
+            var srsUrl = string.IsNullOrEmpty(config.ConstItem.SrsSourceUrl)
                             ? Global.SingboxRulesetUrl
-                            : _config.ConstItem.SrsSourceUrl;
+                            : config.ConstItem.SrsSourceUrl;
 
             var fileName = $"{type}-{srsName}.srs";
             var targetPath = Path.Combine(Utils.GetBinPath("srss"), fileName);

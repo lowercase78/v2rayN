@@ -44,7 +44,7 @@
                 Style="{StaticResource ToolbarTextBlock}"
                 Text="{x:Static resx:ResUI.TbSettingsFollowSystemTheme}" />
             <ToggleButton
-                x:Name="followSystemTheme"
+                x:Name="togFollowSystemTheme"
                 Grid.Row="1"
                 Grid.Column="1"
                 Margin="{StaticResource Margin8}" />

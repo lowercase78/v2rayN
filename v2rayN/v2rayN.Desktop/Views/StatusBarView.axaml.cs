@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
@@ -41,7 +42,7 @@ namespace v2rayN.Desktop.Views
                 this.Bind(ViewModel, vm => vm.SelectedRouting, v => v.cmbRoutings2.SelectedItem).DisposeWith(disposables);
             });
 
-            spEnableTun.IsVisible = (Utils.IsWindows() || AppHandler.Instance.IsAdministrator);
+            //spEnableTun.IsVisible = (Utils.IsWindows() || AppHandler.Instance.IsAdministrator);
         }
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -77,6 +78,9 @@ namespace v2rayN.Desktop.Views
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow.Icon = AvaUtils.GetAppIcon(_config.SystemProxyItem.SysProxyType);
+                var iconslist = TrayIcon.GetIcons(Application.Current);
+                iconslist[0].Icon = desktop.MainWindow.Icon;
+                TrayIcon.SetIcons(Application.Current, iconslist);
             }
         }
 

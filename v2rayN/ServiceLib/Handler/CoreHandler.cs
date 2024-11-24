@@ -37,9 +37,9 @@ namespace ServiceLib.Handler
                         continue;
                     }
 
-                    foreach (var vName in it.CoreExes)
+                    foreach (var name in it.CoreExes)
                     {
-                        var exe = Utils.GetExeName(Utils.GetBinPath(vName, it.CoreType.ToString()));
+                        var exe = Utils.GetBinPath(Utils.GetExeName(name), it.CoreType.ToString());
                         if (File.Exists(exe))
                         {
                             await Utils.SetLinuxChmod(exe);
@@ -59,15 +59,18 @@ namespace ServiceLib.Handler
 
             var fileName = Utils.GetConfigPath(Global.CoreConfigFileName);
             var result = await CoreConfigHandler.GenerateClientConfig(node, fileName);
-            ShowMsg(false, result.Msg);
             if (result.Success != true)
             {
+                ShowMsg(true, result.Msg);
                 return;
             }
             else
             {
                 ShowMsg(true, $"{node.GetSummary()}");
+                ShowMsg(false, $"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
+                ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
                 await CoreStop();
+                await Task.Delay(100);
                 await CoreStart(node);
 
                 //In tun mode, do a delay check and restart the core
@@ -99,6 +102,8 @@ namespace ServiceLib.Handler
             ShowMsg(false, result.Msg);
             if (result.Success)
             {
+                ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
+                ShowMsg(false, configPath);
                 pid = await CoreStartSpeedtest(configPath, coreType);
             }
             return pid;
@@ -108,13 +113,11 @@ namespace ServiceLib.Handler
         {
             try
             {
-                bool hasProc = false;
                 if (_process != null)
                 {
                     await KillProcess(_process);
                     _process.Dispose();
                     _process = null;
-                    hasProc = true;
                 }
 
                 if (_processPre != null)
@@ -122,31 +125,6 @@ namespace ServiceLib.Handler
                     await KillProcess(_processPre);
                     _processPre.Dispose();
                     _processPre = null;
-                    hasProc = true;
-                }
-
-                if (!hasProc)
-                {
-                    var coreInfo = CoreInfoHandler.Instance.GetCoreInfo();
-                    foreach (var it in coreInfo)
-                    {
-                        if (it.CoreType == ECoreType.v2rayN)
-                        {
-                            continue;
-                        }
-                        foreach (string vName in it.CoreExes)
-                        {
-                            var existing = Process.GetProcessesByName(vName);
-                            foreach (Process p in existing)
-                            {
-                                string? path = p.MainModule?.FileName;
-                                if (path == Utils.GetExeName(Utils.GetBinPath(vName, it.CoreType.ToString())))
-                                {
-                                    await KillProcess(p);
-                                }
-                            }
-                        }
-                    }
                 }
             }
             catch (Exception ex)
@@ -172,11 +150,10 @@ namespace ServiceLib.Handler
 
         private string CoreFindExe(CoreInfo coreInfo)
         {
-            string fileName = string.Empty;
-            foreach (string name in coreInfo.CoreExes)
+            var fileName = string.Empty;
+            foreach (var name in coreInfo.CoreExes)
             {
-                string vName = Utils.GetExeName(name);
-                vName = Utils.GetBinPath(vName, coreInfo.CoreType.ToString());
+                var vName = Utils.GetBinPath(Utils.GetExeName(name), coreInfo.CoreType.ToString());
                 if (File.Exists(vName))
                 {
                     fileName = vName;
@@ -185,7 +162,7 @@ namespace ServiceLib.Handler
             }
             if (Utils.IsNullOrEmpty(fileName))
             {
-                string msg = string.Format(ResUI.NotFoundCore, Utils.GetBinPath("", coreInfo.CoreType.ToString()), string.Join(", ", coreInfo.CoreExes.ToArray()), coreInfo.Url);
+                var msg = string.Format(ResUI.NotFoundCore, Utils.GetBinPath("", coreInfo.CoreType.ToString()), string.Join(", ", coreInfo.CoreExes.ToArray()), coreInfo.Url);
                 Logging.SaveLog(msg);
                 ShowMsg(false, msg);
             }
@@ -194,24 +171,12 @@ namespace ServiceLib.Handler
 
         private async Task CoreStart(ProfileItem node)
         {
-            ShowMsg(false, $"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
-            ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
-
-            //ECoreType coreType;
-            //if (node.configType != EConfigType.Custom && _config.tunModeItem.enableTun)
-            //{
-            //    coreType = ECoreType.sing_box;
-            //}
-            //else
-            //{
-            //    coreType = LazyConfig.Instance.GetCoreType(node, node.configType);
-            //}
             var coreType = AppHandler.Instance.GetCoreType(node, node.ConfigType);
             _config.RunningCoreType = coreType;
             var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(coreType);
 
             var displayLog = node.ConfigType != EConfigType.Custom || node.DisplayLog;
-            var proc = await RunProcess(node, coreInfo, "", displayLog);
+            var proc = await RunProcess(coreInfo, Global.CoreConfigFileName, displayLog, true);
             if (proc is null)
             {
                 return;
@@ -248,12 +213,12 @@ namespace ServiceLib.Handler
                 }
                 if (itemSocks != null)
                 {
-                    string fileName2 = Utils.GetConfigPath(Global.CorePreConfigFileName);
+                    var fileName2 = Utils.GetConfigPath(Global.CorePreConfigFileName);
                     var result = await CoreConfigHandler.GenerateClientConfig(itemSocks, fileName2);
                     if (result.Success)
                     {
                         var coreInfo2 = CoreInfoHandler.Instance.GetCoreInfo(preCoreType);
-                        var proc2 = await RunProcess(node, coreInfo2, $" -c {Global.CorePreConfigFileName}", true);
+                        var proc2 = await RunProcess(coreInfo2, Global.CorePreConfigFileName, true, true);
                         if (proc2 is not null)
                         {
                             _processPre = proc2;
@@ -265,13 +230,10 @@ namespace ServiceLib.Handler
 
         private async Task<int> CoreStartSpeedtest(string configPath, ECoreType coreType)
         {
-            ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
-
-            ShowMsg(false, configPath);
             try
             {
                 var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(coreType);
-                var proc = await RunProcess(new(), coreInfo, $" -c {Global.CoreSpeedtestConfigFileName}", true);
+                var proc = await RunProcess(coreInfo, Global.CoreSpeedtestConfigFileName, true, false);
                 if (proc is null)
                 {
                     return -1;
@@ -282,8 +244,7 @@ namespace ServiceLib.Handler
             catch (Exception ex)
             {
                 Logging.SaveLog(ex.Message, ex);
-                string msg = ex.Message;
-                ShowMsg(false, msg);
+                ShowMsg(false, ex.Message);
                 return -1;
             }
         }
@@ -293,19 +254,29 @@ namespace ServiceLib.Handler
             _updateFunc?.Invoke(notify, msg);
         }
 
+        private bool IsNeedSudo(ECoreType eCoreType)
+        {
+            return _config.TunModeItem.EnableTun
+                   && eCoreType == ECoreType.sing_box
+                   && Utils.IsLinux()
+                //&& _config.TunModeItem.LinuxSudoPwd.IsNotEmpty()
+                ;
+        }
+
         #endregion Private
 
         #region Process
 
-        private async Task<Process?> RunProcess(ProfileItem node, CoreInfo coreInfo, string configPath, bool displayLog)
+        private async Task<Process?> RunProcess(CoreInfo coreInfo, string configPath, bool displayLog, bool mayNeedSudo)
         {
+            var fileName = CoreFindExe(coreInfo);
+            if (Utils.IsNullOrEmpty(fileName))
+            {
+                return null;
+            }
+
             try
             {
-                string fileName = CoreFindExe(coreInfo);
-                if (Utils.IsNullOrEmpty(fileName))
-                {
-                    return null;
-                }
                 Process proc = new()
                 {
                     StartInfo = new()
@@ -321,33 +292,44 @@ namespace ServiceLib.Handler
                         StandardErrorEncoding = displayLog ? Encoding.UTF8 : null,
                     }
                 };
+
+                var isNeedSudo = mayNeedSudo && IsNeedSudo(coreInfo.CoreType);
+                if (isNeedSudo)
+                {
+                    await RunProcessAsLinuxRoot(proc, fileName, coreInfo, configPath);
+                }
+
                 var startUpErrorMessage = new StringBuilder();
                 var startUpSuccessful = false;
                 if (displayLog)
                 {
                     proc.OutputDataReceived += (sender, e) =>
                     {
-                        if (Utils.IsNotEmpty(e.Data))
-                        {
-                            string msg = e.Data + Environment.NewLine;
-                            ShowMsg(false, msg);
-                        }
+                        if (Utils.IsNullOrEmpty(e.Data)) return;
+                        ShowMsg(false, e.Data + Environment.NewLine);
                     };
                     proc.ErrorDataReceived += (sender, e) =>
                     {
-                        if (Utils.IsNotEmpty(e.Data))
-                        {
-                            string msg = e.Data + Environment.NewLine;
-                            ShowMsg(false, msg);
+                        if (Utils.IsNullOrEmpty(e.Data)) return;
+                        ShowMsg(false, e.Data + Environment.NewLine);
 
-                            if (!startUpSuccessful)
-                            {
-                                startUpErrorMessage.Append(msg);
-                            }
+                        if (!startUpSuccessful)
+                        {
+                            startUpErrorMessage.Append(e.Data + Environment.NewLine);
                         }
                     };
                 }
                 proc.Start();
+
+                if (isNeedSudo && _config.TunModeItem.LinuxSudoPwd.IsNotEmpty())
+                {
+                    var pwd = DesUtils.Decrypt(_config.TunModeItem.LinuxSudoPwd);
+                    await Task.Delay(10);
+                    await proc.StandardInput.WriteLineAsync(pwd);
+                    await Task.Delay(10);
+                    await proc.StandardInput.WriteLineAsync(pwd);
+                }
+
                 if (displayLog)
                 {
                     proc.BeginOutputReadLine();
@@ -370,10 +352,40 @@ namespace ServiceLib.Handler
             catch (Exception ex)
             {
                 Logging.SaveLog(ex.Message, ex);
-                string msg = ex.Message;
-                ShowMsg(true, msg);
+                ShowMsg(true, ex.Message);
                 return null;
             }
+        }
+
+        private async Task RunProcessAsLinuxRoot(Process proc, string fileName, CoreInfo coreInfo, string configPath)
+        {
+            var cmdLine = $"{fileName.AppendQuotes()} {string.Format(coreInfo.Arguments, Utils.GetConfigPath(configPath).AppendQuotes())}";
+
+            //Prefer shell scripts
+            var shFilePath = Utils.GetBinPath("run_as_root.sh");
+            File.Delete(shFilePath);
+            var sb = new StringBuilder();
+            sb.AppendLine("#!/bin/sh");
+            sb.AppendLine(cmdLine);
+            await File.WriteAllTextAsync(shFilePath, sb.ToString());
+            await Utils.SetLinuxChmod(shFilePath);
+
+            //Replace command
+            var args = File.Exists(shFilePath) ? shFilePath : cmdLine;
+            if (_config.TunModeItem.LinuxSudoPwd.IsNotEmpty())
+            {
+                proc.StartInfo.FileName = $"/bin/sudo";
+                proc.StartInfo.Arguments = $"-S {args}";
+            }
+            else
+            {
+                proc.StartInfo.FileName = $"/bin/pkexec";
+                proc.StartInfo.Arguments = $"{args}";
+            }
+            proc.StartInfo.WorkingDirectory = null;
+            proc.StartInfo.StandardInputEncoding = Encoding.UTF8;
+            proc.StartInfo.RedirectStandardInput = true;
+            Logging.SaveLog(proc.StartInfo.Arguments);
         }
 
         private async Task KillProcess(Process? proc)
@@ -382,19 +394,25 @@ namespace ServiceLib.Handler
             {
                 return;
             }
+            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
             try
             {
+                await proc.WaitForExitAsync(timeout.Token);
+            }
+            catch (OperationCanceledException)
+            {
                 proc.Kill();
-                proc.WaitForExit(100);
-                if (!proc.HasExited)
+            }
+            if (!proc.HasExited)
+            {
+                try
+                {
+                    await proc.WaitForExitAsync(timeout.Token);
+                }
+                catch (Exception)
                 {
                     proc.Kill();
-                    proc.WaitForExit(100);
                 }
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog(ex.Message, ex);
             }
         }
 

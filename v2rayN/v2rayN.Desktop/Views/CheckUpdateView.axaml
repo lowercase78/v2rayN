@@ -39,7 +39,7 @@
             <ListBox
                 x:Name="lstCheckUpdates"
                 BorderThickness="1"
-                ItemsSource="{Binding CheckUpdateItems}">
+                ItemsSource="{Binding CheckUpdateModels}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Vertical" />
@@ -50,7 +50,7 @@
                         <Border
                             Width="500"
                             Height="80"
-                            Margin="0"
+                            Margin="-2"
                             VerticalAlignment="Center"
                             Theme="{StaticResource CardBorder}">
                             <Grid>

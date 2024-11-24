@@ -8,8 +8,13 @@
         public const string GithubUrl = "https://github.com";
         public const string GithubApiUrl = "https://api.github.com/repos";
         public const string V2flyCoreUrl = "https://github.com/v2fly/v2ray-core/releases";
+<<<<<<< HEAD
         public const string XrayCoreUrl = "https://github.com/GFW-knocker/Xray-core/releases";
         public const string NUrl = @"https://github.com/lowercase78/v2rayN/releases";
+=======
+        public const string XrayCoreUrl = "https://github.com/XTLS/Xray-core/releases";
+        public const string NUrl = @"https://github.com/2dust/v2rayN/releases";
+>>>>>>> upstream/master
         public const string MihomoCoreUrl = "https://github.com/MetaCubeX/mihomo/releases";
         public const string HysteriaCoreUrl = "https://github.com/apernet/hysteria/releases";
         public const string NaiveproxyCoreUrl = "https://github.com/klzgrad/naiveproxy/releases";
@@ -18,8 +23,15 @@
         public const string GeoUrl = "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/{0}.dat";
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
         public const string JuicityCoreUrl = "https://github.com/juicity/juicity/releases";
+<<<<<<< HEAD
         public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/lowercase78/v2rayCustomRoutingList/master/";
         public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set-{0}/{1}.srs";
+=======
+        public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/2dust/v2rayCustomRoutingList/master/";
+        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/2dust/sing-box-rules/rule-set-{0}/{1}.srs";
+        public const string IPAPIUrl = "https://ipapi.co/json";
+
+>>>>>>> upstream/master
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
         public const string ConfigFileName = "guiNConfig.json";
         public const string CoreConfigFileName = "config.json";
@@ -27,21 +39,25 @@
         public const string CoreSpeedtestConfigFileName = "configSpeedtest.json";
         public const string CoreMultipleLoadConfigFileName = "configMultipleLoad.json";
         public const string ClashMixinConfigFileName = "Mixin.yaml";
-        public const string V2raySampleClient = "ServiceLib.Sample.SampleClientConfig";
-        public const string SingboxSampleClient = "ServiceLib.Sample.SingboxSampleClientConfig";
-        public const string V2raySampleHttpRequestFileName = "ServiceLib.Sample.SampleHttpRequest";
-        public const string V2raySampleHttpResponseFileName = "ServiceLib.Sample.SampleHttpResponse";
-        public const string V2raySampleInbound = "ServiceLib.Sample.SampleInbound";
-        public const string V2raySampleOutbound = "ServiceLib.Sample.SampleOutbound";
-        public const string SingboxSampleOutbound = "ServiceLib.Sample.SingboxSampleOutbound";
-        public const string CustomRoutingFileName = "ServiceLib.Sample.custom_routing_";
-        public const string TunSingboxDNSFileName = "ServiceLib.Sample.tun_singbox_dns";
-        public const string TunSingboxInboundFileName = "ServiceLib.Sample.tun_singbox_inbound";
-        public const string TunSingboxRulesFileName = "ServiceLib.Sample.tun_singbox_rules";
-        public const string DNSV2rayNormalFileName = "ServiceLib.Sample.dns_v2ray_normal";
-        public const string DNSSingboxNormalFileName = "ServiceLib.Sample.dns_singbox_normal";
-        public const string ClashMixinYaml = "ServiceLib.Sample.clash_mixin_yaml";
-        public const string ClashTunYaml = "ServiceLib.Sample.clash_tun_yaml";
+
+        public const string NamespaceSample = "ServiceLib.Sample.";
+        public const string V2raySampleClient = NamespaceSample + "SampleClientConfig";
+        public const string SingboxSampleClient = NamespaceSample + "SingboxSampleClientConfig";
+        public const string V2raySampleHttpRequestFileName = NamespaceSample + "SampleHttpRequest";
+        public const string V2raySampleHttpResponseFileName = NamespaceSample + "SampleHttpResponse";
+        public const string V2raySampleInbound = NamespaceSample + "SampleInbound";
+        public const string V2raySampleOutbound = NamespaceSample + "SampleOutbound";
+        public const string SingboxSampleOutbound = NamespaceSample + "SingboxSampleOutbound";
+        public const string CustomRoutingFileName = NamespaceSample + "custom_routing_";
+        public const string TunSingboxDNSFileName = NamespaceSample + "tun_singbox_dns";
+        public const string TunSingboxInboundFileName = NamespaceSample + "tun_singbox_inbound";
+        public const string TunSingboxRulesFileName = NamespaceSample + "tun_singbox_rules";
+        public const string DNSV2rayNormalFileName = NamespaceSample + "dns_v2ray_normal";
+        public const string DNSSingboxNormalFileName = NamespaceSample + "dns_singbox_normal";
+        public const string ClashMixinYaml = NamespaceSample + "clash_mixin_yaml";
+        public const string ClashTunYaml = NamespaceSample + "clash_tun_yaml";
+        public const string LinuxAutostartConfig = NamespaceSample + "linux_autostart_config";
+        public const string PacFileName = NamespaceSample + "pac";
 
         public const string DefaultSecurity = "auto";
         public const string DefaultNetwork = "tcp";
@@ -101,9 +117,9 @@
 
         public static readonly List<string> SpeedTestUrls = new() {
             @"https://speed.cloudflare.com/__down?bytes=100000000",
+            @"https://speed.cloudflare.com/__down?bytes=50000000",
             @"https://speed.cloudflare.com/__down?bytes=10000000",
-            @"http://cachefly.cachefly.net/50mb.test",
-            @"http://cachefly.cachefly.net/10mb.test"
+            @"https://cachefly.cachefly.net/50mb.test",
         };
 
         public static readonly List<string> SpeedPingTestUrls = new() {
@@ -171,11 +187,10 @@
 
         public static readonly List<string> VmessSecurities = new() { "aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero" };
         public static readonly List<string> SsSecurities = new() { "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "none", "plain" };
-        public static readonly List<string> SsSecuritiesInSagerNet = new() { "none", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305", "aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305", "rc4", "rc4-md5", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-cfb8", "aes-192-cfb8", "aes-256-cfb8", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "bf-cfb", "cast5-cfb", "des-cfb", "idea-cfb", "rc2-cfb", "seed-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "camellia-128-cfb8", "camellia-192-cfb8", "camellia-256-cfb8", "salsa20", "chacha20", "chacha20-ietf", "xchacha20" };
         public static readonly List<string> SsSecuritiesInXray = new() { "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-poly1305", "xchacha20-ietf-poly1305", "none", "plain", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305" };
         public static readonly List<string> SsSecuritiesInSingbox = new() { "aes-256-gcm", "aes-192-gcm", "aes-128-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305", "none", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "rc4-md5", "chacha20-ietf", "xchacha20" };
         public static readonly List<string> Flows = new() { "", "xtls-rprx-vision", "xtls-rprx-vision-udp443" };
-        public static readonly List<string> Networks = new() { "tcp", "kcp", "ws", "httpupgrade", "splithttp", "h2", "quic", "grpc" };
+        public static readonly List<string> Networks = new() { "tcp", "kcp", "ws", "httpupgrade", "xhttp", "h2", "quic", "grpc" };
         public static readonly List<string> KcpHeaderTypes = new() { "srtp", "utp", "wechat-video", "dtls", "wireguard" };
         public static readonly List<string> CoreTypes = new() { "v2fly", "Xray", "sing_box" };
         public static readonly List<string> CoreTypes4VLESS = new() { "Xray", "sing_box" };
@@ -184,6 +199,7 @@
         public static readonly List<string> DomainMatchers = new() { "linear", "mph", "" };
         public static readonly List<string> Fingerprints = new() { "chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", "" };
         public static readonly List<string> UserAgent = new() { "chrome", "firefox", "safari", "edge", "none" };
+        public static readonly List<string> XhttpMode = new() { "auto", "packet-up", "stream-up" };
 
         public static readonly List<string> AllowInsecure = new() { "true", "false", "" };
         public static readonly List<string> DomainStrategy4Freedoms = new() { "AsIs", "UseIP", "UseIPv4", "UseIPv6", "" };
@@ -203,9 +219,9 @@
         public static readonly List<string> SingboxMuxs = new() { "h2mux", "smux", "yamux", "" };
         public static readonly List<string> TuicCongestionControls = new() { "cubic", "new_reno", "bbr" };
 
-        public static readonly List<string> allowSelectType = new List<string> { "selector", "urltest", "loadbalance", "fallback" };
-        public static readonly List<string> notAllowTestType = new List<string> { "selector", "urltest", "direct", "reject", "compatible", "pass", "loadbalance", "fallback" };
-        public static readonly List<string> proxyVehicleType = new List<string> { "file", "http" };
+        public static readonly List<string> allowSelectType = new() { "selector", "urltest", "loadbalance", "fallback" };
+        public static readonly List<string> notAllowTestType = new() { "selector", "urltest", "direct", "reject", "compatible", "pass", "loadbalance", "fallback" };
+        public static readonly List<string> proxyVehicleType = new() { "file", "http" };
 
         #endregion const
     }

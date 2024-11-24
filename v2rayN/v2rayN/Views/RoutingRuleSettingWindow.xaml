@@ -13,13 +13,8 @@
     Width="960"
     Height="700"
     x:TypeArguments="vms:RoutingRuleSettingViewModel"
-    Background="{DynamicResource MaterialDesignPaper}"
-    FontFamily="{x:Static conv:MaterialDesignFonts.MyFont}"
-    ResizeMode="NoResize"
     ShowInTaskbar="False"
     Style="{StaticResource WindowGlobal}"
-    TextElement.FontFamily="{x:Static conv:MaterialDesignFonts.MyFont}"
-    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <DockPanel>

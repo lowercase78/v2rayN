@@ -377,7 +377,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <!--
+
                         <TextBlock
                             Grid.Row="1"
                             Grid.Column="0"
@@ -390,7 +390,8 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             Classes="Margin8" />
-                        <TextBlock
+                        <!--
+						<TextBlock
                             Grid.Row="1"
                             Grid.Column="2"
                             VerticalAlignment="Center"
@@ -493,13 +494,14 @@
                             Grid.Column="0"
                             VerticalAlignment="Center"
                             Classes="Margin8"
-                            Text="{x:Static resx:ResUI.TbSettingsEnableCheckPreReleaseUpdate}" />
+                            Text="{x:Static resx:ResUI.TbSettingsHide2TrayWhenClose}" />
                         <ToggleSwitch
-                            x:Name="togEnableCheckPreReleaseUpdate"
+                            x:Name="togHide2TrayWhenClose"
                             Grid.Row="9"
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             Classes="Margin8" />
+
 
                         <TextBlock
                             Grid.Row="11"
@@ -533,7 +535,6 @@
                             Grid.Column="0"
                             VerticalAlignment="Center"
                             Classes="Margin8"
-                            IsVisible="False"
                             Text="{x:Static resx:ResUI.TbSettingsCurrentFontFamily}" />
                         <ComboBox
                             x:Name="cmbcurrentFontFamily"
@@ -541,15 +542,13 @@
                             Grid.Column="1"
                             Width="200"
                             Classes="Margin8"
-                            IsVisible="False"
                             MaxDropDownHeight="1000" />
                         <TextBlock
                             Grid.Row="16"
                             Grid.Column="2"
                             VerticalAlignment="Center"
                             Classes="Margin8"
-                            IsVisible="False"
-                            Text="{x:Static resx:ResUI.TbSettingsCurrentFontFamilyTip}"
+                            Text="{x:Static resx:ResUI.TbSettingsCurrentFontFamilyLinuxTip}"
                             TextWrapping="Wrap" />
 
                         <TextBlock
@@ -677,7 +676,6 @@
                             Classes="Margin8"
                             Text="{x:Static resx:ResUI.TbSettingsChinaUserTip}"
                             TextWrapping="Wrap" />
-
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -728,6 +726,7 @@
                 <DockPanel Classes="Margin8">
                     <Grid Classes="Margin8" DockPanel.Dock="Top">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -808,6 +807,27 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             Classes="Margin8" />
+
+                        <TextBlock
+                            Grid.Row="7"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsLinuxSudoPassword}" />
+                        <TextBox
+                            x:Name="txtLinuxSudoPassword"
+                            Grid.Row="7"
+                            Grid.Column="1"
+                            Width="200"
+                            HorizontalAlignment="Left"
+                            Classes="Margin8" />
+                        <TextBlock
+                            Grid.Row="7"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Classes="Margin8"
+                            Text="{x:Static resx:ResUI.TbSettingsLinuxSudoPasswordTip}"
+                            TextWrapping="Wrap" />
                     </Grid>
                 </DockPanel>
             </TabItem>

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Text.RegularExpressions;
 
 namespace ServiceLib.Handler
@@ -65,10 +65,8 @@ namespace ServiceLib.Handler
                     config.Inbound[0].Protocol = EInboundProtocol.socks.ToString();
                 }
             }
-            config.RoutingBasicItem ??= new()
-            {
-                EnableRoutingAdvanced = true
-            };
+
+            config.RoutingBasicItem ??= new();
 
             if (Utils.IsNullOrEmpty(config.RoutingBasicItem.DomainStrategy))
             {
@@ -162,6 +160,7 @@ namespace ServiceLib.Handler
             config.ClashUIItem ??= new();
             config.SystemProxyItem ??= new();
             config.WebDavItem ??= new();
+            config.CheckUpdateItem ??= new();
 
             return config;
         }
@@ -239,6 +238,7 @@ namespace ServiceLib.Handler
                 item.PublicKey = profileItem.PublicKey;
                 item.ShortId = profileItem.ShortId;
                 item.SpiderX = profileItem.SpiderX;
+                item.Extra = profileItem.Extra;
             }
 
             var ret = item.ConfigType switch
@@ -383,7 +383,7 @@ namespace ServiceLib.Handler
             }
 
             var item = await SQLiteHelper.Instance.TableAsync<ProfileItem>().FirstOrDefaultAsync(t => t.Port > 0);
-            return await SetDefaultServerIndex(config, item.IndexId);
+            return await SetDefaultServerIndex(config, item?.IndexId);
         }
 
         public static async Task<ProfileItem?> GetDefaultServer(Config config)
@@ -465,7 +465,7 @@ namespace ServiceLib.Handler
                         break;
                     }
                 case EMove.Position:
-                    sort = pos * 10 + 1;
+                    sort = (pos * 10) + 1;
                     break;
             }
 
@@ -957,7 +957,6 @@ namespace ServiceLib.Handler
                 && o.Address == n.Address
                 && o.Port == n.Port
                 && o.Id == n.Id
-                && o.AlterId == n.AlterId
                 && o.Security == n.Security
                 && o.Network == n.Network
                 && o.HeaderType == n.HeaderType
@@ -966,6 +965,10 @@ namespace ServiceLib.Handler
                 && (o.ConfigType == EConfigType.Trojan || o.StreamSecurity == n.StreamSecurity)
                 && o.Flow == n.Flow
                 && o.Sni == n.Sni
+                && o.Alpn == n.Alpn
+                && o.Fingerprint == n.Fingerprint
+                && o.PublicKey == n.PublicKey
+                && o.ShortId == n.ShortId
                 && (!remarks || o.Remarks == n.Remarks);
         }
 
@@ -1034,14 +1037,14 @@ namespace ServiceLib.Handler
         /// <param name="strData"></param>
         /// <param name="subid"></param>
         /// <returns>成功导入的数量</returns>
-        private static async Task<int> AddBatchServers(Config config, string strData, string subid, bool isSub, List<ProfileItem> lstOriSub)
+        private static async Task<int> AddBatchServersCommon(Config config, string strData, string subid, bool isSub)
         {
             if (Utils.IsNullOrEmpty(strData))
             {
                 return -1;
             }
 
-            string subFilter = string.Empty;
+            var subFilter = string.Empty;
             //remove sub items
             if (isSub && Utils.IsNotEmpty(subid))
             {
@@ -1049,16 +1052,14 @@ namespace ServiceLib.Handler
                 subFilter = (await AppHandler.Instance.GetSubItem(subid))?.Filter ?? "";
             }
 
-            int countServers = 0;
-            //Check for duplicate indexId
-            List<string>? lstDbIndexId = null;
+            var countServers = 0;
             List<ProfileItem> lstAdd = new();
             var arrData = strData.Split(Environment.NewLine.ToCharArray()).Where(t => !t.IsNullOrEmpty());
             if (isSub)
             {
                 arrData = arrData.Distinct();
             }
-            foreach (string str in arrData)
+            foreach (var str in arrData)
             {
                 //maybe sub
                 if (!isSub && (str.StartsWith(Global.HttpsProtocol) || str.StartsWith(Global.HttpProtocol)))
@@ -1075,35 +1076,12 @@ namespace ServiceLib.Handler
                     continue;
                 }
 
-                //exist sub items
-                if (isSub && Utils.IsNotEmpty(subid))
+                //exist sub items //filter
+                if (isSub && Utils.IsNotEmpty(subid) && Utils.IsNotEmpty(subFilter))
                 {
-                    var existItem = lstOriSub?.FirstOrDefault(t => t.IsSub == isSub
-                                                && config.UiItem.EnableUpdateSubOnlyRemarksExist ? t.Remarks == profileItem.Remarks : CompareProfileItem(t, profileItem, true));
-                    if (existItem != null)
+                    if (!Regex.IsMatch(profileItem.Remarks, subFilter))
                     {
-                        //Check for duplicate indexId
-                        if (lstDbIndexId is null)
-                        {
-                            lstDbIndexId = await AppHandler.Instance.ProfileItemIndexes("");
-                        }
-                        if (lstAdd.Any(t => t.IndexId == existItem.IndexId)
-                            || lstDbIndexId.Any(t => t == existItem.IndexId))
-                        {
-                            profileItem.IndexId = string.Empty;
-                        }
-                        else
-                        {
-                            profileItem.IndexId = existItem.IndexId;
-                        }
-                    }
-                    //filter
-                    if (Utils.IsNotEmpty(subFilter))
-                    {
-                        if (!Regex.IsMatch(profileItem.Remarks, subFilter))
-                        {
-                            continue;
-                        }
+                        continue;
                     }
                 }
                 profileItem.Subid = subid;
@@ -1138,7 +1116,7 @@ namespace ServiceLib.Handler
             return countServers;
         }
 
-        private static async Task<int> AddBatchServers4Custom(Config config, string strData, string subid, bool isSub, List<ProfileItem> lstOriSub)
+        private static async Task<int> AddBatchServers4Custom(Config config, string strData, string subid, bool isSub)
         {
             if (Utils.IsNullOrEmpty(strData))
             {
@@ -1222,10 +1200,7 @@ namespace ServiceLib.Handler
             {
                 await RemoveServerViaSubid(config, subid, isSub);
             }
-            if (isSub && lstOriSub?.Count == 1)
-            {
-                profileItem.IndexId = lstOriSub[0].IndexId;
-            }
+
             profileItem.Subid = subid;
             profileItem.IsSub = isSub;
             profileItem.PreSocksPort = preSocksPort;
@@ -1239,7 +1214,7 @@ namespace ServiceLib.Handler
             }
         }
 
-        private static async Task<int> AddBatchServers4SsSIP008(Config config, string strData, string subid, bool isSub, List<ProfileItem> lstOriSub)
+        private static async Task<int> AddBatchServers4SsSIP008(Config config, string strData, string subid, bool isSub)
         {
             if (Utils.IsNullOrEmpty(strData))
             {
@@ -1278,34 +1253,61 @@ namespace ServiceLib.Handler
                 return -1;
             }
             List<ProfileItem>? lstOriSub = null;
+            ProfileItem? activeProfile = null;
             if (isSub && Utils.IsNotEmpty(subid))
             {
                 lstOriSub = await AppHandler.Instance.ProfileItems(subid);
+                activeProfile = lstOriSub?.FirstOrDefault(t => t.IndexId == config.IndexId);
             }
 
             var counter = 0;
             if (Utils.IsBase64String(strData))
             {
-                counter = await AddBatchServers(config, Utils.Base64Decode(strData), subid, isSub, lstOriSub);
+                counter = await AddBatchServersCommon(config, Utils.Base64Decode(strData), subid, isSub);
             }
             if (counter < 1)
             {
-                counter = await AddBatchServers(config, strData, subid, isSub, lstOriSub);
+                counter = await AddBatchServersCommon(config, strData, subid, isSub);
             }
             if (counter < 1)
             {
-                counter = await AddBatchServers(config, Utils.Base64Decode(strData), subid, isSub, lstOriSub);
+                counter = await AddBatchServersCommon(config, Utils.Base64Decode(strData), subid, isSub);
             }
 
             if (counter < 1)
             {
-                counter = await AddBatchServers4SsSIP008(config, strData, subid, isSub, lstOriSub);
+                counter = await AddBatchServers4SsSIP008(config, strData, subid, isSub);
             }
 
             //maybe other sub
             if (counter < 1)
             {
-                counter = await AddBatchServers4Custom(config, strData, subid, isSub, lstOriSub);
+                counter = await AddBatchServers4Custom(config, strData, subid, isSub);
+            }
+
+            //Select active node
+            if (activeProfile != null)
+            {
+                var lstSub = await AppHandler.Instance.ProfileItems(subid);
+                var existItem = lstSub?.FirstOrDefault(t => config.UiItem.EnableUpdateSubOnlyRemarksExist ? t.Remarks == activeProfile.Remarks : CompareProfileItem(t, activeProfile, true));
+                if (existItem != null)
+                {
+                    await ConfigHandler.SetDefaultServerIndex(config, existItem.IndexId);
+                }
+            }
+
+            //Keep the last traffic statistics
+            if (lstOriSub != null)
+            {
+                var lstSub = await AppHandler.Instance.ProfileItems(subid);
+                foreach (var item in lstSub)
+                {
+                    var existItem = lstOriSub?.FirstOrDefault(t => config.UiItem.EnableUpdateSubOnlyRemarksExist ? t.Remarks == item.Remarks : CompareProfileItem(t, item, true));
+                    if (existItem != null)
+                    {
+                        await StatisticsHandler.Instance.CloneServerStatItem(existItem.IndexId, item.IndexId);
+                    }
+                }
             }
 
             return counter;
@@ -1373,6 +1375,7 @@ namespace ServiceLib.Handler
                 item.PrevProfile = subItem.PrevProfile;
                 item.NextProfile = subItem.NextProfile;
                 item.PreSocksPort = subItem.PreSocksPort;
+                item.Memo = subItem.Memo;
             }
 
             if (Utils.IsNullOrEmpty(item.Id))
@@ -1609,7 +1612,7 @@ namespace ServiceLib.Handler
             var item = await AppHandler.Instance.GetRoutingItem(config.RoutingBasicItem.RoutingIndexId);
             if (item is null)
             {
-                var item2 = await SQLiteHelper.Instance.TableAsync<RoutingItem>().FirstOrDefaultAsync(t => t.Locked == false);
+                var item2 = await SQLiteHelper.Instance.TableAsync<RoutingItem>().FirstOrDefaultAsync();
                 await SetDefaultRouting(config, item2);
                 return item2;
             }
@@ -1683,6 +1686,15 @@ namespace ServiceLib.Handler
         {
             var ver = "V3-";
             var items = await AppHandler.Instance.RoutingItems();
+
+            //TODO Temporary code to be removed later
+            var lockItem = items?.FirstOrDefault(t => t.Locked == true);
+            if (lockItem != null)
+            {
+                await ConfigHandler.RemoveRoutingItem(lockItem);
+                items = await AppHandler.Instance.RoutingItems();
+            }
+
             if (!blImportAdvancedRules && items.Where(t => t.Remarks.StartsWith(ver)).ToList().Count > 0)
             {
                 return 0;
@@ -1721,11 +1733,6 @@ namespace ServiceLib.Handler
                 await SetDefaultRouting(config, item2);
             }
             return 0;
-        }
-
-        public static async Task<RoutingItem?> GetLockedRoutingItem(Config config)
-        {
-            return await SQLiteHelper.Instance.TableAsync<RoutingItem>().FirstOrDefaultAsync(it => it.Locked == true);
         }
 
         public static async Task RemoveRoutingItem(RoutingItem routingItem)

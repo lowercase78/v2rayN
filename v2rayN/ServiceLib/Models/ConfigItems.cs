@@ -81,13 +81,13 @@
 
         public int AutoUpdateInterval { get; set; }
 
-        public bool CheckPreReleaseUpdate { get; set; } = false;
-
         public bool EnableSecurityProtocolTls13 { get; set; }
 
         public int TrayMenuServersLimit { get; set; } = 20;
 
         public bool EnableHWA { get; set; } = false;
+
+        public bool EnableLog { get; set; } = true;
     }
 
     [Serializable]
@@ -116,6 +116,7 @@
         public bool EnableDragDropSort { get; set; }
         public bool DoubleClick2Activate { get; set; }
         public bool AutoHideStartup { get; set; }
+        public bool Hide2TrayWhenClose { get; set; }
         public List<ColumnItem> MainColumnItem { get; set; }
         public bool ShowInTaskbar { get; set; }
     }
@@ -161,6 +162,7 @@
         public int Mtu { get; set; }
         public bool EnableExInbound { get; set; }
         public bool EnableIPv6Address { get; set; }
+        public string? LinuxSudoPwd { get; set; }
     }
 
     [Serializable]
@@ -178,7 +180,6 @@
         public string DomainStrategy4Singbox { get; set; }
         public string DomainMatcher { get; set; }
         public string RoutingIndexId { get; set; }
-        public bool EnableRoutingAdvanced { get; set; }
     }
 
     [Serializable]
@@ -242,5 +243,12 @@
         public string? UserName { get; set; }
         public string? Password { get; set; }
         public string? DirName { get; set; }
+    }
+
+    [Serializable]
+    public class CheckUpdateItem
+    {
+        public bool CheckPreReleaseUpdate { get; set; }
+        public List<string>? SelectedCoreTypes { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using static ServiceLib.Handler.SysProxy.ProxySettingWindows.InternetConnectionOption;
 
 namespace ServiceLib.Handler.SysProxy
@@ -11,24 +11,24 @@ namespace ServiceLib.Handler.SysProxy
         {
             if (type == 1)
             {
-                RegWriteValue(_regPath, "ProxyEnable", 0);
-                RegWriteValue(_regPath, "ProxyServer", string.Empty);
-                RegWriteValue(_regPath, "ProxyOverride", string.Empty);
-                RegWriteValue(_regPath, "AutoConfigURL", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyEnable", 0);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyServer", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyOverride", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "AutoConfigURL", string.Empty);
             }
             if (type == 2)
             {
-                RegWriteValue(_regPath, "ProxyEnable", 1);
-                RegWriteValue(_regPath, "ProxyServer", strProxy ?? string.Empty);
-                RegWriteValue(_regPath, "ProxyOverride", exceptions ?? string.Empty);
-                RegWriteValue(_regPath, "AutoConfigURL", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyEnable", 1);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyServer", strProxy ?? string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyOverride", exceptions ?? string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "AutoConfigURL", string.Empty);
             }
             else if (type == 4)
             {
-                RegWriteValue(_regPath, "ProxyEnable", 0);
-                RegWriteValue(_regPath, "ProxyServer", string.Empty);
-                RegWriteValue(_regPath, "ProxyOverride", string.Empty);
-                RegWriteValue(_regPath, "AutoConfigURL", strProxy ?? string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyEnable", 0);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyServer", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "ProxyOverride", string.Empty);
+                WindowsUtils.RegWriteValue(_regPath, "AutoConfigURL", strProxy ?? string.Empty);
             }
             return true;
         }
@@ -144,12 +144,12 @@ namespace ServiceLib.Handler.SysProxy
             {
                 if (Environment.Is64BitOperatingSystem)
                 {
-                    nint opt = new(optionsPtr.ToInt64() + i * optSize);
+                    nint opt = new(optionsPtr.ToInt64() + (i * optSize));
                     Marshal.StructureToPtr(options[i], opt, false);
                 }
                 else
                 {
-                    nint opt = new(optionsPtr.ToInt32() + i * optSize);
+                    nint opt = new(optionsPtr.ToInt32() + (i * optSize));
                     Marshal.StructureToPtr(options[i], opt, false);
                 }
             }
@@ -247,7 +247,7 @@ namespace ServiceLib.Handler.SysProxy
 
             //[MarshalAs(UnmanagedType.)]
             public nint options;
-        };
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         public struct InternetConnectionOption
@@ -355,31 +355,6 @@ namespace ServiceLib.Handler.SysProxy
                 ref int lpcb,             // Size of the buffer
                 ref int lpcEntries        // Number of entries written to the buffer
             );
-        }
-
-        private static void RegWriteValue(string path, string name, object value)
-        {
-            Microsoft.Win32.RegistryKey? regKey = null;
-            try
-            {
-                regKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(path);
-                if (string.IsNullOrEmpty(value.ToString()))
-                {
-                    regKey?.DeleteValue(name, false);
-                }
-                else
-                {
-                    regKey?.SetValue(name, value);
-                }
-            }
-            catch (Exception ex)
-            {
-                //Logging.SaveLog(ex.Message, ex);
-            }
-            finally
-            {
-                regKey?.Close();
-            }
         }
     }
 }

@@ -219,6 +219,7 @@ namespace ServiceLib.ViewModels
 
             await Reload();
             await AutoHideStartup();
+            Locator.Current.GetService<StatusBarViewModel>()?.RefreshRoutingsMenu();
         }
 
         #endregion Init
@@ -266,7 +267,7 @@ namespace ServiceLib.ViewModels
             try
             {
                 Locator.Current.GetService<StatusBarViewModel>()?.UpdateStatistics(update);
-                if ((update.ProxyUp + update.ProxyDown) > 0 && DateTime.Now.Second % 3 == 0)
+                if ((update.ProxyUp + update.ProxyDown) > 0 && DateTime.Now.Second % 9 == 0)
                 {
                     Locator.Current.GetService<ProfilesViewModel>()?.UpdateStatistics(update);
                 }
@@ -289,7 +290,7 @@ namespace ServiceLib.ViewModels
                 await ProfileExHandler.Instance.SaveTo();
                 await StatisticsHandler.Instance.SaveTo();
                 StatisticsHandler.Instance.Close();
-                CoreHandler.Instance.CoreStop();
+                await CoreHandler.Instance.CoreStop();
 
                 Logging.SaveLog("MyAppExit End");
             }
@@ -313,6 +314,7 @@ namespace ServiceLib.ViewModels
             {
                 StartInfo = new ProcessStartInfo
                 {
+                    UseShellExecute = true,
                     FileName = fileName,
                     Arguments = arg.AppendQuotes(),
                     WorkingDirectory = Utils.StartupPath()
@@ -321,6 +323,7 @@ namespace ServiceLib.ViewModels
             process.Start();
             if (process.Id > 0)
             {
+                await MyAppExitAsync(false);
                 await MyAppExitAsync(false);
             }
         }
@@ -529,6 +532,10 @@ namespace ServiceLib.ViewModels
             else if (Utils.IsLinux())
             {
                 Utils.ProcessStart("nautilus", Utils.GetConfigPath());
+            }
+            else if (Utils.IsOSX())
+            {
+                Utils.ProcessStart("open", Utils.GetConfigPath());
             }
         }
 

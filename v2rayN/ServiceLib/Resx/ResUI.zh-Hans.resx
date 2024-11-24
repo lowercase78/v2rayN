@@ -302,7 +302,7 @@
     <value>扫描导入分享链接成功</value>
   </data>
   <data name="TestMeOutput" xml:space="preserve">
-    <value>当前服务的真连接延迟: {0} ms</value>
+    <value>当前延迟: {0} ms，{1}</value>
   </data>
   <data name="OperationSuccess" xml:space="preserve">
     <value>操作成功</value>
@@ -344,7 +344,7 @@
     <value>请填写正确的自定义DNS</value>
   </data>
   <data name="TransportPathTip1" xml:space="preserve">
-    <value>*ws/httpupgrade/splithttp path</value>
+    <value>*ws/httpupgrade/xhttp path</value>
   </data>
   <data name="TransportPathTip2" xml:space="preserve">
     <value>*h2 path</value>
@@ -359,7 +359,7 @@
     <value>*http host中间逗号(,)分隔</value>
   </data>
   <data name="TransportRequestHostTip2" xml:space="preserve">
-    <value>*ws/httpupgrade/splithttp host</value>
+    <value>*ws/httpupgrade/xhttp host</value>
   </data>
   <data name="TransportRequestHostTip3" xml:space="preserve">
     <value>*h2 host中间逗号(,)分隔</value>
@@ -850,12 +850,6 @@
   <data name="menuRoutingAdvancedSetDefault" xml:space="preserve">
     <value>设为活动规则 (Enter)</value>
   </data>
-  <data name="menuRoutingBasic" xml:space="preserve">
-    <value>基础功能</value>
-  </data>
-  <data name="menuRoutingBasicImportRules" xml:space="preserve">
-    <value>一键导入基础规则</value>
-  </data>
   <data name="TbdomainMatcher" xml:space="preserve">
     <value>域名匹配算法</value>
   </data>
@@ -1271,7 +1265,7 @@
     <value>显示或隐藏主界面</value>
   </data>
   <data name="UpdateStandalonePackageTip" xml:space="preserve">
-    <value>您当前运行的是独立包，请手动下载 SelfContained.7z文件解压覆盖</value>
+    <value>您当前运行的是独立包，请手动下载 SelfContained.7z文件解压覆盖！</value>
   </data>
   <data name="TbPreSocksPort4Sub" xml:space="preserve">
     <value>自定义配置的Socks端口</value>
@@ -1356,5 +1350,35 @@
   </data>
   <data name="InsecureUrlProtocol" xml:space="preserve">
     <value>请不要使用不安全的HTTP协议订阅地址</value>
+  </data>
+  <data name="TbSettingsCurrentFontFamilyLinuxTip" xml:space="preserve">
+    <value>安装字体到系统中，重启设置</value>
+  </data>
+  <data name="menuExitTips" xml:space="preserve">
+    <value>是否确定退出？</value>
+  </data>
+  <data name="LvMemo" xml:space="preserve">
+    <value>备注备忘</value>
+  </data>
+  <data name="TbSettingsLinuxSudoPassword" xml:space="preserve">
+    <value>Linux系统的sudo密码</value>
+  </data>
+  <data name="TbSettingsLinuxSudoPasswordTip" xml:space="preserve">
+    <value>密码已加密且只存储在本地文件中，无密码则每次都要输入</value>
+  </data>
+  <data name="TbSettingsLinuxSudoPasswordIsEmpty" xml:space="preserve">
+    <value>请先在Tun模式设置中设置sudo密码</value>
+  </data>
+  <data name="TbSettingsLinuxSudoPasswordNotSudoRunApp" xml:space="preserve">
+    <value>请不要用sudo运行本app</value>
+  </data>
+  <data name="TransportHeaderTypeTip5" xml:space="preserve">
+    <value>*xhttp 模式</value>
+  </data>
+  <data name="TransportExtraTip" xml:space="preserve">
+    <value>XHTTP Extra 原始 JSON，格式： { XHTTPObject }</value>
+  </data>
+  <data name="TbSettingsHide2TrayWhenClose" xml:space="preserve">
+    <value>关闭窗口时隐藏至托盘</value>
   </data>
 </root>

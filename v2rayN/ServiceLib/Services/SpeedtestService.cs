@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using ReactiveUI;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
@@ -80,10 +81,12 @@ namespace ServiceLib.Services
                     Task.Run(RunMixedtestAsync);
                     break;
             }
+            MessageBus.Current.Listen<string>(EMsgCommand.StopSpeedtest.ToString()).Subscribe(ExitLoop);
         }
 
-        public void ExitLoop()
+        private void ExitLoop(string x)
         {
+            if (_exitLoop) return;
             _exitLoop = true;
             UpdateFunc("", ResUI.SpeedtestingStop);
         }

@@ -108,7 +108,7 @@ namespace ServiceLib.ViewModels
             SelectedServer = new();
             RunningServerToolTipText = "-";
 
-            if (_config.TunModeItem.EnableTun && AppHandler.Instance.IsAdministrator)
+            if (_config.TunModeItem.EnableTun && AllowEnableTun())
             {
                 EnableTun = true;
             }
@@ -347,11 +347,6 @@ namespace ServiceLib.ViewModels
         public async Task RefreshRoutingsMenu()
         {
             _routingItems.Clear();
-            if (!_config.RoutingBasicItem.EnableRoutingAdvanced)
-            {
-                BlRouting = false;
-                return;
-            }
 
             BlRouting = true;
             var routings = await AppHandler.Instance.RoutingItems();
@@ -414,15 +409,35 @@ namespace ServiceLib.ViewModels
             {
                 _config.TunModeItem.EnableTun = EnableTun;
                 // When running as a non-administrator, reboot to administrator mode
-                if (EnableTun && !AppHandler.Instance.IsAdministrator)
+                if (EnableTun && AllowEnableTun() == false)
                 {
-                    _config.TunModeItem.EnableTun = false;
-                    Locator.Current.GetService<MainWindowViewModel>()?.RebootAsAdmin();
-                    return;
+                    if (Utils.IsWindows())
+                    {
+                        _config.TunModeItem.EnableTun = false;
+                        Locator.Current.GetService<MainWindowViewModel>()?.RebootAsAdmin();
+                        return;
+                    }
+                    //else if (Utils.IsLinux())
+                    //{
+                    //    NoticeHandler.Instance.SendMessageAndEnqueue(ResUI.TbSettingsLinuxSudoPasswordIsEmpty);
+                    //}
                 }
                 await ConfigHandler.SaveConfig(_config);
                 Locator.Current.GetService<MainWindowViewModel>()?.Reload();
             }
+        }
+
+        private bool AllowEnableTun()
+        {
+            if (Utils.IsWindows())
+            {
+                return AppHandler.Instance.IsAdministrator;
+            }
+            else if (Utils.IsLinux())
+            {
+                return _config.TunModeItem.LinuxSudoPwd.IsNotEmpty();
+            }
+            return false;
         }
 
         #endregion System proxy and Routings
@@ -454,7 +469,7 @@ namespace ServiceLib.ViewModels
             }
             else
             {
-                InboundLanDisplay = $"{ResUI.LabLAN}:None";
+                InboundLanDisplay = $"{ResUI.LabLAN}:{Global.None}";
             }
         }
 

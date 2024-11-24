@@ -53,7 +53,7 @@ namespace ServiceLib.ViewModels
         [Reactive] public bool EnableUpdateSubOnlyRemarksExist { get; set; }
         [Reactive] public bool EnableSecurityProtocolTls13 { get; set; }
         [Reactive] public bool AutoHideStartup { get; set; }
-        [Reactive] public bool EnableCheckPreReleaseUpdate { get; set; }
+        [Reactive] public bool Hide2TrayWhenClose { get; set; }
         [Reactive] public bool EnableDragDropSort { get; set; }
         [Reactive] public bool DoubleClick2Activate { get; set; }
         [Reactive] public int AutoUpdateInterval { get; set; }
@@ -86,6 +86,7 @@ namespace ServiceLib.ViewModels
         [Reactive] public int TunMtu { get; set; }
         [Reactive] public bool TunEnableExInbound { get; set; }
         [Reactive] public bool TunEnableIPv6Address { get; set; }
+        [Reactive] public string TunLinuxSudoPassword { get; set; }
 
         #endregion Tun mode
 
@@ -117,6 +118,8 @@ namespace ServiceLib.ViewModels
 
         private async Task Init()
         {
+            await _updateView?.Invoke(EViewAction.InitSettingFont, null);
+
             #region Core
 
             var inbound = _config.Inbound[0];
@@ -164,7 +167,7 @@ namespace ServiceLib.ViewModels
             EnableUpdateSubOnlyRemarksExist = _config.UiItem.EnableUpdateSubOnlyRemarksExist;
             EnableSecurityProtocolTls13 = _config.GuiItem.EnableSecurityProtocolTls13;
             AutoHideStartup = _config.UiItem.AutoHideStartup;
-            EnableCheckPreReleaseUpdate = _config.GuiItem.CheckPreReleaseUpdate;
+            Hide2TrayWhenClose = _config.UiItem.Hide2TrayWhenClose;
             EnableDragDropSort = _config.UiItem.EnableDragDropSort;
             DoubleClick2Activate = _config.UiItem.DoubleClick2Activate;
             AutoUpdateInterval = _config.GuiItem.AutoUpdateInterval;
@@ -197,6 +200,7 @@ namespace ServiceLib.ViewModels
             TunMtu = _config.TunModeItem.Mtu;
             TunEnableExInbound = _config.TunModeItem.EnableExInbound;
             TunEnableIPv6Address = _config.TunModeItem.EnableIPv6Address;
+            TunLinuxSudoPassword = _config.TunModeItem.LinuxSudoPwd;
 
             #endregion Tun mode
 
@@ -314,8 +318,8 @@ namespace ServiceLib.ViewModels
             _config.UiItem.EnableUpdateSubOnlyRemarksExist = EnableUpdateSubOnlyRemarksExist;
             _config.GuiItem.EnableSecurityProtocolTls13 = EnableSecurityProtocolTls13;
             _config.UiItem.AutoHideStartup = AutoHideStartup;
+            _config.UiItem.Hide2TrayWhenClose = Hide2TrayWhenClose;
             _config.GuiItem.AutoUpdateInterval = AutoUpdateInterval;
-            _config.GuiItem.CheckPreReleaseUpdate = EnableCheckPreReleaseUpdate;
             _config.UiItem.EnableDragDropSort = EnableDragDropSort;
             _config.UiItem.DoubleClick2Activate = DoubleClick2Activate;
             _config.GuiItem.TrayMenuServersLimit = TrayMenuServersLimit;
@@ -341,20 +345,19 @@ namespace ServiceLib.ViewModels
             _config.TunModeItem.Mtu = TunMtu;
             _config.TunModeItem.EnableExInbound = TunEnableExInbound;
             _config.TunModeItem.EnableIPv6Address = TunEnableIPv6Address;
+            if (TunLinuxSudoPassword != _config.TunModeItem.LinuxSudoPwd)
+            {
+                _config.TunModeItem.LinuxSudoPwd = DesUtils.Encrypt(TunLinuxSudoPassword);
+            }
 
             //coreType
             await SaveCoreType();
 
             if (await ConfigHandler.SaveConfig(_config) == 0)
             {
-                if (needReboot)
-                {
-                    NoticeHandler.Instance.Enqueue(ResUI.NeedRebootTips);
-                }
-                else
-                {
-                    NoticeHandler.Instance.Enqueue(ResUI.OperationSuccess);
-                }
+                await AutoStartupHandler.UpdateTask(_config);
+
+                NoticeHandler.Instance.Enqueue(needReboot ? ResUI.NeedRebootTips : ResUI.OperationSuccess);
                 _updateView?.Invoke(EViewAction.CloseWindow, null);
             }
             else

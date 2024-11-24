@@ -17,7 +17,6 @@ namespace v2rayN.Views
 
             this.Owner = Application.Current.MainWindow;
             _config = AppHandler.Instance.Config;
-            var lstFonts = GetFonts(Utils.GetFontsPath());
 
             ViewModel = new OptionSettingViewModel(UpdateViewHandler);
 
@@ -102,9 +101,6 @@ namespace v2rayN.Views
                 cmbMainGirdOrientation.Items.Add(it.ToString());
             }
 
-            lstFonts.ForEach(it => { cmbcurrentFontFamily.Items.Add(it); });
-            cmbcurrentFontFamily.Items.Add(string.Empty);
-
             this.WhenActivated(disposables =>
             {
                 this.Bind(ViewModel, vm => vm.localPort, v => v.txtlocalPort.Text).DisposeWith(disposables);
@@ -145,7 +141,6 @@ namespace v2rayN.Views
                 this.Bind(ViewModel, vm => vm.EnableUpdateSubOnlyRemarksExist, v => v.togEnableUpdateSubOnlyRemarksExist.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableSecurityProtocolTls13, v => v.togEnableSecurityProtocolTls13.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.AutoHideStartup, v => v.togAutoHideStartup.IsChecked).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.EnableCheckPreReleaseUpdate, v => v.togEnableCheckPreReleaseUpdate.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableDragDropSort, v => v.togEnableDragDropSort.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.DoubleClick2Activate, v => v.togDoubleClick2Activate.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.AutoUpdateInterval, v => v.txtautoUpdateInterval.Text).DisposeWith(disposables);
@@ -180,7 +175,7 @@ namespace v2rayN.Views
 
                 this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
             });
-            WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.FollowSystemTheme ? !WindowsUtils.IsLightTheme() : AppHandler.Instance.Config.UiItem.ColorModeDark);
+            WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.FollowSystemTheme ? WindowsUtils.IsDarkTheme() : AppHandler.Instance.Config.UiItem.ColorModeDark);
         }
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -188,14 +183,24 @@ namespace v2rayN.Views
             switch (action)
             {
                 case EViewAction.CloseWindow:
-                    WindowsUtils.SetAutoRun(Global.AutoRunRegPath, Global.AutoRunName, togAutoRun.IsChecked ?? false);
                     this.DialogResult = true;
+                    break;
+
+                case EViewAction.InitSettingFont:
+                    await InitSettingFont();
                     break;
             }
             return await Task.FromResult(true);
         }
 
-        private List<string> GetFonts(string path)
+        private async Task InitSettingFont()
+        {
+            var lstFonts = await GetFonts(Utils.GetFontsPath());
+            lstFonts.ForEach(it => { cmbcurrentFontFamily.Items.Add(it); });
+            cmbcurrentFontFamily.Items.Add(string.Empty);
+        }
+
+        private async Task<List<string>> GetFonts(string path)
         {
             var lstFonts = new List<string>();
             try
@@ -241,7 +246,7 @@ namespace v2rayN.Views
             {
                 Logging.SaveLog("fill fonts error", ex);
             }
-            return lstFonts;
+            return lstFonts.OrderBy(t => t).ToList();
         }
 
         private void ClbdestOverride_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

@@ -83,7 +83,6 @@ namespace ServiceLib.Handler.Fmt
 
                 case nameof(ETransport.ws):
                 case nameof(ETransport.httpupgrade):
-                case nameof(ETransport.splithttp):
                     if (Utils.IsNotEmpty(item.RequestHost))
                     {
                         dicQuery.Add("host", Utils.UrlEncode(item.RequestHost));
@@ -91,6 +90,25 @@ namespace ServiceLib.Handler.Fmt
                     if (Utils.IsNotEmpty(item.Path))
                     {
                         dicQuery.Add("path", Utils.UrlEncode(item.Path));
+                    }
+                    break;
+
+                case nameof(ETransport.xhttp):
+                    if (Utils.IsNotEmpty(item.RequestHost))
+                    {
+                        dicQuery.Add("host", Utils.UrlEncode(item.RequestHost));
+                    }
+                    if (Utils.IsNotEmpty(item.Path))
+                    {
+                        dicQuery.Add("path", Utils.UrlEncode(item.Path));
+                    }
+                    if (Utils.IsNotEmpty(item.HeaderType) && Global.XhttpMode.Contains(item.HeaderType))
+                    {
+                        dicQuery.Add("mode", Utils.UrlEncode(item.HeaderType));
+                    }
+                    if (Utils.IsNotEmpty(item.Extra))
+                    {
+                        dicQuery.Add("extra", Utils.UrlEncode(item.Extra));
                     }
                     break;
 
@@ -156,9 +174,15 @@ namespace ServiceLib.Handler.Fmt
 
                 case nameof(ETransport.ws):
                 case nameof(ETransport.httpupgrade):
-                case nameof(ETransport.splithttp):
                     item.RequestHost = Utils.UrlDecode(query["host"] ?? "");
                     item.Path = Utils.UrlDecode(query["path"] ?? "/");
+                    break;
+
+                case nameof(ETransport.xhttp):
+                    item.RequestHost = Utils.UrlDecode(query["host"] ?? "");
+                    item.Path = Utils.UrlDecode(query["path"] ?? "/");
+                    item.HeaderType = Utils.UrlDecode(query["mode"] ?? "");
+                    item.Extra = Utils.UrlDecode(query["extra"] ?? "");
                     break;
 
                 case nameof(ETransport.http):
