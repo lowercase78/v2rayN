@@ -249,9 +249,9 @@ namespace ServiceLib.Services
             var ip = Global.None;
             if (time > 0)
             {
-                var result = await downloadHandle.TryDownloadString(Global.IPAPIUrl, true, "ipapi");
+                var result = await downloadHandle.TryDownloadString(Global.IPAPIUrl, true, Global.IPAPIUrl);
                 var ipInfo = JsonUtils.Deserialize<IPAPIInfo>(result);
-                ip = $"({ipInfo?.country}) {ipInfo?.ip}";
+                ip = $"({ipInfo?.country_code}) {ipInfo?.ip}";
             }
 
             updateFunc?.Invoke(false, string.Format(ResUI.TestMeOutput, time, ip));
@@ -447,6 +447,15 @@ namespace ServiceLib.Services
                 {
                     Architecture.Arm64 => coreInfo?.DownloadUrlLinuxArm64,
                     Architecture.X64 => coreInfo?.DownloadUrlLinux64,
+                    _ => null,
+                };
+            }
+            else if (Utils.IsOSX())
+            {
+                return RuntimeInformation.ProcessArchitecture switch
+                {
+                    Architecture.Arm64 => coreInfo?.DownloadUrlOSXArm64,
+                    Architecture.X64 => coreInfo?.DownloadUrlOSX64,
                     _ => null,
                 };
             }

@@ -23,7 +23,7 @@ namespace v2rayN.Desktop.Views
             {
                 clbdestOverride.Items.Add(it);
             });
-            _config.Inbound[0].DestOverride?.ForEach(it =>
+            _config.Inbound.First().DestOverride?.ForEach(it =>
             {
                 clbdestOverride.SelectedItems.Add(it);
             });
@@ -102,6 +102,7 @@ namespace v2rayN.Desktop.Views
             this.WhenActivated(disposables =>
             {
                 this.Bind(ViewModel, vm => vm.localPort, v => v.txtlocalPort.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SecondLocalPortEnabled, v => v.togSecondLocalPortEnabled.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.udpEnabled, v => v.togudpEnabled.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.sniffingEnabled, v => v.togsniffingEnabled.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.routeOnly, v => v.togrouteOnly.IsChecked).DisposeWith(disposables);
@@ -138,6 +139,7 @@ namespace v2rayN.Desktop.Views
                 this.Bind(ViewModel, vm => vm.SpeedTestTimeout, v => v.cmbSpeedTestTimeout.SelectedValue).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SpeedTestUrl, v => v.cmbSpeedTestUrl.SelectedValue).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SpeedPingTestUrl, v => v.cmbSpeedPingTestUrl.SelectedValue).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.SpeedTestPageSize, v => v.txtSpeedTestPageSize.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.SelectedValue).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.MainGirdOrientation, v => v.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.GeoFileSourceUrl, v => v.cmbGetFilesSourceUrl.SelectedValue).DisposeWith(disposables);
@@ -165,9 +167,21 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
             });
 
-            if (!Utils.IsWindows())
+            if (Utils.IsWindows())
             {
-                tabSystemproxy.IsVisible = false;
+                txbSettingsExceptionTip2.IsVisible = false;
+            }
+            else
+            {
+                txbSettingsExceptionTip.IsVisible = false;
+                panSystemProxyAdvanced.IsVisible = false;
+            }
+
+            if (Utils.IsOSX())
+            {
+                tbAutoRun.IsVisible = false;
+                togAutoRun.IsVisible = false;
+                //TODO
             }
         }
 
@@ -202,7 +216,7 @@ namespace v2rayN.Desktop.Views
                 {
                     return lstFonts;
                 }
-                else if (Utils.IsLinux())
+                else if (Utils.IsNonWindows())
                 {
                     var result = await Utils.GetLinuxFontFamily("zh");
                     if (result.IsNullOrEmpty())

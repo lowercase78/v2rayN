@@ -2600,6 +2600,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 socks: local port, socks2: second local port, socks3: LAN port 的本地化字符串。
+        /// </summary>
+        public static string TbRoutingInboundTagTips {
+            get {
+                return ResourceManager.GetString("TbRoutingInboundTagTips", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Domain 的本地化字符串。
         /// </summary>
         public static string TbRoutingRuleDomain {
@@ -2915,6 +2924,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Sniffing type 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsDestOverride {
+            get {
+                return ResourceManager.GetString("TbSettingsDestOverride", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Outbound DNS address 的本地化字符串。
         /// </summary>
         public static string TbSettingsDomainDNSAddress {
@@ -3059,6 +3077,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Exception. Do not use proxy server for addresses,with a comma (,) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsExceptionTip2 {
+            get {
+                return ResourceManager.GetString("TbSettingsExceptionTip2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Follow System Theme 的本地化字符串。
         /// </summary>
         public static string TbSettingsFollowSystemTheme {
@@ -3140,7 +3167,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 Linux system sudo password 的本地化字符串。
+        ///   查找类似 System sudo password 的本地化字符串。
         /// </summary>
         public static string TbSettingsLinuxSudoPassword {
             get {
@@ -3293,6 +3320,15 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   查找类似 Enable second mixed port 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsSecondLocalPortEnabled {
+            get {
+                return ResourceManager.GetString("TbSettingsSecondLocalPortEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Set Win10 UWP Loopback 的本地化字符串。
         /// </summary>
         public static string TbSettingsSetUWP {
@@ -3311,7 +3347,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 SOCKS Port 的本地化字符串。
+        ///   查找类似 Mixed Port 的本地化字符串。
         /// </summary>
         public static string TbSettingsSocksPort {
             get {
@@ -3320,7 +3356,7 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 http port = +1; Pac port = +4; *ray API port = +5; mihomo API port = +6; 的本地化字符串。
+        ///   查找类似 Pac port = +3; Xray API port = +4; mihomo API port = +5; 的本地化字符串。
         /// </summary>
         public static string TbSettingsSocksPortTip {
             get {
@@ -3334,6 +3370,15 @@ namespace ServiceLib.Resx {
         public static string TbSettingsSpeedPingTestUrl {
             get {
                 return ResourceManager.GetString("TbSettingsSpeedPingTestUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Number per time for auto batch during speedtest(max 1000) 的本地化字符串。
+        /// </summary>
+        public static string TbSettingsSpeedTestPageSize {
+            get {
+                return ResourceManager.GetString("TbSettingsSpeedTestPageSize", resourceCulture);
             }
         }
         

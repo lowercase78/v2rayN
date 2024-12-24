@@ -27,7 +27,6 @@ namespace v2rayN.Desktop.Views
             menuSelectAll.Click += menuSelectAll_Click;
             btnAutofitColumnWidth.Click += BtnAutofitColumnWidth_Click;
             txtServerFilter.KeyDown += TxtServerFilter_KeyDown;
-            menuStorageUI.Click += MenuStorageUI_Click;
             lstProfiles.KeyDown += LstProfiles_KeyDown;
             lstProfiles.SelectionChanged += lstProfiles_SelectionChanged;
             lstProfiles.DoubleTapped += LstProfiles_DoubleTapped;
@@ -91,6 +90,7 @@ namespace v2rayN.Desktop.Views
 
             RestoreUI();
             ViewModel?.RefreshServers();
+            MessageBus.Current.Listen<string>(EMsgCommand.AppExit.ToString()).Subscribe(StorageUI);
         }
 
         private async void LstProfiles_Sorting(object? sender, DataGridColumnEventArgs e)
@@ -324,11 +324,6 @@ namespace v2rayN.Desktop.Views
             }
         }
 
-        private void MenuStorageUI_Click(object? sender, RoutedEventArgs e)
-        {
-            StorageUI();
-        }
-
         //#endregion Event
 
         //#region UI
@@ -358,17 +353,14 @@ namespace v2rayN.Desktop.Views
                         }
                         if (item.Name.ToLower().StartsWith("to"))
                         {
-                            if (!_config.GuiItem.EnableStatistics)
-                            {
-                                item2.IsVisible = false;
-                            }
+                            item2.IsVisible = _config.GuiItem.EnableStatistics;
                         }
                     }
                 }
             }
         }
 
-        private void StorageUI()
+        private void StorageUI(string? n = null)
         {
             List<ColumnItem> lvColumnItem = new();
             for (int k = 0; k < lstProfiles.Columns.Count; k++)
@@ -386,7 +378,6 @@ namespace v2rayN.Desktop.Views
                 });
             }
             _config.UiItem.MainColumnItem = lvColumnItem;
-            ConfigHandler.SaveConfig(_config);
         }
 
         //#endregion UI

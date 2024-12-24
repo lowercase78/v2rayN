@@ -313,8 +313,8 @@ namespace ServiceLib.Common
                     continue;
                 }
 
-                var key = Uri.UnescapeDataString(keyValue[0]);
-                var val = Uri.UnescapeDataString(keyValue[1]);
+                var key = Uri.UnescapeDataString(keyValue.First());
+                var val = Uri.UnescapeDataString(keyValue.Last());
 
                 if (result[key] is null)
                 {
@@ -529,15 +529,9 @@ namespace ServiceLib.Common
         {
             try
             {
-                if (blFull)
-                {
-                    return
-                        $"{Global.AppName} - V{GetVersionInfo()} - {RuntimeInformation.ProcessArchitecture} - {File.GetLastWriteTime(GetExePath()):yyyy/MM/dd}";
-                }
-                else
-                {
-                    return $"{Global.AppName}/{GetVersionInfo()}";
-                }
+                return blFull
+                    ? $"{Global.AppName} - V{GetVersionInfo()} - {RuntimeInformation.ProcessArchitecture} - {StartupPath()}"
+                    : $"{Global.AppName}/{GetVersionInfo()}";
             }
             catch (Exception ex)
             {
@@ -622,8 +616,8 @@ namespace ServiceLib.Common
                     {
                         if (host.StartsWith("#")) continue;
                         var hostItem = host.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (hostItem.Length < 2) continue;
-                        systemHosts.Add(hostItem[1], hostItem[0]);
+                        if (hostItem.Length != 2) continue;
+                        systemHosts.Add(hostItem.Last(), hostItem.First());
                     }
                 }
             }
@@ -677,6 +671,27 @@ namespace ServiceLib.Common
 
         #region TempPath
 
+        public static bool HasWritePermission()
+        {
+            try
+            {
+                var tempPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "guiTemps");
+                if (!Directory.Exists(tempPath))
+                {
+                    Directory.CreateDirectory(tempPath);
+                }
+                var fileName = Path.Combine(tempPath, GetGuid());
+                File.Create(fileName).Close();
+                File.Delete(fileName);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public static string GetPath(string fileName)
         {
             var startupPath = StartupPath();
@@ -695,6 +710,11 @@ namespace ServiceLib.Common
 
         public static string StartupPath()
         {
+            if (Utils.IsNonWindows() && Environment.GetEnvironmentVariable("V2RAYN_LOCAL_APPLICATION_DATA") == "1")
+            {
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "v2rayN");
+            }
+
             return AppDomain.CurrentDomain.BaseDirectory;
         }
 
@@ -818,6 +838,8 @@ namespace ServiceLib.Common
 
         public static bool IsOSX() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
+        public static bool IsNonWindows() => !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
         public static string GetExeName(string name)
         {
             return IsWindows() ? $"{name}.exe" : name;
@@ -852,6 +874,7 @@ namespace ServiceLib.Common
         public static async Task<string?> SetLinuxChmod(string? fileName)
         {
             if (fileName.IsNullOrEmpty()) return null;
+            //File.SetUnixFileMode(fileName, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             var arg = new List<string>() { "-c", $"chmod +x {fileName}" };
             return await GetCliWrapOutput("/bin/bash", arg);
         }

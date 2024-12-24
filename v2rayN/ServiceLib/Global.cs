@@ -8,8 +8,13 @@
         public const string GithubUrl = "https://github.com";
         public const string GithubApiUrl = "https://api.github.com/repos";
         public const string V2flyCoreUrl = "https://github.com/v2fly/v2ray-core/releases";
+<<<<<<< HEAD
         public const string XrayCoreUrl = "https://github.com/GFW-knocker/Xray-core/releases";
         public const string NUrl = @"https://github.com/lowercase78/v2rayN/releases";
+=======
+        public const string XrayCoreUrl = "https://github.com/XTLS/Xray-core/releases";
+        public const string NUrl = @"https://github.com/2dust/v2rayN/releases";
+>>>>>>> upstream/master
         public const string MihomoCoreUrl = "https://github.com/MetaCubeX/mihomo/releases";
         public const string HysteriaCoreUrl = "https://github.com/apernet/hysteria/releases";
         public const string NaiveproxyCoreUrl = "https://github.com/klzgrad/naiveproxy/releases";
@@ -18,9 +23,15 @@
         public const string GeoUrl = "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/{0}.dat";
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
         public const string JuicityCoreUrl = "https://github.com/juicity/juicity/releases";
+<<<<<<< HEAD
         public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/lowercase78/v2rayCustomRoutingList/master/";
         public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set-{0}/{1}.srs";
         public const string IPAPIUrl = "https://ipapi.co/json";
+=======
+        public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/2dust/v2rayCustomRoutingList/master/";
+        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/2dust/sing-box-rules/rule-set-{0}/{1}.srs";
+        public const string IPAPIUrl = "https://api.ip.sb/geoip";
+>>>>>>> upstream/master
 
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
         public const string ConfigFileName = "guiNConfig.json";
@@ -68,15 +79,17 @@
         public const string AutoRunRegPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         public const string AutoRunName = "v2rayNAutoRun";
         public const string CustomIconName = "v2rayN.ico";
-        public const string IEProxyExceptions = "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*";
+        public const string SystemProxyExceptionsWindows = "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*";
+        public const string SystemProxyExceptionsLinux = "localhost, 127.0.0.0/8, ::1";
         public const string RoutingRuleComma = "<COMMA>";
         public const string GrpcGunMode = "gun";
         public const string GrpcMultiMode = "multi";
         public const int MaxPort = 65536;
         public const string DelayUnit = "";
         public const string SpeedUnit = "";
-        public const int MinFontSize = 10;
+        public const int MinFontSize = 8;
         public const string RebootAs = "rebootas";
+        public const string AvaAssets = "avares://v2rayN/Assets/";
 
         public static readonly List<string> IEProxyProtocols = new() {
                         "{ip}:{http_port}",
@@ -182,24 +195,38 @@
         public static readonly List<string> Flows = new() { "", "xtls-rprx-vision", "xtls-rprx-vision-udp443" };
         public static readonly List<string> Networks = new() { "tcp", "kcp", "ws", "httpupgrade", "xhttp", "h2", "quic", "grpc" };
         public static readonly List<string> KcpHeaderTypes = new() { "srtp", "utp", "wechat-video", "dtls", "wireguard" };
+<<<<<<< HEAD
         public static readonly List<string> CoreTypes = new() { "v2fly", "Xray", "sing_box" };
         public static readonly List<string> CoreTypes4VLESS = new() { "Xray", "sing_box" };
+=======
+        public static readonly List<string> CoreTypes = new() { "Xray", "sing_box" };
+>>>>>>> upstream/master
         public static readonly List<string> DomainStrategies = new() { "AsIs", "IPIfNonMatch", "IPOnDemand" };
         public static readonly List<string> DomainStrategies4Singbox = new() { "ipv4_only", "ipv6_only", "prefer_ipv4", "prefer_ipv6", "" };
         public static readonly List<string> DomainMatchers = new() { "linear", "mph", "" };
         public static readonly List<string> Fingerprints = new() { "chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", "" };
         public static readonly List<string> UserAgent = new() { "chrome", "firefox", "safari", "edge", "none" };
+<<<<<<< HEAD
         public static readonly List<string> XhttpMode = new() { "auto", "packet-up", "stream-up" };
+=======
+        public static readonly List<string> XhttpMode = new() { "auto", "packet-up", "stream-up", "stream-one" };
+>>>>>>> upstream/master
 
         public static readonly List<string> AllowInsecure = new() { "true", "false", "" };
         public static readonly List<string> DomainStrategy4Freedoms = new() { "AsIs", "UseIP", "UseIPv4", "UseIPv6", "" };
         public static readonly List<string> SingboxDomainStrategy4Out = new() { "ipv4_only", "prefer_ipv4", "prefer_ipv6", "ipv6_only", "" };
+<<<<<<< HEAD
         public static readonly List<string> DomainDNSAddress = ["8.8.4.4", "8.8.8.8", "localhost"];
         public static readonly List<string> SingboxDomainDNSAddress = ["8.8.4.4", "8.8.8.8", "dhcp://auto"];
         public static readonly List<string> Languages = new() { "zh-Hans", "zh-Hant", "en", "fa-Ir", "ru" };
+=======
+        public static readonly List<string> DomainDNSAddress = ["223.5.5.5", "223.6.6.6", "localhost"];
+        public static readonly List<string> SingboxDomainDNSAddress = ["223.5.5.5", "223.6.6.6", "dhcp://auto"];
+        public static readonly List<string> Languages = new() { "zh-Hans", "zh-Hant", "en", "fa-Ir", "ru", "hu" };
+>>>>>>> upstream/master
         public static readonly List<string> Alpns = new() { "h3", "h2", "http/1.1", "h3,h2", "h2,http/1.1", "h3,h2,http/1.1", "" };
         public static readonly List<string> LogLevels = new() { "debug", "info", "warning", "error", "none" };
-        public static readonly List<string> InboundTags = new() { "socks", "http", "socks2", "http2" };
+        public static readonly List<string> InboundTags = new() { "socks", "socks2", "socks3" };
         public static readonly List<string> RuleProtocols = new() { "http", "tls", "bittorrent" };
         public static readonly List<string> RuleNetworks = new() { "", "tcp", "udp", "tcp,udp" };
         public static readonly List<string> destOverrideProtocols = ["http", "tls", "quic", "fakedns", "fakedns+others"];

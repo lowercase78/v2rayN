@@ -24,21 +24,16 @@
     public class InItem
     {
         public int LocalPort { get; set; }
-
         public string Protocol { get; set; }
-
         public bool UdpEnabled { get; set; }
-
         public bool SniffingEnabled { get; set; } = true;
         public List<string>? DestOverride { get; set; } = ["http", "tls"];
         public bool RouteOnly { get; set; }
         public bool AllowLANConn { get; set; }
-
         public bool NewPort4LAN { get; set; }
-
         public string User { get; set; }
-
         public string Pass { get; set; }
+        public bool SecondLocalPortEnabled { get; set; }
     }
 
     [Serializable]
@@ -171,6 +166,7 @@
         public int SpeedTestTimeout { get; set; }
         public string SpeedTestUrl { get; set; }
         public string SpeedPingTestUrl { get; set; }
+        public int SpeedTestPageSize { get; set; }
     }
 
     [Serializable]
@@ -222,7 +218,6 @@
         public int ProxiesSorting { get; set; }
         public bool ProxiesAutoRefresh { get; set; }
         public int ProxiesAutoDelayTestInterval { get; set; } = 10;
-        public int ConnectionsSorting { get; set; }
         public bool ConnectionsAutoRefresh { get; set; }
         public int ConnectionsRefreshInterval { get; set; } = 2;
     }

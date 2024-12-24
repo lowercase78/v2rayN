@@ -2,41 +2,41 @@ param (
 	[Parameter()]
 	[ValidateNotNullOrEmpty()]
 	[string]
-	$OutputPath = '.\bin\v2rayN'
+	$OutputPathWin64 = './bin/v2rayN/win-x64',
+	$OutputPathWinArm64 = './bin/v2rayN/win-arm64'
 )
 
-Write-Host 'Building'
+Write-Host 'Building Windows'
 
 dotnet publish `
-	.\v2rayN\v2rayN.csproj `
+	./v2rayN/v2rayN.csproj `
 	-c Release `
 	-r win-x64 `
 	--self-contained false `
 	-p:PublishReadyToRun=false `
 	-p:PublishSingleFile=true `
-	-o "$OutputPath\win-x64"
+	-o $OutputPathWin64
 
 dotnet publish `
-	.\v2rayN.Desktop\v2rayN.Desktop.csproj `
+	./v2rayN/v2rayN.csproj `
 	-c Release `
-	-r linux-x64 `
-	--self-contained true `
+	-r win-arm64 `
+	--self-contained false `
 	-p:PublishReadyToRun=false `
 	-p:PublishSingleFile=true `
-	-o "$OutputPath\linux-x64"
-
+	-o $OutputPathWinArm64
 
 if ( -Not $? ) {
 	exit $lastExitCode
 	}
 
-if ( Test-Path -Path .\bin\v2rayN ) {
-    rm -Force "$OutputPath\win-x64\*.pdb"
-    rm -Force "$OutputPath\linux-x64\*.pdb"
+if ( Test-Path -Path ./bin/v2rayN ) {
+    rm -Force "$OutputPathWin64/*.pdb"
+    rm -Force "$OutputPathWinArm64/*.pdb"
 }
 
 Write-Host 'Build done'
 
-ls $OutputPath
-7z a  v2rayN.zip $OutputPath
+7z a  v2rayN-windows-64.zip $OutputPathWin64
+7z a  v2rayN-windows-arm64.zip $OutputPathWinArm64
 exit 0

@@ -761,7 +761,7 @@
     <value>Включить сниффинг</value>
   </data>
   <data name="TbSettingsSocksPort" xml:space="preserve">
-    <value>Порт Socks</value>
+    <value>Mixed Port</value>
   </data>
   <data name="TbSettingsStartBoot" xml:space="preserve">
     <value>Автозапуск</value>
@@ -1310,7 +1310,7 @@
     <value>Move up and down</value>
   </data>
   <data name="TbSettingsSocksPortTip" xml:space="preserve">
-    <value>http port = +1; Pac port = +4; *ray API port = +5; mihomo API port = +6;</value>
+    <value>Pac port = +3; Xray API port = +4; mihomo API port = +5;</value>
   </data>
   <data name="TbSettingsCurrentFontFamilyLinuxTip" xml:space="preserve">
     <value>Install the font to the system and restart the settings</value>
@@ -1364,7 +1364,7 @@
     <value>Remote (WebDAV)</value>
   </data>
   <data name="TbSettingsLinuxSudoPassword" xml:space="preserve">
-    <value>Linux system sudo password</value>
+    <value>System sudo password</value>
   </data>
   <data name="TbSettingsLinuxSudoPasswordTip" xml:space="preserve">
     <value>The password is encrypted and stored only in local files.</value>
@@ -1383,5 +1383,20 @@
   </data>
   <data name="TbSettingsHide2TrayWhenClose" xml:space="preserve">
     <value>Hide to tray when closing the window</value>
+  </data>
+  <data name="TbSettingsSpeedTestPageSize" xml:space="preserve">
+    <value>Number per time for auto batch during speedtest(max 1000)</value>
+  </data>
+  <data name="TbSettingsExceptionTip2" xml:space="preserve">
+    <value>Exception. Do not use proxy server for addresses,with a comma (,)</value>
+  </data>
+  <data name="TbSettingsDestOverride" xml:space="preserve">
+    <value>Sniffing type</value>
+  </data>
+  <data name="TbSettingsSecondLocalPortEnabled" xml:space="preserve">
+    <value>Enable second mixed port</value>
+  </data>
+  <data name="TbRoutingInboundTagTips" xml:space="preserve">
+    <value>socks: local port, socks2: second local port, socks3: LAN port</value>
   </data>
 </root>

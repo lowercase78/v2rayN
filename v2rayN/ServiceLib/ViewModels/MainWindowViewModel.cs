@@ -282,22 +282,25 @@ namespace ServiceLib.ViewModels
         {
             try
             {
-                Logging.SaveLog("MyAppExit Begin");
-                //if (blWindowsShutDown)
-                await SysProxyHandler.UpdateSysProxy(_config, true);
+                Logging.SaveLog("MyAppExitAsync Begin");
+                MessageBus.Current.SendMessage("", EMsgCommand.AppExit.ToString());
 
                 await ConfigHandler.SaveConfig(_config);
+                await SysProxyHandler.UpdateSysProxy(_config, true);
                 await ProfileExHandler.Instance.SaveTo();
                 await StatisticsHandler.Instance.SaveTo();
                 StatisticsHandler.Instance.Close();
                 await CoreHandler.Instance.CoreStop();
 
-                Logging.SaveLog("MyAppExit End");
+                Logging.SaveLog("MyAppExitAsync End");
             }
             catch { }
             finally
             {
-                _updateView?.Invoke(EViewAction.Shutdown, null);
+                if (!blWindowsShutDown)
+                {
+                    _updateView?.Invoke(EViewAction.Shutdown, null);
+                }
             }
         }
 

@@ -78,17 +78,15 @@ namespace ServiceLib.Services.CoreConfig
                     return ret;
                 }
 
-                //port
-                fileContent["port"] = AppHandler.Instance.GetLocalPort(EInboundProtocol.http);
-                //socks-port
-                fileContent["socks-port"] = AppHandler.Instance.GetLocalPort(EInboundProtocol.socks);
+                //mixed-port
+                fileContent["mixed-port"] = AppHandler.Instance.GetLocalPort(EInboundProtocol.socks);
                 //log-level
                 fileContent["log-level"] = GetLogLevel(_config.CoreBasicItem.Loglevel);
 
                 //external-controller
                 fileContent["external-controller"] = $"{Global.Loopback}:{AppHandler.Instance.StatePort2}";
                 //allow-lan
-                if (_config.Inbound[0].AllowLANConn)
+                if (_config.Inbound.First().AllowLANConn)
                 {
                     fileContent["allow-lan"] = "true";
                     fileContent["bind-address"] = "*";

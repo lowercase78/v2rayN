@@ -27,7 +27,7 @@
             get
             {
                 _statePort2 ??= Utils.GetFreePort(GetLocalPort(EInboundProtocol.api2));
-                return _statePort2.Value;
+                return _statePort2.Value + (_config.TunModeItem.EnableTun ? 1 : 0);
             }
         }
 
@@ -46,11 +46,18 @@
 
         public bool InitApp()
         {
-            _config = ConfigHandler.LoadConfig();
-            if (_config == null)
+            if (Utils.IsNonWindows() && Utils.HasWritePermission() == false)
+            {
+                Environment.SetEnvironmentVariable("V2RAYN_LOCAL_APPLICATION_DATA", "1", EnvironmentVariableTarget.Process);
+            }
+
+            Logging.Setup();
+            var config = ConfigHandler.LoadConfig();
+            if (config == null)
             {
                 return false;
             }
+            _config = config;
             Thread.CurrentThread.CurrentUICulture = new(_config.UiItem.CurrentLanguage);
 
             //Under Win10
@@ -70,12 +77,18 @@
 
         public bool InitComponents()
         {
-            Logging.Setup();
-            Logging.LoggingEnabled(_config.GuiItem.EnableLog);
             Logging.SaveLog($"v2rayN start up | {Utils.GetVersion()} | {Utils.GetExePath()}");
             Logging.SaveLog($"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
+            Logging.LoggingEnabled(_config.GuiItem.EnableLog);
             Logging.ClearLogs();
 
+            return true;
+        }
+
+        public bool Reset()
+        {
+            _statePort = null;
+            _statePort2 = null;
             return true;
         }
 
@@ -257,16 +270,8 @@
                 return (ECoreType)profileItem.CoreType;
             }
 
-            if (_config.CoreTypeItem == null)
-            {
-                return ECoreType.Xray;
-            }
-            var item = _config.CoreTypeItem.FirstOrDefault(it => it.ConfigType == eConfigType);
-            if (item == null)
-            {
-                return ECoreType.Xray;
-            }
-            return item.CoreType;
+            var item = _config.CoreTypeItem?.FirstOrDefault(it => it.ConfigType == eConfigType);
+            return item?.CoreType ?? ECoreType.Xray;
         }
 
         #endregion Core Type
