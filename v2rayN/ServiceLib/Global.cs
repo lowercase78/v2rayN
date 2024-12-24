@@ -19,7 +19,7 @@
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
         public const string JuicityCoreUrl = "https://github.com/juicity/juicity/releases";
         public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/lowercase78/v2rayCustomRoutingList/master/";
-        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set-{0}/{1}.srs";
+        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/{1}.srs";
         public const string IPAPIUrl = "https://api.ip.sb/geoip";
 
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
