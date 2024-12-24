@@ -13,6 +13,7 @@ namespace ServiceLib.Handler
         private Config _config;
         private Process? _process;
         private Process? _processPre;
+        private int _linuxSudoPid = -1;
         private Action<bool, string>? _updateFunc;
 
         public async Task Init(Config config, Action<bool, string> updateFunc)
@@ -23,7 +24,7 @@ namespace ServiceLib.Handler
             Environment.SetEnvironmentVariable("V2RAY_LOCATION_ASSET", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
             Environment.SetEnvironmentVariable("XRAY_LOCATION_ASSET", Utils.GetBinPath(""), EnvironmentVariableTarget.Process);
 
-            if (Utils.IsLinux())
+            if (Utils.IsNonWindows())
             {
                 var coreInfo = CoreInfoHandler.Instance.GetCoreInfo();
                 foreach (var it in coreInfo)
@@ -64,49 +65,30 @@ namespace ServiceLib.Handler
                 ShowMsg(true, result.Msg);
                 return;
             }
-            else
-            {
-                ShowMsg(true, $"{node.GetSummary()}");
-                ShowMsg(false, $"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
-                ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
-                await CoreStop();
-                await Task.Delay(100);
-                await CoreStart(node);
 
-                //In tun mode, do a delay check and restart the core
-                //if (_config.tunModeItem.enableTun)
-                //{
-                //    Observable.Range(1, 1)
-                //    .Delay(TimeSpan.FromSeconds(15))
-                //    .Subscribe(x =>
-                //    {
-                //        {
-                //            if (_process == null || _process.HasExited)
-                //            {
-                //                CoreStart(node);
-                //                ShowMsg(false, "Tun mode restart the core once");
-                //                Logging.SaveLog("Tun mode restart the core once");
-                //            }
-                //        }
-                //    });
-                //}
-            }
+            ShowMsg(true, $"{node.GetSummary()}");
+            ShowMsg(false, $"{Environment.OSVersion} - {(Environment.Is64BitOperatingSystem ? 64 : 32)}");
+            ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
+            await CoreStop();
+            await Task.Delay(100);
+            await CoreStart(node);
+            await CoreStartPreService(node);
         }
 
         public async Task<int> LoadCoreConfigSpeedtest(List<ServerTestItem> selecteds)
         {
-            var pid = -1;
             var coreType = selecteds.Exists(t => t.ConfigType is EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard) ? ECoreType.sing_box : ECoreType.Xray;
             var configPath = Utils.GetConfigPath(Global.CoreSpeedtestConfigFileName);
             var result = await CoreConfigHandler.GenerateClientSpeedtestConfig(_config, configPath, selecteds, coreType);
             ShowMsg(false, result.Msg);
-            if (result.Success)
+            if (result.Success != true)
             {
-                ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
-                ShowMsg(false, configPath);
-                pid = await CoreStartSpeedtest(configPath, coreType);
+                return -1;
             }
-            return pid;
+
+            ShowMsg(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
+            ShowMsg(false, configPath);
+            return await CoreStartSpeedtest(configPath, coreType);
         }
 
         public async Task CoreStop()
@@ -115,17 +97,19 @@ namespace ServiceLib.Handler
             {
                 if (_process != null)
                 {
-                    await KillProcess(_process);
-                    _process.Dispose();
-                    _process = null;
+                    _process = await KillProcess(_process);
                 }
 
                 if (_processPre != null)
                 {
-                    await KillProcess(_processPre);
-                    _processPre.Dispose();
-                    _processPre = null;
+                    _processPre = await KillProcess(_processPre);
                 }
+
+                if (_linuxSudoPid > 0)
+                {
+                    await KillProcessAsLinuxSudo();
+                }
+                _linuxSudoPid = -1;
             }
             catch (Exception ex)
             {
@@ -137,8 +121,7 @@ namespace ServiceLib.Handler
         {
             try
             {
-                var _p = Process.GetProcessById(pid);
-                await KillProcess(_p);
+                await KillProcess(Process.GetProcessById(pid));
             }
             catch (Exception ex)
             {
@@ -171,8 +154,7 @@ namespace ServiceLib.Handler
 
         private async Task CoreStart(ProfileItem node)
         {
-            var coreType = AppHandler.Instance.GetCoreType(node, node.ConfigType);
-            _config.RunningCoreType = coreType;
+            var coreType = _config.RunningCoreType = AppHandler.Instance.GetCoreType(node, node.ConfigType);
             var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(coreType);
 
             var displayLog = node.ConfigType != EConfigType.Custom || node.DisplayLog;
@@ -182,47 +164,28 @@ namespace ServiceLib.Handler
                 return;
             }
             _process = proc;
+        }
 
-            //start a pre service
+        private async Task CoreStartPreService(ProfileItem node)
+        {
             if (_process != null && !_process.HasExited)
             {
-                ProfileItem? itemSocks = null;
-                var preCoreType = ECoreType.sing_box;
-                if (node.ConfigType != EConfigType.Custom && coreType != ECoreType.sing_box && _config.TunModeItem.EnableTun)
-                {
-                    itemSocks = new ProfileItem()
-                    {
-                        CoreType = preCoreType,
-                        ConfigType = EConfigType.SOCKS,
-                        Address = Global.Loopback,
-                        Sni = node.Address, //Tun2SocksAddress
-                        Port = AppHandler.Instance.GetLocalPort(EInboundProtocol.socks)
-                    };
-                }
-                else if ((node.ConfigType == EConfigType.Custom && node.PreSocksPort > 0))
-                {
-                    preCoreType = _config.TunModeItem.EnableTun ? ECoreType.sing_box : ECoreType.Xray;
-                    itemSocks = new ProfileItem()
-                    {
-                        CoreType = preCoreType,
-                        ConfigType = EConfigType.SOCKS,
-                        Address = Global.Loopback,
-                        Port = node.PreSocksPort.Value,
-                    };
-                    _config.RunningCoreType = preCoreType;
-                }
+                var coreType = AppHandler.Instance.GetCoreType(node, node.ConfigType);
+                var itemSocks = await ConfigHandler.GetPreSocksItem(_config, node, coreType);
                 if (itemSocks != null)
                 {
-                    var fileName2 = Utils.GetConfigPath(Global.CorePreConfigFileName);
-                    var result = await CoreConfigHandler.GenerateClientConfig(itemSocks, fileName2);
+                    var preCoreType = itemSocks.CoreType ?? ECoreType.sing_box;
+                    var fileName = Utils.GetConfigPath(Global.CorePreConfigFileName);
+                    var result = await CoreConfigHandler.GenerateClientConfig(itemSocks, fileName);
                     if (result.Success)
                     {
-                        var coreInfo2 = CoreInfoHandler.Instance.GetCoreInfo(preCoreType);
-                        var proc2 = await RunProcess(coreInfo2, Global.CorePreConfigFileName, true, true);
-                        if (proc2 is not null)
+                        var coreInfo = CoreInfoHandler.Instance.GetCoreInfo(preCoreType);
+                        var proc = await RunProcess(coreInfo, Global.CorePreConfigFileName, true, true);
+                        if (proc is null)
                         {
-                            _processPre = proc2;
+                            return;
                         }
+                        _processPre = proc;
                     }
                 }
             }
@@ -258,7 +221,7 @@ namespace ServiceLib.Handler
         {
             return _config.TunModeItem.EnableTun
                    && eCoreType == ECoreType.sing_box
-                   && Utils.IsLinux()
+                   && (Utils.IsNonWindows())
                 //&& _config.TunModeItem.LinuxSudoPwd.IsNotEmpty()
                 ;
         }
@@ -296,7 +259,7 @@ namespace ServiceLib.Handler
                 var isNeedSudo = mayNeedSudo && IsNeedSudo(coreInfo.CoreType);
                 if (isNeedSudo)
                 {
-                    await RunProcessAsLinuxRoot(proc, fileName, coreInfo, configPath);
+                    await RunProcessAsLinuxSudo(proc, fileName, coreInfo, configPath);
                 }
 
                 var startUpErrorMessage = new StringBuilder();
@@ -329,6 +292,7 @@ namespace ServiceLib.Handler
                     await Task.Delay(10);
                     await proc.StandardInput.WriteLineAsync(pwd);
                 }
+                if (isNeedSudo) _linuxSudoPid = proc.Id;
 
                 if (displayLog)
                 {
@@ -357,65 +321,104 @@ namespace ServiceLib.Handler
             }
         }
 
-        private async Task RunProcessAsLinuxRoot(Process proc, string fileName, CoreInfo coreInfo, string configPath)
-        {
-            var cmdLine = $"{fileName.AppendQuotes()} {string.Format(coreInfo.Arguments, Utils.GetConfigPath(configPath).AppendQuotes())}";
-
-            //Prefer shell scripts
-            var shFilePath = Utils.GetBinPath("run_as_root.sh");
-            File.Delete(shFilePath);
-            var sb = new StringBuilder();
-            sb.AppendLine("#!/bin/sh");
-            sb.AppendLine(cmdLine);
-            await File.WriteAllTextAsync(shFilePath, sb.ToString());
-            await Utils.SetLinuxChmod(shFilePath);
-
-            //Replace command
-            var args = File.Exists(shFilePath) ? shFilePath : cmdLine;
-            if (_config.TunModeItem.LinuxSudoPwd.IsNotEmpty())
-            {
-                proc.StartInfo.FileName = $"/bin/sudo";
-                proc.StartInfo.Arguments = $"-S {args}";
-            }
-            else
-            {
-                proc.StartInfo.FileName = $"/bin/pkexec";
-                proc.StartInfo.Arguments = $"{args}";
-            }
-            proc.StartInfo.WorkingDirectory = null;
-            proc.StartInfo.StandardInputEncoding = Encoding.UTF8;
-            proc.StartInfo.RedirectStandardInput = true;
-            Logging.SaveLog(proc.StartInfo.Arguments);
-        }
-
-        private async Task KillProcess(Process? proc)
+        private async Task<Process?> KillProcess(Process? proc)
         {
             if (proc is null)
             {
-                return;
+                return null;
             }
-            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-            try
-            {
-                await proc.WaitForExitAsync(timeout.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                proc.Kill();
-            }
-            if (!proc.HasExited)
-            {
-                try
-                {
-                    await proc.WaitForExitAsync(timeout.Token);
-                }
-                catch (Exception)
-                {
-                    proc.Kill();
-                }
-            }
+            try { proc?.Kill(true); } catch { }
+            try { proc?.Close(); } catch { }
+            try { proc?.Dispose(); } catch { }
+
+            await Task.Delay(100);
+            return null;
         }
 
         #endregion Process
+
+        #region Linux
+
+        private async Task RunProcessAsLinuxSudo(Process proc, string fileName, CoreInfo coreInfo, string configPath)
+        {
+            var cmdLine = $"{fileName.AppendQuotes()} {string.Format(coreInfo.Arguments, Utils.GetConfigPath(configPath).AppendQuotes())}";
+
+            var shFilePath = await CreateLinuxShellFile(cmdLine, "run_as_sudo.sh");
+            proc.StartInfo.FileName = shFilePath;
+            proc.StartInfo.Arguments = "";
+            proc.StartInfo.WorkingDirectory = "";
+            if (_config.TunModeItem.LinuxSudoPwd.IsNotEmpty())
+            {
+                proc.StartInfo.StandardInputEncoding = Encoding.UTF8;
+                proc.StartInfo.RedirectStandardInput = true;
+            }
+        }
+
+        private async Task KillProcessAsLinuxSudo()
+        {
+            var cmdLine = $"kill {_linuxSudoPid}";
+            var shFilePath = await CreateLinuxShellFile(cmdLine, "kill_as_sudo.sh");
+            Process proc = new()
+            {
+                StartInfo = new()
+                {
+                    FileName = shFilePath,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardInputEncoding = Encoding.UTF8,
+                    RedirectStandardInput = true
+                }
+            };
+            proc.Start();
+
+            if (_config.TunModeItem.LinuxSudoPwd.IsNotEmpty())
+            {
+                try
+                {
+                    var pwd = DesUtils.Decrypt(_config.TunModeItem.LinuxSudoPwd);
+                    await Task.Delay(10);
+                    await proc.StandardInput.WriteLineAsync(pwd);
+                    await Task.Delay(10);
+                    await proc.StandardInput.WriteLineAsync(pwd);
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+
+            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await proc.WaitForExitAsync(timeout.Token);
+            await Task.Delay(3000);
+        }
+
+        private async Task<string> CreateLinuxShellFile(string cmdLine, string fileName)
+        {
+            //Shell scripts
+            var shFilePath = Utils.GetBinPath(AppHandler.Instance.IsAdministrator ? "root_" + fileName : fileName);
+            File.Delete(shFilePath);
+            var sb = new StringBuilder();
+            sb.AppendLine("#!/bin/sh");
+            if (AppHandler.Instance.IsAdministrator)
+            {
+                sb.AppendLine($"{cmdLine}");
+            }
+            else if (_config.TunModeItem.LinuxSudoPwd.IsNullOrEmpty())
+            {
+                sb.AppendLine($"pkexec {cmdLine}");
+            }
+            else
+            {
+                sb.AppendLine($"sudo -S {cmdLine}");
+            }
+
+            await File.WriteAllTextAsync(shFilePath, sb.ToString());
+            await Utils.SetLinuxChmod(shFilePath);
+            Logging.SaveLog(shFilePath);
+
+            return shFilePath;
+        }
+
+        #endregion Linux
     }
 }
