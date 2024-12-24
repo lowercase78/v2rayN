@@ -8,16 +8,8 @@
         public const string GithubUrl = "https://github.com";
         public const string GithubApiUrl = "https://api.github.com/repos";
         public const string V2flyCoreUrl = "https://github.com/v2fly/v2ray-core/releases";
-<<<<<<< HEAD
-        public const string XrayCoreUrl = "https://github.com/XTLS/Xray-core/releases";
-        public const string NUrl = @"https://github.com/2dust/v2rayN/releases";
-=======
-        public const string XrayCoreUrl = "https://github.com/GFW-knocker/Xray-core/releases";
-        public const string SagerNetCoreUrl = "https://github.com/SagerNet/v2ray-core/releases";
+        public const string XrayCoreUrl = "https://github.com/XTLS/GFW-knocker/releases";
         public const string NUrl = @"https://github.com/lowercase78/v2rayN/releases";
-        public const string ClashCoreUrl = "https://github.com/Dreamacro/clash/releases";
-        public const string ClashMetaCoreUrl = "https://github.com/MetaCubeX/Clash.Meta/releases";
->>>>>>> 7a8acb60 (	modified:   v2rayN/ServiceLib/Global.cs)
         public const string MihomoCoreUrl = "https://github.com/MetaCubeX/mihomo/releases";
         public const string HysteriaCoreUrl = "https://github.com/apernet/hysteria/releases";
         public const string NaiveproxyCoreUrl = "https://github.com/klzgrad/naiveproxy/releases";
@@ -26,15 +18,10 @@
         public const string GeoUrl = "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/{0}.dat";
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
         public const string JuicityCoreUrl = "https://github.com/juicity/juicity/releases";
-<<<<<<< HEAD
-        public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/2dust/v2rayCustomRoutingList/master/";
-        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/2dust/sing-box-rules/rule-set-{0}/{1}.srs";
-        public const string IPAPIUrl = "https://api.ip.sb/geoip";
-
-=======
         public const string CustomRoutingListUrl = @"https://raw.githubusercontent.com/lowercase78/v2rayCustomRoutingList/master/";
         public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set-{0}/{1}.srs";
->>>>>>> 7a8acb60 (	modified:   v2rayN/ServiceLib/Global.cs)
+        public const string IPAPIUrl = "https://api.ip.sb/geoip";
+
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
         public const string ConfigFileName = "guiNConfig.json";
         public const string CoreConfigFileName = "config.json";
@@ -208,15 +195,9 @@
         public static readonly List<string> AllowInsecure = new() { "true", "false", "" };
         public static readonly List<string> DomainStrategy4Freedoms = new() { "AsIs", "UseIP", "UseIPv4", "UseIPv6", "" };
         public static readonly List<string> SingboxDomainStrategy4Out = new() { "ipv4_only", "prefer_ipv4", "prefer_ipv6", "ipv6_only", "" };
-<<<<<<< HEAD
-        public static readonly List<string> DomainDNSAddress = ["223.5.5.5", "223.6.6.6", "localhost"];
-        public static readonly List<string> SingboxDomainDNSAddress = ["223.5.5.5", "223.6.6.6", "dhcp://auto"];
-        public static readonly List<string> Languages = new() { "zh-Hans", "zh-Hant", "en", "fa-Ir", "ru", "hu" };
-=======
         public static readonly List<string> DomainDNSAddress = ["8.8.4.4", "8.8.8.8", "localhost"];
         public static readonly List<string> SingboxDomainDNSAddress = ["8.8.4.4", "8.8.8.8", "dhcp://auto"];
-        public static readonly List<string> Languages = new() { "zh-Hans", "zh-Hant", "en", "fa-Ir", "ru" };
->>>>>>> b42632ea (bug fix)
+        public static readonly List<string> Languages = new() { "zh-Hans", "zh-Hant", "en", "fa-Ir", "ru", "hu" };
         public static readonly List<string> Alpns = new() { "h3", "h2", "http/1.1", "h3,h2", "h2,http/1.1", "h3,h2,http/1.1", "" };
         public static readonly List<string> LogLevels = new() { "debug", "info", "warning", "error", "none" };
         public static readonly List<string> InboundTags = new() { "socks", "socks2", "socks3" };
