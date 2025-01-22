@@ -157,7 +157,7 @@ namespace ServiceLib.Handler
             {
                 Packets = "tlshello",
                 Length = "100-200",
-                Interval = "10-20"
+                Interval = "100-200"
             };
 
             if (config.SystemProxyItem.SystemProxyExceptions.IsNullOrEmpty())
