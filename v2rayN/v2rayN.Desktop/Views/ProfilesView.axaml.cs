@@ -1,3 +1,4 @@
+using System.Reactive.Disposables;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -7,7 +8,6 @@ using DialogHostAvalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using Splat;
-using System.Reactive.Disposables;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views
@@ -67,8 +67,11 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.CopyServerCmd, v => v.menuCopyServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SetDefaultServerCmd, v => v.menuSetDefaultServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.ShareServerCmd, v => v.menuShareServer).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerCmd, v => v.menuSetDefaultMultipleServer).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.SetDefaultLoadBalanceServerCmd, v => v.menuSetDefaultLoadBalanceServer).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRandomCmd, v => v.menuSetDefaultMultipleServerXrayRandom).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRoundRobinCmd, v => v.menuSetDefaultMultipleServerXrayRoundRobin).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastPingCmd, v => v.menuSetDefaultMultipleServerXrayLeastPing).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastLoadCmd, v => v.menuSetDefaultMultipleServerXrayLeastLoad).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerSingBoxLeastPingCmd, v => v.menuSetDefaultMultipleServerSingBoxLeastPing).DisposeWith(disposables);
 
                 //servers move
                 //this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
@@ -85,6 +88,7 @@ namespace v2rayN.Desktop.Views
                 this.BindCommand(ViewModel, vm => vm.RealPingServerCmd, v => v.menuRealPingServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SpeedServerCmd, v => v.menuSpeedServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SortServerResultCmd, v => v.menuSortServerResult).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.RemoveInvalidServerResultCmd, v => v.menuRemoveInvalidServerResult).DisposeWith(disposables);
 
                 //servers export
                 this.BindCommand(ViewModel, vm => vm.Export2ClientConfigCmd, v => v.menuExport2ClientConfig).DisposeWith(disposables);
@@ -101,18 +105,24 @@ namespace v2rayN.Desktop.Views
         private async void LstProfiles_Sorting(object? sender, DataGridColumnEventArgs e)
         {
             e.Handled = true;
-            await ViewModel?.SortServer(e.Column.Tag.ToString());
+
+            if (ViewModel != null && e.Column?.Tag?.ToString() != null)
+            {
+                await ViewModel.SortServer(e.Column.Tag.ToString());
+            }
+
             e.Handled = false;
         }
 
-        //#region Event
+        #region Event
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
         {
             switch (action)
             {
                 case EViewAction.SetClipboardData:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     await AvaUtils.SetClipboardData(this, (string)obj);
                     break;
 
@@ -135,7 +145,8 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case EViewAction.SaveFileDialog:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     var fileName = await UI.SaveFileDialog(_window, "");
                     if (fileName.IsNullOrEmpty())
                     {
@@ -145,24 +156,29 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case EViewAction.AddServerWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return await new AddServerWindow((ProfileItem)obj).ShowDialog<bool>(_window);
 
                 case EViewAction.AddServer2Window:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return await new AddServer2Window((ProfileItem)obj).ShowDialog<bool>(_window);
 
                 case EViewAction.ShareServer:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     await ShareServer((string)obj);
                     break;
 
                 case EViewAction.SubEditWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return await new SubEditWindow((SubItem)obj).ShowDialog<bool>(_window);
 
                 case EViewAction.DispatcherSpeedTest:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Dispatcher.UIThread.Post(() =>
                         ViewModel?.SetSpeedTestResult((SpeedTestResult)obj),
                     DispatcherPriority.Default);
@@ -171,7 +187,9 @@ namespace v2rayN.Desktop.Views
 
                 case EViewAction.DispatcherRefreshServersBiz:
                     Dispatcher.UIThread.Post(() =>
-                        ViewModel?.RefreshServersBiz(),
+                    {
+                        _ = RefreshServersBiz();
+                    },
                     DispatcherPriority.Default);
                     break;
             }
@@ -181,7 +199,7 @@ namespace v2rayN.Desktop.Views
 
         public async Task ShareServer(string url)
         {
-            if (Utils.IsNullOrEmpty(url))
+            if (url.IsNullOrEmpty())
             {
                 return;
             }
@@ -190,15 +208,32 @@ namespace v2rayN.Desktop.Views
             await DialogHost.Show(dialog);
         }
 
+        public async Task RefreshServersBiz()
+        {
+            if (ViewModel != null)
+            {
+                await ViewModel.RefreshServersBiz();
+            }
+
+            if (lstProfiles.SelectedIndex > 0)
+            {
+                lstProfiles.ScrollIntoView(lstProfiles.SelectedItem, null);
+            }
+        }
+
         private void lstProfiles_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            ViewModel.SelectedProfiles = lstProfiles.SelectedItems.Cast<ProfileItemModel>().ToList();
+            if (ViewModel != null)
+            {
+                ViewModel.SelectedProfiles = lstProfiles.SelectedItems.Cast<ProfileItemModel>().ToList();
+            }
         }
 
         private void LstProfiles_DoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
         {
             var source = e.Source as Border;
-            if (source?.Name == "HeaderBackground") return;
+            if (source?.Name == "HeaderBackground")
+                return;
             if (_config.UiItem.DoubleClick2Activate)
             {
                 ViewModel?.SetDefaultServer();
@@ -211,7 +246,7 @@ namespace v2rayN.Desktop.Views
 
         private void LstProfiles_LoadingRow(object? sender, DataGridRowEventArgs e)
         {
-            e.Row.Header = $" {e.Row.GetIndex() + 1}";
+            e.Row.Header = $" {e.Row.Index + 1}";
         }
 
         //private void LstProfiles_ColumnHeader_Click(object? sender, RoutedEventArgs e)
@@ -324,9 +359,9 @@ namespace v2rayN.Desktop.Views
             }
         }
 
-        //#endregion Event
+        #endregion Event
 
-        //#region UI
+        #region UI
 
         private void RestoreUI()
         {
@@ -363,9 +398,8 @@ namespace v2rayN.Desktop.Views
         private void StorageUI(string? n = null)
         {
             List<ColumnItem> lvColumnItem = new();
-            for (int k = 0; k < lstProfiles.Columns.Count; k++)
+            foreach (var item2 in lstProfiles.Columns)
             {
-                var item2 = lstProfiles.Columns[k];
                 if (item2.Tag == null)
                 {
                     continue;
@@ -373,16 +407,16 @@ namespace v2rayN.Desktop.Views
                 lvColumnItem.Add(new()
                 {
                     Name = (string)item2.Tag,
-                    Width = item2.IsVisible == true ? Utils.ToInt(item2.ActualWidth) : -1,
+                    Width = (int)(item2.IsVisible == true ? item2.ActualWidth : -1),
                     Index = item2.DisplayIndex
                 });
             }
             _config.UiItem.MainColumnItem = lvColumnItem;
         }
 
-        //#endregion UI
+        #endregion UI
 
-        //#region Drag and Drop
+        #region Drag and Drop
 
         //private Point startPoint = new();
         //private int startIndex = -1;
@@ -472,6 +506,6 @@ namespace v2rayN.Desktop.Views
         //    }
         //}
 
-        //#endregion Drag and Drop
+        #endregion Drag and Drop
     }
 }

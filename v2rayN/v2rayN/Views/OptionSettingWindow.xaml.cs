@@ -1,9 +1,9 @@
-﻿using ReactiveUI;
 using System.Globalization;
 using System.IO;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Media;
+using ReactiveUI;
 
 namespace v2rayN.Views
 {
@@ -68,7 +68,11 @@ namespace v2rayN.Views
                 cmbCoreType6.Items.Add(it);
             });
 
-            for (int i = 2; i <= 6; i++)
+            for (var i = 2; i <= 8; i++)
+            {
+                cmbMixedConcurrencyCount.Items.Add(i);
+            }
+            for (var i = 2; i <= 6; i++)
             {
                 cmbSpeedTestTimeout.Items.Add(i * 5);
             }
@@ -150,7 +154,7 @@ namespace v2rayN.Views
                 this.Bind(ViewModel, vm => vm.SpeedTestTimeout, v => v.cmbSpeedTestTimeout.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SpeedTestUrl, v => v.cmbSpeedTestUrl.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SpeedPingTestUrl, v => v.cmbSpeedPingTestUrl.Text).DisposeWith(disposables);
-                this.Bind(ViewModel, vm => vm.SpeedTestPageSize, v => v.txtSpeedTestPageSize.Text).DisposeWith(disposables);
+                this.Bind(ViewModel, vm => vm.MixedConcurrencyCount, v => v.cmbMixedConcurrencyCount.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.EnableHWA, v => v.togEnableHWA.IsChecked).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.Text).DisposeWith(disposables);
                 this.Bind(ViewModel, vm => vm.MainGirdOrientation, v => v.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
@@ -230,10 +234,10 @@ namespace v2rayN.Views
                             //    continue;
                             //}
                             var fontFamily = glyph.Win32FamilyNames[new CultureInfo(culture)];
-                            if (Utils.IsNullOrEmpty(fontFamily))
+                            if (fontFamily.IsNullOrEmpty())
                             {
                                 fontFamily = glyph.Win32FamilyNames[new CultureInfo(culture2)];
-                                if (Utils.IsNullOrEmpty(fontFamily))
+                                if (fontFamily.IsNullOrEmpty())
                                 {
                                     continue;
                                 }
@@ -255,7 +259,10 @@ namespace v2rayN.Views
 
         private void ClbdestOverride_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            ViewModel.destOverride = clbdestOverride.SelectedItems.Cast<string>().ToList();
+            if (ViewModel != null)
+            {
+                ViewModel.destOverride = clbdestOverride.SelectedItems.Cast<string>().ToList();
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Reactive.Disposables;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -5,7 +6,6 @@ using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using ReactiveUI;
 using Splat;
-using System.Reactive.Disposables;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views
@@ -43,6 +43,11 @@ namespace v2rayN.Desktop.Views
             });
 
             //spEnableTun.IsVisible = (Utils.IsWindows() || AppHandler.Instance.IsAdministrator);
+
+            if (Utils.IsNonWindows() && cmbSystemProxy.Items.IsReadOnly == false)
+            {
+                cmbSystemProxy.Items.RemoveAt(cmbSystemProxy.Items.Count - 1);
+            }
         }
 
         private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -50,7 +55,8 @@ namespace v2rayN.Desktop.Views
             switch (action)
             {
                 case EViewAction.DispatcherServerAvailability:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Dispatcher.UIThread.Post(() =>
                         ViewModel?.TestServerAvailabilityResult((string)obj),
                     DispatcherPriority.Default);
@@ -71,7 +77,8 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case EViewAction.SetClipboardData:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     await AvaUtils.SetClipboardData(this, (string)obj);
                     break;
             }

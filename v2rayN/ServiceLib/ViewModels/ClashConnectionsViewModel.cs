@@ -1,9 +1,9 @@
+using System.Reactive;
+using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System.Reactive;
-using System.Reactive.Linq;
 
 namespace ServiceLib.ViewModels
 {
@@ -32,7 +32,7 @@ namespace ServiceLib.ViewModels
 
             var canEditRemove = this.WhenAnyValue(
              x => x.SelectedSource,
-             selectedSource => selectedSource != null && Utils.IsNotEmpty(selectedSource.Id));
+             selectedSource => selectedSource != null && selectedSource.Id.IsNotEmpty());
 
             this.WhenAnyValue(
                x => x.AutoRefresh,
@@ -53,38 +53,18 @@ namespace ServiceLib.ViewModels
 
         private async Task Init()
         {
-            var lastTime = DateTime.Now;
-
-            Observable.Interval(TimeSpan.FromSeconds(5))
-              .Subscribe(async x =>
-              {
-                  if (!(AutoRefresh && _config.UiItem.ShowInTaskbar && _config.IsRunningCore(ECoreType.sing_box)))
-                  {
-                      return;
-                  }
-                  var dtNow = DateTime.Now;
-                  if (_config.ClashUIItem.ConnectionsRefreshInterval > 0)
-                  {
-                      if ((dtNow - lastTime).Minutes % _config.ClashUIItem.ConnectionsRefreshInterval == 0)
-                      {
-                          await GetClashConnections();
-                          lastTime = dtNow;
-                      }
-                      Task.Delay(1000).Wait();
-                  }
-              });
-            await Task.CompletedTask;
+            await DelayTestTask();
         }
 
         private async Task GetClashConnections()
         {
-            var ret = await ClashApiHandler.Instance.GetClashConnectionsAsync(_config);
+            var ret = await ClashApiHandler.Instance.GetClashConnectionsAsync();
             if (ret == null)
             {
                 return;
             }
 
-            _updateView?.Invoke(EViewAction.DispatcherRefreshConnections, ret?.connections);
+            _ = _updateView?.Invoke(EViewAction.DispatcherRefreshConnections, ret?.connections);
         }
 
         public void RefreshConnections(List<ConnectionItem>? connections)
@@ -95,27 +75,29 @@ namespace ServiceLib.ViewModels
             var lstModel = new List<ClashConnectionModel>();
             foreach (var item in connections ?? new())
             {
-                var host = $"{(Utils.IsNullOrEmpty(item.metadata.host) ? item.metadata.destinationIP : item.metadata.host)}:{item.metadata.destinationPort}";
+                var host = $"{(item.metadata.host.IsNullOrEmpty() ? item.metadata.destinationIP : item.metadata.host)}:{item.metadata.destinationPort}";
                 if (HostFilter.IsNotEmpty() && !host.Contains(HostFilter))
                 {
                     continue;
                 }
 
-                ClashConnectionModel model = new();
-
-                model.Id = item.id;
-                model.Network = item.metadata.network;
-                model.Type = item.metadata.type;
-                model.Host = host;
-                var sp = (dtNow - item.start);
-                model.Time = sp.TotalSeconds < 0 ? 1 : sp.TotalSeconds;
-                model.Elapsed = sp.ToString(@"hh\:mm\:ss");
-                item.chains?.Reverse();
-                model.Chain = $"{item.rule} , {string.Join("->", item.chains ?? new())}";
+                var model = new ClashConnectionModel
+                {
+                    Id = item.id,
+                    Network = item.metadata.network,
+                    Type = item.metadata.type,
+                    Host = host,
+                    Time = (dtNow - item.start).TotalSeconds < 0 ? 1 : (dtNow - item.start).TotalSeconds,
+                    Elapsed = (dtNow - item.start).ToString(@"hh\:mm\:ss"),
+                    Chain = $"{item.rule} , {string.Join("->", item.chains ?? new())}"
+                };
 
                 lstModel.Add(model);
             }
-            if (lstModel.Count <= 0) { return; }
+            if (lstModel.Count <= 0)
+            {
+                return;
+            }
 
             _connectionItems.AddRange(lstModel);
         }
@@ -138,6 +120,36 @@ namespace ServiceLib.ViewModels
             }
             await ClashApiHandler.Instance.ClashConnectionClose(id);
             await GetClashConnections();
+        }
+
+        public async Task DelayTestTask()
+        {
+            _ = Task.Run(async () =>
+            {
+                var numOfExecuted = 1;
+                while (true)
+                {
+                    await Task.Delay(1000 * 5);
+                    numOfExecuted++;
+                    if (!(AutoRefresh && _config.UiItem.ShowInTaskbar && _config.IsRunningCore(ECoreType.sing_box)))
+                    {
+                        continue;
+                    }
+
+                    if (_config.ClashUIItem.ConnectionsRefreshInterval <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (numOfExecuted % _config.ClashUIItem.ConnectionsRefreshInterval != 0)
+                    {
+                        continue;
+                    }
+                    await GetClashConnections();
+                }
+            });
+
+            await Task.CompletedTask;
         }
     }
 }

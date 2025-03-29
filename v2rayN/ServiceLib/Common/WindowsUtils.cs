@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Win32;
 
 namespace ServiceLib.Common
 {
@@ -13,7 +15,7 @@ namespace ServiceLib.Common
             {
                 regKey = Registry.CurrentUser.OpenSubKey(path, false);
                 var value = regKey?.GetValue(name) as string;
-                return Utils.IsNullOrEmpty(value) ? def : value;
+                return value.IsNullOrEmpty() ? def : value;
             }
             catch (Exception ex)
             {
@@ -32,7 +34,7 @@ namespace ServiceLib.Common
             try
             {
                 regKey = Registry.CurrentUser.CreateSubKey(path);
-                if (Utils.IsNullOrEmpty(value.ToString()))
+                if (value.ToString().IsNullOrEmpty())
                 {
                     regKey?.DeleteValue(name, false);
                 }
@@ -48,6 +50,24 @@ namespace ServiceLib.Common
             finally
             {
                 regKey?.Close();
+            }
+        }
+
+        public static async Task RemoveTunDevice()
+        {
+            try
+            {
+                var sum = MD5.HashData(Encoding.UTF8.GetBytes("wintunsingbox_tun"));
+                var guid = new Guid(sum);
+                var pnpUtilPath = @"C:\Windows\System32\pnputil.exe";
+                var arg = $$""" /remove-device  "SWD\Wintun\{{{guid}}}" """;
+
+                // Try to remove the device
+                _ = await Utils.GetCliWrapOutput(pnpUtilPath, arg);
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
             }
         }
     }

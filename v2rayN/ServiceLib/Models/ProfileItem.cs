@@ -1,4 +1,4 @@
-﻿using SQLite;
+using SQLite;
 
 namespace ServiceLib.Models
 {
@@ -48,12 +48,12 @@ namespace ServiceLib.Models
 
         public List<string>? GetAlpn()
         {
-            return Utils.IsNullOrEmpty(Alpn) ? null : Utils.String2List(Alpn);
+            return Alpn.IsNullOrEmpty() ? null : Utils.String2List(Alpn);
         }
 
         public string GetNetwork()
         {
-            if (Utils.IsNullOrEmpty(Network) || !Global.Networks.Contains(Network))
+            if (Network.IsNullOrEmpty() || !Global.Networks.Contains(Network))
             {
                 return Global.DefaultNetwork;
             }
@@ -64,11 +64,11 @@ namespace ServiceLib.Models
 
         [PrimaryKey]
         public string IndexId { get; set; }
-
         public EConfigType ConfigType { get; set; }
         public int ConfigVersion { get; set; }
         public string Address { get; set; }
         public int Port { get; set; }
+        public string Ports { get; set; }
         public string Id { get; set; }
         public int AlterId { get; set; }
         public string Security { get; set; }

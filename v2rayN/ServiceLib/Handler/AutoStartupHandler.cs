@@ -1,4 +1,4 @@
-﻿using System.Security.Principal;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
 
 namespace ServiceLib.Handler
@@ -29,7 +29,12 @@ namespace ServiceLib.Handler
             }
             else if (Utils.IsOSX())
             {
-                //TODO
+                await ClearTaskOSX();
+
+                if (config.GuiItem.AutoRun)
+                {
+                    await SetTaskOSX();
+                }
             }
 
             return true;
@@ -80,7 +85,7 @@ namespace ServiceLib.Handler
         /// <exception cref="ArgumentNullException"></exception>
         public static void AutoStartTaskService(string taskName, string fileName, string description)
         {
-            if (Utils.IsNullOrEmpty(taskName))
+            if (taskName.IsNullOrEmpty())
             {
                 return;
             }
@@ -88,7 +93,7 @@ namespace ServiceLib.Handler
             var logonUser = WindowsIdentity.GetCurrent().Name;
             using var taskService = new Microsoft.Win32.TaskScheduler.TaskService();
             var tasks = taskService.RootFolder.GetTasks(new Regex(taskName));
-            if (Utils.IsNullOrEmpty(fileName))
+            if (fileName.IsNullOrEmpty())
             {
                 foreach (var t in tasks)
                 {
@@ -104,7 +109,7 @@ namespace ServiceLib.Handler
             task.Settings.RunOnlyIfIdle = false;
             task.Settings.IdleSettings.StopOnIdleEnd = false;
             task.Settings.ExecutionTimeLimit = TimeSpan.Zero;
-            task.Triggers.Add(new Microsoft.Win32.TaskScheduler.LogonTrigger { UserId = logonUser, Delay = TimeSpan.FromSeconds(10) });
+            task.Triggers.Add(new Microsoft.Win32.TaskScheduler.LogonTrigger { UserId = logonUser, Delay = TimeSpan.FromSeconds(30) });
             task.Principal.RunLevel = Microsoft.Win32.TaskScheduler.TaskRunLevel.Highest;
             task.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(fileName.AppendQuotes(), null, Path.GetDirectoryName(fileName)));
 
@@ -137,7 +142,7 @@ namespace ServiceLib.Handler
         {
             try
             {
-                var linuxConfig = Utils.GetEmbedText(Global.LinuxAutostartConfig);
+                var linuxConfig = EmbedUtils.GetEmbedText(Global.LinuxAutostartConfig);
                 if (linuxConfig.IsNotEmpty())
                 {
                     linuxConfig = linuxConfig.Replace("$ExecPath$", Utils.GetExePath());
@@ -161,5 +166,77 @@ namespace ServiceLib.Handler
         }
 
         #endregion Linux
+
+        #region macOS
+
+        private static async Task ClearTaskOSX()
+        {
+            try
+            {
+                var launchAgentPath = GetLaunchAgentPathMacOS();
+                if (File.Exists(launchAgentPath))
+                {
+                    var args = new[] { "-c", $"launchctl unload -w \"{launchAgentPath}\"" };
+                    await Utils.GetCliWrapOutput(Global.LinuxBash, args);
+
+                    File.Delete(launchAgentPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
+            }
+        }
+
+        private static async Task SetTaskOSX()
+        {
+            try
+            {
+                var plistContent = GenerateLaunchAgentPlist();
+                var launchAgentPath = GetLaunchAgentPathMacOS();
+                await File.WriteAllTextAsync(launchAgentPath, plistContent);
+
+                var args = new[] { "-c", $"launchctl load -w \"{launchAgentPath}\"" };
+                await Utils.GetCliWrapOutput(Global.LinuxBash, args);
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
+            }
+        }
+
+        private static string GetLaunchAgentPathMacOS()
+        {
+            var homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var launchAgentPath = Path.Combine(homePath, "Library", "LaunchAgents", $"{Global.AppName}-LaunchAgent.plist");
+            Directory.CreateDirectory(Path.GetDirectoryName(launchAgentPath));
+            return launchAgentPath;
+        }
+
+        private static string GenerateLaunchAgentPlist()
+        {
+            var exePath = Utils.GetExePath();
+            var appName = Path.GetFileNameWithoutExtension(exePath);
+            return $@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<!DOCTYPE plist PUBLIC ""-//Apple//DTD PLIST 1.0//EN"" ""http://www.apple.com/DTDs/PropertyList-1.0.dtd"">
+<plist version=""1.0"">
+<dict>
+    <key>Label</key>
+    <string>{Global.AppName}-LaunchAgent</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>if ! pgrep -x ""{appName}"" > /dev/null; then ""{exePath}""; fi</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>";
+        }
+
+        #endregion macOS
     }
 }

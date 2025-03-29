@@ -1,5 +1,3 @@
-using CliWrap;
-using CliWrap.Buffered;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
@@ -10,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using CliWrap;
+using CliWrap.Buffered;
 
 namespace ServiceLib.Common
 {
@@ -17,138 +17,72 @@ namespace ServiceLib.Common
     {
         private static readonly string _tag = "Utils";
 
-        #region 资源操作
-
-        /// <summary>
-        /// 获取嵌入文本资源
-        /// </summary>
-        /// <param name="res"></param>
-        /// <returns></returns>
-        public static string GetEmbedText(string res)
-        {
-            var result = string.Empty;
-
-            try
-            {
-                var assembly = Assembly.GetExecutingAssembly();
-                using var stream = assembly.GetManifestResourceStream(res);
-                ArgumentNullException.ThrowIfNull(stream);
-                using StreamReader reader = new(stream);
-                result = reader.ReadToEnd();
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog(_tag, ex);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// 取得存储资源
-        /// </summary>
-        /// <returns></returns>
-        public static string? LoadResource(string? res)
-        {
-            try
-            {
-                if (File.Exists(res))
-                {
-                    return File.ReadAllText(res);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog(_tag, ex);
-            }
-
-            return null;
-        }
-
-        #endregion 资源操作
-
         #region 转换函数
 
         /// <summary>
-        /// 转逗号分隔的字符串
+        /// Convert to comma-separated string
         /// </summary>
         /// <param name="lst"></param>
         /// <param name="wrap"></param>
         /// <returns></returns>
         public static string List2String(List<string>? lst, bool wrap = false)
         {
+            if (lst == null || lst.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var separator = wrap ? "," + Environment.NewLine : ",";
+
             try
             {
-                if (lst == null)
-                {
-                    return string.Empty;
-                }
-                if (wrap)
-                {
-                    return string.Join("," + Environment.NewLine, lst);
-                }
-                else
-                {
-                    return string.Join(",", lst);
-                }
+                return string.Join(separator, lst);
             }
             catch (Exception ex)
             {
                 Logging.SaveLog(_tag, ex);
+                return string.Empty;
             }
-
-            return string.Empty;
         }
 
         /// <summary>
-        /// 逗号分隔的字符串
+        /// Comma-separated string
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
         public static List<string>? String2List(string? str)
         {
+            if (string.IsNullOrWhiteSpace(str))
+            {
+                return null;
+            }
+
             try
             {
-                if (str == null)
-                {
-                    return null;
-                }
-
-                str = str.Replace(Environment.NewLine, "");
+                str = str.Replace(Environment.NewLine, string.Empty);
                 return new List<string>(str.Split(',', StringSplitOptions.RemoveEmptyEntries));
             }
             catch (Exception ex)
             {
                 Logging.SaveLog(_tag, ex);
+                return null;
             }
-
-            return null;
         }
 
         /// <summary>
-        /// 逗号分隔的字符串,先排序后转List
+        /// Comma-separated string, sorted and then converted to List
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
         public static List<string>? String2ListSorted(string str)
         {
-            try
-            {
-                str = str.Replace(Environment.NewLine, "");
-                List<string> list = new(str.Split(',', StringSplitOptions.RemoveEmptyEntries));
-                list.Sort();
-                return list;
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog(_tag, ex);
-            }
-
-            return null;
+            var lst = String2List(str);
+            lst?.Sort();
+            return lst;
         }
 
         /// <summary>
-        /// Base64编码
+        /// Base64 Encode
         /// </summary>
         /// <param name="plainText"></param>
         /// <returns></returns>
@@ -168,7 +102,7 @@ namespace ServiceLib.Common
         }
 
         /// <summary>
-        /// Base64解码
+        /// Base64 Decode
         /// </summary>
         /// <param name="plainText"></param>
         /// <returns></returns>
@@ -176,7 +110,11 @@ namespace ServiceLib.Common
         {
             try
             {
-                if (plainText.IsNullOrEmpty()) return "";
+                if (plainText.IsNullOrEmpty())
+                {
+                    return "";
+                }
+
                 plainText = plainText.Trim()
                     .Replace(Environment.NewLine, "")
                     .Replace("\n", "")
@@ -199,18 +137,6 @@ namespace ServiceLib.Common
             }
 
             return string.Empty;
-        }
-
-        public static int ToInt(object? obj)
-        {
-            try
-            {
-                return Convert.ToInt32(obj ?? string.Empty);
-            }
-            catch
-            {
-                return 0;
-            }
         }
 
         public static bool ToBool(object obj)
@@ -237,55 +163,25 @@ namespace ServiceLib.Common
             }
         }
 
-        private static void ToHumanReadable(long amount, out double result, out string unit)
-        {
-            var factor = 1024u;
-            //long KBs = amount / factor;
-            var KBs = amount;
-            if (KBs > 0)
-            {
-                // multi KB
-                var MBs = KBs / factor;
-                if (MBs > 0)
-                {
-                    // multi MB
-                    var GBs = MBs / factor;
-                    if (GBs > 0)
-                    {
-                        // multi GB
-                        var TBs = GBs / factor;
-                        if (TBs > 0)
-                        {
-                            result = TBs + ((GBs % factor) / (factor + 0.0));
-                            unit = "TB";
-                            return;
-                        }
-
-                        result = GBs + ((MBs % factor) / (factor + 0.0));
-                        unit = "GB";
-                        return;
-                    }
-
-                    result = MBs + ((KBs % factor) / (factor + 0.0));
-                    unit = "MB";
-                    return;
-                }
-
-                result = KBs + ((amount % factor) / (factor + 0.0));
-                unit = "KB";
-                return;
-            }
-            else
-            {
-                result = amount;
-                unit = "B";
-            }
-        }
-
         public static string HumanFy(long amount)
         {
-            ToHumanReadable(amount, out var result, out var unit);
-            return $"{result:f1} {unit}";
+            if (amount <= 0)
+            {
+                return $"{amount:f1} B";
+            }
+
+            string[] units = ["KB", "MB", "GB", "TB", "PB"];
+            var unitIndex = 0;
+            double size = amount;
+
+            // Loop and divide by 1024 until a suitable unit is found
+            while (size >= 1024 && unitIndex < units.Length - 1)
+            {
+                size /= 1024;
+                unitIndex++;
+            }
+
+            return $"{size:f1} {units[unitIndex]}";
         }
 
         public static string UrlEncode(string url)
@@ -301,7 +197,7 @@ namespace ServiceLib.Common
         public static NameValueCollection ParseQueryString(string query)
         {
             var result = new NameValueCollection(StringComparer.OrdinalIgnoreCase);
-            if (IsNullOrEmpty(query))
+            if (query.IsNullOrEmpty())
             {
                 return result;
             }
@@ -329,15 +225,54 @@ namespace ServiceLib.Common
 
         public static string GetMd5(string str)
         {
-            var byteOld = Encoding.UTF8.GetBytes(str);
-            var byteNew = MD5.HashData(byteOld);
-            StringBuilder sb = new(32);
-            foreach (var b in byteNew)
+            if (string.IsNullOrEmpty(str))
             {
-                sb.Append(b.ToString("x2"));
+                return string.Empty;
             }
 
-            return sb.ToString();
+            try
+            {
+                var byteOld = Encoding.UTF8.GetBytes(str);
+                var byteNew = MD5.HashData(byteOld);
+                StringBuilder sb = new(32);
+                foreach (var b in byteNew)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
+                return string.Empty;
+            }
+        }
+
+        public static string GetFileHash(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return string.Empty;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                using var md5 = MD5.Create();
+                using var stream = File.OpenRead(filePath);
+                var hash = md5.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -347,7 +282,7 @@ namespace ServiceLib.Common
         /// <returns></returns>
         public static string GetPunycode(string url)
         {
-            if (Utils.IsNullOrEmpty(url))
+            if (url.IsNullOrEmpty())
             {
                 return url;
             }
@@ -372,14 +307,15 @@ namespace ServiceLib.Common
 
         public static bool IsBase64String(string? plainText)
         {
-            if (plainText.IsNullOrEmpty()) return false;
+            if (plainText.IsNullOrEmpty())
+                return false;
             var buffer = new Span<byte>(new byte[plainText.Length]);
             return Convert.TryFromBase64String(plainText, buffer, out var _);
         }
 
         public static string Convert2Comma(string text)
         {
-            if (IsNullOrEmpty(text))
+            if (text.IsNullOrEmpty())
             {
                 return text;
             }
@@ -392,7 +328,7 @@ namespace ServiceLib.Common
         #region 数据检查
 
         /// <summary>
-        /// 判断输入的是否是数字
+        /// Determine if the input is a number
         /// </summary>
         /// <param name="oText"></param>
         /// <returns></returns>
@@ -401,28 +337,13 @@ namespace ServiceLib.Common
             return oText.All(char.IsNumber);
         }
 
-        public static bool IsNullOrEmpty(string? text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return true;
-            }
-
-            return text == "null";
-        }
-
-        public static bool IsNotEmpty(string? text)
-        {
-            return !string.IsNullOrEmpty(text);
-        }
-
         /// <summary>
-        /// 验证Domain地址是否合法
+        /// Validate if the domain address is valid
         /// </summary>
         /// <param name="domain"></param>
         public static bool IsDomain(string? domain)
         {
-            if (IsNullOrEmpty(domain))
+            if (domain.IsNullOrEmpty())
             {
                 return false;
             }
@@ -462,9 +383,12 @@ namespace ServiceLib.Common
             if (IPAddress.TryParse(ip, out var address))
             {
                 var ipBytes = address.GetAddressBytes();
-                if (ipBytes[0] == 10) return true;
-                if (ipBytes[0] == 172 && ipBytes[1] >= 16 && ipBytes[1] <= 31) return true;
-                if (ipBytes[0] == 192 && ipBytes[1] == 168) return true;
+                if (ipBytes[0] == 10)
+                    return true;
+                if (ipBytes[0] == 172 && ipBytes[1] >= 16 && ipBytes[1] <= 31)
+                    return true;
+                if (ipBytes[0] == 192 && ipBytes[1] == 168)
+                    return true;
             }
 
             return false;
@@ -478,10 +402,22 @@ namespace ServiceLib.Common
         {
             try
             {
-                var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-                var ipEndPoints = ipProperties.GetActiveTcpListeners();
-                //var lstIpEndPoints = new List<IPEndPoint>(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners());
-                return ipEndPoints.Any(endPoint => endPoint.Port == port);
+                List<IPEndPoint> lstIpEndPoints = new();
+                List<TcpConnectionInformation> lstTcpConns = new();
+
+                lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners());
+                lstIpEndPoints.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners());
+                lstTcpConns.AddRange(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections());
+
+                if (lstIpEndPoints?.FindIndex(it => it.Port == port) >= 0)
+                {
+                    return true;
+                }
+
+                if (lstTcpConns?.FindIndex(it => it.LocalEndPoint.Port == port) >= 0)
+                {
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -524,7 +460,7 @@ namespace ServiceLib.Common
         }
 
         /// <summary>
-        /// 取得版本
+        /// Get version
         /// </summary>
         /// <returns></returns>
         public static string GetVersion(bool blFull = true)
@@ -562,7 +498,7 @@ namespace ServiceLib.Common
         }
 
         /// <summary>
-        /// 取得GUID
+        /// GUID
         /// </summary>
         /// <returns></returns>
         public static string GetGuid(bool full = true)
@@ -604,9 +540,11 @@ namespace ServiceLib.Common
 
                     foreach (var host in hostsList)
                     {
-                        if (host.StartsWith("#")) continue;
+                        if (host.StartsWith("#"))
+                            continue;
                         var hostItem = host.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (hostItem.Length != 2) continue;
+                        if (hostItem.Length != 2)
+                            continue;
                         systemHosts.Add(hostItem.Last(), hostItem.First());
                     }
                 }
@@ -665,13 +603,20 @@ namespace ServiceLib.Common
         {
             try
             {
+                var basePath = GetBaseDirectory();
                 //When this file exists, it is equivalent to having no permission to read and write
-                if (File.Exists(Path.Combine(GetBaseDirectory(), "NotStoreConfigHere.txt")))
+                if (File.Exists(Path.Combine(basePath, "NotStoreConfigHere.txt")))
                 {
                     return false;
                 }
 
-                var tempPath = Path.Combine(GetBaseDirectory(), "guiTemps");
+                //Check if it is installed by Windows WinGet
+                if (IsWindows() && basePath.Contains("Users") && basePath.Contains("WinGet"))
+                {
+                    return false;
+                }
+
+                var tempPath = Path.Combine(basePath, "guiTemps");
                 if (!Directory.Exists(tempPath))
                 {
                     Directory.CreateDirectory(tempPath);
@@ -691,7 +636,7 @@ namespace ServiceLib.Common
         public static string GetPath(string fileName)
         {
             var startupPath = StartupPath();
-            if (IsNullOrEmpty(fileName))
+            if (fileName.IsNullOrEmpty())
             {
                 return startupPath;
             }
@@ -727,7 +672,7 @@ namespace ServiceLib.Common
                 Directory.CreateDirectory(tempPath);
             }
 
-            if (IsNullOrEmpty(filename))
+            if (filename.IsNullOrEmpty())
             {
                 return tempPath;
             }
@@ -756,7 +701,7 @@ namespace ServiceLib.Common
                 Directory.CreateDirectory(tempPath);
             }
 
-            if (Utils.IsNullOrEmpty(filename))
+            if (filename.IsNullOrEmpty())
             {
                 return tempPath;
             }
@@ -783,7 +728,7 @@ namespace ServiceLib.Common
                 }
             }
 
-            if (IsNullOrEmpty(filename))
+            if (filename.IsNullOrEmpty())
             {
                 return tempPath;
             }
@@ -801,7 +746,7 @@ namespace ServiceLib.Common
                 Directory.CreateDirectory(tempPath);
             }
 
-            if (Utils.IsNullOrEmpty(filename))
+            if (filename.IsNullOrEmpty())
             {
                 return tempPath;
             }
@@ -819,7 +764,25 @@ namespace ServiceLib.Common
                 Directory.CreateDirectory(tempPath);
             }
 
-            if (Utils.IsNullOrEmpty(filename))
+            if (filename.IsNullOrEmpty())
+            {
+                return tempPath;
+            }
+            else
+            {
+                return Path.Combine(tempPath, filename);
+            }
+        }
+
+        public static string GetBinConfigPath(string filename = "")
+        {
+            var tempPath = Path.Combine(StartupPath(), "binConfigs");
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            if (filename.IsNullOrEmpty())
             {
                 return tempPath;
             }
@@ -870,23 +833,25 @@ namespace ServiceLib.Common
         private static async Task<string?> GetLinuxUserId()
         {
             var arg = new List<string>() { "-c", "id -u" };
-            return await GetCliWrapOutput("/bin/bash", arg);
+            return await GetCliWrapOutput(Global.LinuxBash, arg);
         }
 
         public static async Task<string?> SetLinuxChmod(string? fileName)
         {
-            if (fileName.IsNullOrEmpty()) return null;
-            if (fileName.Contains(' ')) fileName = fileName.AppendQuotes();
+            if (fileName.IsNullOrEmpty())
+                return null;
+            if (fileName.Contains(' '))
+                fileName = fileName.AppendQuotes();
             //File.SetUnixFileMode(fileName, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             var arg = new List<string>() { "-c", $"chmod +x {fileName}" };
-            return await GetCliWrapOutput("/bin/bash", arg);
+            return await GetCliWrapOutput(Global.LinuxBash, arg);
         }
 
         public static async Task<string?> GetLinuxFontFamily(string lang)
         {
             // var arg = new List<string>() { "-c", $"fc-list :lang={lang} family" };
             var arg = new List<string>() { "-c", $"fc-list : family" };
-            return await GetCliWrapOutput("/bin/bash", arg);
+            return await GetCliWrapOutput(Global.LinuxBash, arg);
         }
 
         public static string? GetHomePath()
@@ -894,12 +859,6 @@ namespace ServiceLib.Common
             return IsWindows()
                 ? Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%")
                 : Environment.GetEnvironmentVariable("HOME");
-        }
-
-        public static async Task<string?> GetListNetworkServices()
-        {
-            var arg = new List<string>() { "-c", $"networksetup -listallnetworkservices" };
-            return await GetCliWrapOutput("/bin/bash", arg);
         }
 
         #endregion Platform

@@ -1,6 +1,6 @@
-﻿using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System.Reactive;
+using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace ServiceLib.ViewModels
 {
@@ -78,8 +78,8 @@ namespace ServiceLib.ViewModels
               || SelectedSource.Ip?.Count > 0
               || SelectedSource.Protocol?.Count > 0
               || SelectedSource.Process?.Count > 0
-              || Utils.IsNotEmpty(SelectedSource.Port)
-              || Utils.IsNotEmpty(SelectedSource.Network);
+              || SelectedSource.Port.IsNotEmpty()
+              || SelectedSource.Network.IsNotEmpty();
 
             if (!hasRule)
             {

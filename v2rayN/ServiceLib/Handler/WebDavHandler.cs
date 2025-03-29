@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using WebDav;
 
 namespace ServiceLib.Handler
@@ -8,7 +8,7 @@ namespace ServiceLib.Handler
         private static readonly Lazy<WebDavHandler> _instance = new(() => new());
         public static WebDavHandler Instance => _instance.Value;
 
-        private Config? _config;
+        private readonly Config? _config;
         private WebDavClient? _client;
         private string? _lastDescription;
         private string _webDir = Global.AppName + "_backup";
@@ -61,7 +61,10 @@ namespace ServiceLib.Handler
 
         private async Task<bool> TryCreateDir()
         {
-            if (_client is null) return false;
+            if (_client is null)
+            {
+                return false;
+            }
             try
             {
                 var result2 = await _client.Mkcol(_webDir);

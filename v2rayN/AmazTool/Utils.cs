@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace AmazTool
 {
@@ -16,7 +16,7 @@ namespace AmazTool
 
         public static string GetPath(string fileName)
         {
-            string startupPath = StartupPath();
+            var startupPath = StartupPath();
             if (string.IsNullOrEmpty(fileName))
             {
                 return startupPath;

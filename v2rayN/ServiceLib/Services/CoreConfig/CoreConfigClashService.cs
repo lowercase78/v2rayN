@@ -44,8 +44,8 @@ namespace ServiceLib.Services.CoreConfig
                     File.Delete(fileName);
                 }
 
-                string addressFileName = node.Address;
-                if (Utils.IsNullOrEmpty(addressFileName))
+                var addressFileName = node.Address;
+                if (addressFileName.IsNullOrEmpty())
                 {
                     ret.Msg = ResUI.FailedGetDefaultConfiguration;
                     return ret;
@@ -60,9 +60,9 @@ namespace ServiceLib.Services.CoreConfig
                     return ret;
                 }
 
-                string tagYamlStr1 = "!<str>";
-                string tagYamlStr2 = "__strn__";
-                string tagYamlStr3 = "!!str";
+                var tagYamlStr1 = "!<str>";
+                var tagYamlStr2 = "__strn__";
+                var tagYamlStr3 = "!!str";
                 var txtFile = File.ReadAllText(addressFileName);
                 txtFile = txtFile.Replace(tagYamlStr1, tagYamlStr2);
 
@@ -116,19 +116,21 @@ namespace ServiceLib.Services.CoreConfig
                 //enable tun mode
                 if (_config.TunModeItem.EnableTun)
                 {
-                    string tun = Utils.GetEmbedText(Global.ClashTunYaml);
-                    if (Utils.IsNotEmpty(tun))
+                    var tun = EmbedUtils.GetEmbedText(Global.ClashTunYaml);
+                    if (tun.IsNotEmpty())
                     {
                         var tunContent = YamlUtils.FromYaml<Dictionary<string, object>>(tun);
                         if (tunContent != null)
+                        {
                             fileContent["tun"] = tunContent["tun"];
+                        }
                     }
                 }
 
                 //Mixin
                 try
                 {
-                    MixinContent(fileContent, node);
+                    await MixinContent(fileContent, node);
                 }
                 catch (Exception ex)
                 {
@@ -158,20 +160,21 @@ namespace ServiceLib.Services.CoreConfig
             }
         }
 
-        private void MixinContent(Dictionary<string, object> fileContent, ProfileItem node)
+        private async Task MixinContent(Dictionary<string, object> fileContent, ProfileItem node)
         {
-            //if (!_config.clashUIItem.enableMixinContent)
-            //{
-            //    return;
-            //}
-
-            var path = Utils.GetConfigPath(Global.ClashMixinConfigFileName);
-            if (!File.Exists(path))
+            if (!_config.ClashUIItem.EnableMixinContent)
             {
                 return;
             }
 
-            var txtFile = File.ReadAllText(Utils.GetConfigPath(Global.ClashMixinConfigFileName));
+            var path = Utils.GetConfigPath(Global.ClashMixinConfigFileName);
+            if (!File.Exists(path))
+            {
+                var mixin = EmbedUtils.GetEmbedText(Global.ClashMixinYaml);
+                await File.AppendAllTextAsync(path, mixin);
+            }
+
+            var txtFile = await File.ReadAllTextAsync(Utils.GetConfigPath(Global.ClashMixinConfigFileName));
 
             var mixinContent = YamlUtils.FromYaml<Dictionary<string, object>>(txtFile);
             if (mixinContent == null)
@@ -201,8 +204,8 @@ namespace ServiceLib.Services.CoreConfig
 
         private void ModifyContentMerge(Dictionary<string, object> fileContent, string key, object value)
         {
-            bool blPrepend = false;
-            bool blRemoved = false;
+            var blPrepend = false;
+            var blRemoved = false;
             if (key.StartsWith("prepend-"))
             {
                 blPrepend = true;
@@ -243,17 +246,11 @@ namespace ServiceLib.Services.CoreConfig
             if (blPrepend)
             {
                 lstValue.Reverse();
-                foreach (var item in lstValue)
-                {
-                    lstOri.Insert(0, item);
-                }
+                lstValue.ForEach(item => lstOri.Insert(0, item));
             }
             else
             {
-                foreach (var item in lstValue)
-                {
-                    lstOri.Add(item);
-                }
+                lstValue.ForEach(item => lstOri.Add(item));
             }
         }
 

@@ -1,6 +1,6 @@
-﻿using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System.Reactive;
+using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace ServiceLib.ViewModels
 {
@@ -27,7 +27,7 @@ namespace ServiceLib.ViewModels
         private async Task SaveSubAsync()
         {
             var remarks = SelectedSource.Remarks;
-            if (Utils.IsNullOrEmpty(remarks))
+            if (remarks.IsNullOrEmpty())
             {
                 NoticeHandler.Instance.Enqueue(ResUI.PleaseFillRemarks);
                 return;

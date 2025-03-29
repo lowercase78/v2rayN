@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler
+namespace ServiceLib.Handler
 {
     public sealed class AppHandler
     {
@@ -80,8 +80,6 @@
             Logging.SaveLog($"v2rayN start up | {Utils.GetRuntimeInfo()}");
             Logging.LoggingEnabled(_config.GuiItem.EnableLog);
 
-            ClearExpiredFiles();
-
             return true;
         }
 
@@ -90,15 +88,6 @@
             _statePort = null;
             _statePort2 = null;
             return true;
-        }
-
-        private void ClearExpiredFiles()
-        {
-            Task.Run(() =>
-            {
-                FileManager.DeleteExpiredFiles(Utils.GetLogPath(), DateTime.Now.AddMonths(-1));
-                FileManager.DeleteExpiredFiles(Utils.GetTempPath(), DateTime.Now.AddMonths(-1));
-            });
         }
 
         #endregion Init
@@ -142,7 +131,7 @@
 
         public async Task<List<ProfileItem>?> ProfileItems(string subid)
         {
-            if (Utils.IsNullOrEmpty(subid))
+            if (subid.IsNullOrEmpty())
             {
                 return await SQLiteHelper.Instance.TableAsync<ProfileItem>().ToListAsync();
             }
@@ -164,11 +153,11 @@
                         from ProfileItem a
                         left join SubItem b on a.subid = b.id
                         where 1=1 ";
-            if (Utils.IsNotEmpty(subid))
+            if (subid.IsNotEmpty())
             {
                 sql += $" and a.subid = '{subid}'";
             }
-            if (Utils.IsNotEmpty(filter))
+            if (filter.IsNotEmpty())
             {
                 if (filter.Contains('\''))
                 {
@@ -182,7 +171,7 @@
 
         public async Task<ProfileItem?> GetProfileItem(string indexId)
         {
-            if (Utils.IsNullOrEmpty(indexId))
+            if (indexId.IsNullOrEmpty())
             {
                 return null;
             }
@@ -191,7 +180,7 @@
 
         public async Task<ProfileItem?> GetProfileItemViaRemarks(string? remarks)
         {
-            if (Utils.IsNullOrEmpty(remarks))
+            if (remarks.IsNullOrEmpty())
             {
                 return null;
             }

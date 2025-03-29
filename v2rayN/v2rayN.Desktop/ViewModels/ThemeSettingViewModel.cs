@@ -1,3 +1,4 @@
+using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -7,7 +8,6 @@ using Avalonia.Styling;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Semi.Avalonia;
-using System.Reactive.Linq;
 
 namespace v2rayN.Desktop.ViewModels
 {
@@ -69,7 +69,7 @@ namespace v2rayN.Desktop.ViewModels
                     y => y != null && !y.IsNullOrEmpty())
                 .Subscribe(c =>
                 {
-                    if (Utils.IsNotEmpty(CurrentLanguage) && _config.UiItem.CurrentLanguage != CurrentLanguage)
+                    if (CurrentLanguage.IsNotEmpty() && _config.UiItem.CurrentLanguage != CurrentLanguage)
                     {
                         _config.UiItem.CurrentLanguage = CurrentLanguage;
                         Thread.CurrentThread.CurrentUICulture = new(CurrentLanguage);
@@ -100,7 +100,8 @@ namespace v2rayN.Desktop.ViewModels
         private void ModifyFontSize()
         {
             double size = CurrentFontSize;
-            if (size < Global.MinFontSize) return;
+            if (size < Global.MinFontSize)
+                return;
 
             Style style = new(x => Selectors.Or(
                 x.OfType<Button>(),
@@ -117,6 +118,17 @@ namespace v2rayN.Desktop.ViewModels
                 Property = TemplatedControl.FontSizeProperty,
                 Value = size,
             });
+            Application.Current?.Styles.Add(style);
+
+            ModifyFontSizeEx(size);
+        }
+
+        private void ModifyFontSizeEx(double size)
+        {
+            //DataGrid
+            var rowHeight = 20 + (size / 2);
+            var style = new Style(x => x.OfType<DataGrid>());
+            style.Add(new Setter(DataGrid.RowHeightProperty, rowHeight));
             Application.Current?.Styles.Add(style);
         }
 

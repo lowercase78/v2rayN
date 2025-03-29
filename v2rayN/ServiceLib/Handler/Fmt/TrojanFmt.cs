@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler.Fmt
+namespace ServiceLib.Handler.Fmt
 {
     public class TrojanFmt : BaseFmt
     {
@@ -12,7 +12,10 @@
             };
 
             var url = Utils.TryUri(str);
-            if (url == null) return null;
+            if (url == null)
+            {
+                return null;
+            }
 
             item.Address = url.IdnHost;
             item.Port = url.Port;
@@ -20,23 +23,24 @@
             item.Id = Utils.UrlDecode(url.UserInfo);
 
             var query = Utils.ParseQueryString(url.Query);
-            ResolveStdTransport(query, ref item);
+            _ = ResolveStdTransport(query, ref item);
 
             return item;
         }
 
         public static string? ToUri(ProfileItem? item)
         {
-            if (item == null) return null;
-            string url = string.Empty;
-
-            string remark = string.Empty;
-            if (Utils.IsNotEmpty(item.Remarks))
+            if (item == null)
+            {
+                return null;
+            }
+            var remark = string.Empty;
+            if (item.Remarks.IsNotEmpty())
             {
                 remark = "#" + Utils.UrlEncode(item.Remarks);
             }
             var dicQuery = new Dictionary<string, string>();
-            GetStdTransport(item, null, ref dicQuery);
+            _ = GetStdTransport(item, null, ref dicQuery);
 
             return ToUri(EConfigType.Trojan, item.Address, item.Port, item.Id, dicQuery, remark);
         }

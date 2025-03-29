@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler.Fmt
+namespace ServiceLib.Handler.Fmt
 {
     public class Hysteria2Fmt : BaseFmt
     {
@@ -11,7 +11,8 @@
             };
 
             var url = Utils.TryUri(str);
-            if (url == null) return null;
+            if (url == null)
+                return null;
 
             item.Address = url.IdnHost;
             item.Port = url.Port;
@@ -23,34 +24,41 @@
             item.Path = Utils.UrlDecode(query["obfs-password"] ?? "");
             item.AllowInsecure = (query["insecure"] ?? "") == "1" ? "true" : "false";
 
+            item.Ports = Utils.UrlDecode(query["mport"] ?? "").Replace('-', ':');
+
             return item;
         }
 
         public static string? ToUri(ProfileItem? item)
         {
-            if (item == null) return null;
+            if (item == null)
+                return null;
             string url = string.Empty;
 
             string remark = string.Empty;
-            if (Utils.IsNotEmpty(item.Remarks))
+            if (item.Remarks.IsNotEmpty())
             {
                 remark = "#" + Utils.UrlEncode(item.Remarks);
             }
             var dicQuery = new Dictionary<string, string>();
-            if (Utils.IsNotEmpty(item.Sni))
+            if (item.Sni.IsNotEmpty())
             {
                 dicQuery.Add("sni", item.Sni);
             }
-            if (Utils.IsNotEmpty(item.Alpn))
+            if (item.Alpn.IsNotEmpty())
             {
                 dicQuery.Add("alpn", Utils.UrlEncode(item.Alpn));
             }
-            if (Utils.IsNotEmpty(item.Path))
+            if (item.Path.IsNotEmpty())
             {
                 dicQuery.Add("obfs", "salamander");
                 dicQuery.Add("obfs-password", Utils.UrlEncode(item.Path));
             }
             dicQuery.Add("insecure", item.AllowInsecure.ToLower() == "true" ? "1" : "0");
+            if (item.Ports.IsNotEmpty())
+            {
+                dicQuery.Add("mport", Utils.UrlEncode(item.Ports.Replace(':', '-')));
+            }
 
             return ToUri(EConfigType.Hysteria2, item.Address, item.Port, item.Id, dicQuery, remark);
         }

@@ -1,9 +1,9 @@
-﻿using DynamicData.Binding;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System.Reactive;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DynamicData.Binding;
+using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace ServiceLib.ViewModels
 {
@@ -224,7 +224,7 @@ namespace ServiceLib.ViewModels
         private async Task SaveRoutingAsync()
         {
             string remarks = SelectedRouting.Remarks;
-            if (Utils.IsNullOrEmpty(remarks))
+            if (remarks.IsNullOrEmpty())
             {
                 NoticeHandler.Instance.Enqueue(ResUI.PleaseFillRemarks);
                 return;
@@ -252,13 +252,13 @@ namespace ServiceLib.ViewModels
 
         public async Task ImportRulesFromFileAsync(string fileName)
         {
-            if (Utils.IsNullOrEmpty(fileName))
+            if (fileName.IsNullOrEmpty())
             {
                 return;
             }
 
-            var result = Utils.LoadResource(fileName);
-            if (Utils.IsNullOrEmpty(result))
+            var result = EmbedUtils.LoadResource(fileName);
+            if (result.IsNullOrEmpty())
             {
                 return;
             }
@@ -288,7 +288,7 @@ namespace ServiceLib.ViewModels
         private async Task ImportRulesFromUrl()
         {
             var url = SelectedRouting.Url;
-            if (Utils.IsNullOrEmpty(url))
+            if (url.IsNullOrEmpty())
             {
                 NoticeHandler.Instance.Enqueue(ResUI.MsgNeedUrl);
                 return;
@@ -311,7 +311,7 @@ namespace ServiceLib.ViewModels
             {
                 blReplace = true;
             }
-            if (Utils.IsNullOrEmpty(clipboardData))
+            if (clipboardData.IsNullOrEmpty())
             {
                 return -1;
             }

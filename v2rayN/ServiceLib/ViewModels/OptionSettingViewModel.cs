@@ -1,6 +1,6 @@
-﻿using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System.Reactive;
+using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace ServiceLib.ViewModels
 {
@@ -63,7 +63,7 @@ namespace ServiceLib.ViewModels
         [Reactive] public int SpeedTestTimeout { get; set; }
         [Reactive] public string SpeedTestUrl { get; set; }
         [Reactive] public string SpeedPingTestUrl { get; set; }
-        [Reactive] public int SpeedTestPageSize { get; set; }
+        [Reactive] public int MixedConcurrencyCount { get; set; }
         [Reactive] public bool EnableHWA { get; set; }
         [Reactive] public string SubConvertUrl { get; set; }
         [Reactive] public int MainGirdOrientation { get; set; }
@@ -178,7 +178,7 @@ namespace ServiceLib.ViewModels
             CurrentFontFamily = _config.UiItem.CurrentFontFamily;
             SpeedTestTimeout = _config.SpeedTestItem.SpeedTestTimeout;
             SpeedTestUrl = _config.SpeedTestItem.SpeedTestUrl;
-            SpeedTestPageSize = _config.SpeedTestItem.SpeedTestPageSize;
+            MixedConcurrencyCount = _config.SpeedTestItem.MixedConcurrencyCount;
             SpeedPingTestUrl = _config.SpeedTestItem.SpeedPingTestUrl;
             EnableHWA = _config.GuiItem.EnableHWA;
             SubConvertUrl = _config.ConstItem.SubConvertUrl;
@@ -266,7 +266,7 @@ namespace ServiceLib.ViewModels
 
         private async Task SaveSettingAsync()
         {
-            if (Utils.IsNullOrEmpty(localPort.ToString()) || !Utils.IsNumeric(localPort.ToString())
+            if (localPort.ToString().IsNullOrEmpty() || !Utils.IsNumeric(localPort.ToString())
                || localPort <= 0 || localPort >= Global.MaxPort)
             {
                 NoticeHandler.Instance.Enqueue(ResUI.FillLocalListeningPort);
@@ -332,7 +332,7 @@ namespace ServiceLib.ViewModels
             _config.GuiItem.TrayMenuServersLimit = TrayMenuServersLimit;
             _config.UiItem.CurrentFontFamily = CurrentFontFamily;
             _config.SpeedTestItem.SpeedTestTimeout = SpeedTestTimeout;
-            _config.SpeedTestItem.SpeedTestPageSize = SpeedTestPageSize;
+            _config.SpeedTestItem.MixedConcurrencyCount = MixedConcurrencyCount;
             _config.SpeedTestItem.SpeedTestUrl = SpeedTestUrl;
             _config.SpeedTestItem.SpeedPingTestUrl = SpeedPingTestUrl;
             _config.GuiItem.EnableHWA = EnableHWA;

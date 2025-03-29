@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler.Fmt
+namespace ServiceLib.Handler.Fmt
 {
     public class VLESSFmt : BaseFmt
     {
@@ -13,7 +13,10 @@
             };
 
             var url = Utils.TryUri(str);
-            if (url == null) return null;
+            if (url == null)
+            {
+                return null;
+            }
 
             item.Address = url.IdnHost;
             item.Port = url.Port;
@@ -23,23 +26,25 @@
             var query = Utils.ParseQueryString(url.Query);
             item.Security = query["encryption"] ?? Global.None;
             item.StreamSecurity = query["security"] ?? "";
-            ResolveStdTransport(query, ref item);
+            _ = ResolveStdTransport(query, ref item);
 
             return item;
         }
 
         public static string? ToUri(ProfileItem? item)
         {
-            if (item == null) return null;
-            string url = string.Empty;
+            if (item == null)
+            {
+                return null;
+            }
 
-            string remark = string.Empty;
-            if (Utils.IsNotEmpty(item.Remarks))
+            var remark = string.Empty;
+            if (item.Remarks.IsNotEmpty())
             {
                 remark = "#" + Utils.UrlEncode(item.Remarks);
             }
             var dicQuery = new Dictionary<string, string>();
-            if (Utils.IsNotEmpty(item.Security))
+            if (item.Security.IsNotEmpty())
             {
                 dicQuery.Add("encryption", item.Security);
             }
@@ -47,7 +52,7 @@
             {
                 dicQuery.Add("encryption", Global.None);
             }
-            GetStdTransport(item, Global.None, ref dicQuery);
+            _ = GetStdTransport(item, Global.None, ref dicQuery);
 
             return ToUri(EConfigType.VLESS, item.Address, item.Port, item.Id, dicQuery, remark);
         }

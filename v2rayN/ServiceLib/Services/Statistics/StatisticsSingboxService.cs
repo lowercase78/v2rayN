@@ -1,11 +1,11 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 
 namespace ServiceLib.Services.Statistics
 {
     public class StatisticsSingboxService
     {
-        private Config _config;
+        private readonly Config _config;
         private bool _exitFlag;
         private ClientWebSocket? webSocket;
         private Action<ServerSpeedItem>? _updateFunc;
@@ -18,10 +18,10 @@ namespace ServiceLib.Services.Statistics
             _updateFunc = updateFunc;
             _exitFlag = false;
 
-            Task.Run(Run);
+            _ = Task.Run(Run);
         }
 
-        private async void Init()
+        private async Task Init()
         {
             await Task.Delay(5000);
 
@@ -53,9 +53,9 @@ namespace ServiceLib.Services.Statistics
             }
         }
 
-        private async void Run()
+        private async Task Run()
         {
-            Init();
+            await Init();
 
             while (!_exitFlag)
             {
@@ -68,12 +68,11 @@ namespace ServiceLib.Services.Statistics
                     }
                     if (webSocket != null)
                     {
-                        if (webSocket.State == WebSocketState.Aborted
-                            || webSocket.State == WebSocketState.Closed)
+                        if (webSocket.State is WebSocketState.Aborted or WebSocketState.Closed)
                         {
                             webSocket.Abort();
                             webSocket = null;
-                            Init();
+                            await Init();
                             continue;
                         }
 
@@ -87,9 +86,9 @@ namespace ServiceLib.Services.Statistics
                         while (!res.CloseStatus.HasValue)
                         {
                             var result = Encoding.UTF8.GetString(buffer, 0, res.Count);
-                            if (Utils.IsNotEmpty(result))
+                            if (result.IsNotEmpty())
                             {
-                                ParseOutput(result, out ulong up, out ulong down);
+                                ParseOutput(result, out var up, out var down);
 
                                 _updateFunc?.Invoke(new ServerSpeedItem()
                                 {
@@ -109,7 +108,8 @@ namespace ServiceLib.Services.Statistics
 
         private void ParseOutput(string source, out ulong up, out ulong down)
         {
-            up = 0; down = 0;
+            up = 0;
+            down = 0;
             try
             {
                 var trafficItem = JsonUtils.Deserialize<TrafficItem>(source);

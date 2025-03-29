@@ -1,4 +1,8 @@
-﻿namespace ServiceLib.Handler
+using DynamicData;
+using ServiceLib.Enums;
+using ServiceLib.Models;
+
+namespace ServiceLib.Handler
 {
     /// <summary>
     /// Core configuration file processing class
@@ -33,7 +37,7 @@
             {
                 return result;
             }
-            if (Utils.IsNotEmpty(fileName) && result.Data != null)
+            if (fileName.IsNotEmpty() && result.Data != null)
             {
                 await File.WriteAllTextAsync(fileName, result.Data.ToString());
             }
@@ -109,16 +113,40 @@
             return result;
         }
 
-        public static async Task<RetResult> GenerateClientMultipleLoadConfig(Config config, string fileName, List<ProfileItem> selecteds, ECoreType coreType)
+        public static async Task<RetResult> GenerateClientSpeedtestConfig(Config config, ProfileItem node, ServerTestItem testItem, string fileName)
+        {
+            var result = new RetResult();
+            var initPort = AppHandler.Instance.GetLocalPort(EInboundProtocol.speedtest);
+            var port = Utils.GetFreePort(initPort + testItem.QueueNum);
+            testItem.Port = port;
+
+            if (AppHandler.Instance.GetCoreType(node, node.ConfigType) == ECoreType.sing_box)
+            {
+                result = await new CoreConfigSingboxService(config).GenerateClientSpeedtestConfig(node, port);
+            }
+            else
+            {
+                result = await new CoreConfigV2rayService(config).GenerateClientSpeedtestConfig(node, port);
+            }
+            if (result.Success != true)
+            {
+                return result;
+            }
+
+            await File.WriteAllTextAsync(fileName, result.Data.ToString());
+            return result;
+        }
+
+        public static async Task<RetResult> GenerateClientMultipleLoadConfig(Config config, string fileName, List<ProfileItem> selecteds, ECoreType coreType, EMultipleLoad multipleLoad)
         {
             var result = new RetResult();
             if (coreType == ECoreType.sing_box)
             {
                 result = await new CoreConfigSingboxService(config).GenerateClientMultipleLoadConfig(selecteds);
             }
-            else if (coreType == ECoreType.Xray)
+            else
             {
-                result = await new CoreConfigV2rayService(config).GenerateClientMultipleLoadConfig(selecteds);
+                result = await new CoreConfigV2rayService(config).GenerateClientMultipleLoadConfig(selecteds, multipleLoad);
             }
 
             if (result.Success != true)

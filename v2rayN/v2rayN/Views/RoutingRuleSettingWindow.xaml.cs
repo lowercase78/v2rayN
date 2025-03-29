@@ -1,7 +1,7 @@
-﻿using ReactiveUI;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Input;
+using ReactiveUI;
 
 namespace v2rayN.Views
 {
@@ -89,7 +89,8 @@ namespace v2rayN.Views
 
                 case EViewAction.RoutingRuleDetailsWindow:
 
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new RoutingRuleDetailsWindow((RulesItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.ImportRulesFromFile:
@@ -102,13 +103,17 @@ namespace v2rayN.Views
                     break;
 
                 case EViewAction.SetClipboardData:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     WindowsUtils.SetClipboardData((string)obj);
                     break;
 
                 case EViewAction.ImportRulesFromClipboard:
                     var clipboardData = WindowsUtils.GetClipboardData();
-                    ViewModel?.ImportRulesFromClipboardAsync(clipboardData);
+                    if (clipboardData.IsNotEmpty())
+                    {
+                        ViewModel?.ImportRulesFromClipboardAsync(clipboardData);
+                    }
                     break;
             }
 
@@ -160,7 +165,10 @@ namespace v2rayN.Views
 
         private void lstRules_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            ViewModel.SelectedSources = lstRules.SelectedItems.Cast<RulesItemModel>().ToList();
+            if (ViewModel != null)
+            {
+                ViewModel.SelectedSources = lstRules.SelectedItems.Cast<RulesItemModel>().ToList();
+            }
         }
 
         private void LstRules_MouseDoubleClick(object sender, MouseButtonEventArgs e)

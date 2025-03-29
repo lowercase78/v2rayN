@@ -1,11 +1,11 @@
-﻿using Avalonia.Controls;
+using System.Reactive.Disposables;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using DialogHostAvalonia;
 using DynamicData;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
-using System.Reactive.Disposables;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views
@@ -52,13 +52,15 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case EViewAction.SubEditWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     var window = new SubEditWindow((SubItem)obj);
                     await window.ShowDialog(this);
                     break;
 
                 case EViewAction.ShareSub:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     await ShareSub((string)obj);
                     break;
             }
@@ -67,7 +69,7 @@ namespace v2rayN.Desktop.Views
 
         private async Task ShareSub(string url)
         {
-            if (Utils.IsNullOrEmpty(url))
+            if (url.IsNullOrEmpty())
             {
                 return;
             }
@@ -82,7 +84,10 @@ namespace v2rayN.Desktop.Views
 
         private void LstSubscription_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            ViewModel.SelectedSources = lstSubscription.SelectedItems.Cast<SubItem>().ToList();
+            if (ViewModel != null)
+            {
+                ViewModel.SelectedSources = lstSubscription.SelectedItems.Cast<SubItem>().ToList();
+            }
         }
 
         private void menuClose_Click(object? sender, RoutedEventArgs e)

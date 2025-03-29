@@ -4,23 +4,17 @@ namespace ServiceLib.Models
 {
     public class V2rayConfig
     {
-        public string? remarks { get; set; }
-
         public Log4Ray log { get; set; }
-
-        public List<Inbounds4Ray> inbounds { get; set; }
-
-        public List<Outbounds4Ray> outbounds { get; set; }
-
-        public Stats4Ray? stats { get; set; }
-
-        public Metrics4Ray? metrics { get; set; }
-
-        public Policy4Ray? policy { get; set; }
-
         public object dns { get; set; }
-
+        public List<Inbounds4Ray> inbounds { get; set; }
+        public List<Outbounds4Ray> outbounds { get; set; }
         public Routing4Ray routing { get; set; }
+        public Metrics4Ray? metrics { get; set; }
+        public Policy4Ray? policy { get; set; }
+        public Stats4Ray? stats { get; set; }
+        public Observatory4Ray? observatory { get; set; }
+        public BurstObservatory4Ray? burstObservatory { get; set; }
+        public string? remarks { get; set; }
     }
 
     public class Stats4Ray
@@ -240,6 +234,46 @@ namespace ServiceLib.Models
     public class BalancersStrategy4Ray
     {
         public string? type { get; set; }
+        public BalancersStrategySettings4Ray? settings { get; set; }
+    }
+
+    public class BalancersStrategySettings4Ray
+    {
+        public int? expected { get; set; }
+        public string? maxRTT { get; set; }
+        public float? tolerance { get; set; }
+        public List<string>? baselines { get; set; }
+        public List<BalancersStrategySettingsCosts4Ray>? costs { get; set; }
+    }
+
+    public class BalancersStrategySettingsCosts4Ray
+    {
+        public bool? regexp { get; set; }
+        public string? match { get; set; }
+        public float? value { get; set; }
+    }
+
+    public class Observatory4Ray
+    {
+        public List<string>? subjectSelector { get; set; }
+        public string? probeUrl { get; set; }
+        public string? probeInterval { get; set; }
+        public bool? enableConcurrency { get; set; }
+    }
+
+    public class BurstObservatory4Ray
+    {
+        public List<string>? subjectSelector { get; set; }
+        public BurstObservatoryPingConfig4Ray? pingConfig { get; set; }
+    }
+
+    public class BurstObservatoryPingConfig4Ray
+    {
+        public string? destination { get; set; }
+        public string? connectivity { get; set; }
+        public string? interval { get; set; }
+        public int? sampling { get; set; }
+        public string? timeout { get; set; }
     }
 
     public class StreamSettings4Ray
@@ -299,6 +333,8 @@ namespace ServiceLib.Models
         public object request { get; set; }
 
         public object response { get; set; }
+
+        public string? domain { get; set; }
     }
 
     public class KcpSettings4Ray

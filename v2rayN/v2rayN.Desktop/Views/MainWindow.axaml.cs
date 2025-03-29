@@ -1,4 +1,5 @@
-﻿using Avalonia;
+using System.Reactive.Disposables;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Notifications;
@@ -10,8 +11,8 @@ using DialogHostAvalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using Splat;
-using System.Reactive.Disposables;
 using v2rayN.Desktop.Common;
+using v2rayN.Desktop.Handler;
 
 namespace v2rayN.Desktop.Views
 {
@@ -138,8 +139,7 @@ namespace v2rayN.Desktop.Views
             if (Utils.IsWindows())
             {
                 ThreadPool.RegisterWaitForSingleObject(Program.ProgramStarted, OnProgramStarted, null, -1, false);
-
-                menuGlobalHotkeySetting.IsVisible = false;
+                HotkeyHandler.Instance.Init(_config, OnHotkeyHandler);
             }
             else
             {
@@ -156,7 +156,6 @@ namespace v2rayN.Desktop.Views
 
             RestoreUI();
             AddHelpMenuItem();
-            //WindowsHandler.Instance.RegisterGlobalHotkey(_config, OnHotkeyHandler, null);
             MessageBus.Current.Listen<string>(EMsgCommand.AppExit.ToString()).Subscribe(StorageUI);
         }
 
@@ -181,11 +180,13 @@ namespace v2rayN.Desktop.Views
             switch (action)
             {
                 case EViewAction.AddServerWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return await new AddServerWindow((ProfileItem)obj).ShowDialog<bool>(this);
 
                 case EViewAction.AddServer2Window:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return await new AddServer2Window((ProfileItem)obj).ShowDialog<bool>(this);
 
                 case EViewAction.DNSSettingWindow:
@@ -210,7 +211,8 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case EViewAction.DispatcherStatistics:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Dispatcher.UIThread.Post(() =>
                         ViewModel?.SetStatisticsResult((ServerSpeedItem)obj),
                     DispatcherPriority.Default);
@@ -230,6 +232,7 @@ namespace v2rayN.Desktop.Views
                     StorageUI();
                     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                     {
+                        HotkeyHandler.Instance.Dispose();
                         desktop.Shutdown();
                     }
                     break;
@@ -244,7 +247,10 @@ namespace v2rayN.Desktop.Views
 
                 case EViewAction.AddServerViaClipboard:
                     var clipboardData = await AvaUtils.GetClipboardData(this);
-                    ViewModel?.AddServerViaClipboardAsync(clipboardData);
+                    if (clipboardData.IsNotEmpty() && ViewModel != null)
+                    {
+                        await ViewModel.AddServerViaClipboardAsync(clipboardData);
+                    }
                     break;
 
                 case EViewAction.AdjustMainLvColWidth:
@@ -265,21 +271,12 @@ namespace v2rayN.Desktop.Views
                     ShowHideWindow(null);
                     break;
 
-                    //case EGlobalHotkey.SystemProxyClear:
-                    //    ViewModel?.SetListenerType(ESysProxyType.ForcedClear);
-                    //    break;
-
-                    //case EGlobalHotkey.SystemProxySet:
-                    //    ViewModel?.SetListenerType(ESysProxyType.ForcedChange);
-                    //    break;
-
-                    //case EGlobalHotkey.SystemProxyUnchanged:
-                    //    ViewModel?.SetListenerType(ESysProxyType.Unchanged);
-                    //    break;
-
-                    //case EGlobalHotkey.SystemProxyPac:
-                    //    ViewModel?.SetListenerType(ESysProxyType.Pac);
-                    //    break;
+                case EGlobalHotkey.SystemProxyClear:
+                case EGlobalHotkey.SystemProxySet:
+                case EGlobalHotkey.SystemProxyUnchanged:
+                case EGlobalHotkey.SystemProxyPac:
+                    Locator.Current.GetService<StatusBarViewModel>()?.SetListenerType((ESysProxyType)((int)e - 1));
+                    break;
             }
         }
 
@@ -300,7 +297,10 @@ namespace v2rayN.Desktop.Views
                     break;
 
                 case WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown:
-                    await ViewModel?.MyAppExitAsync(true);
+                    if (ViewModel != null)
+                    {
+                        await ViewModel.MyAppExitAsync(true);
+                    }
                     break;
             }
 
@@ -315,7 +315,10 @@ namespace v2rayN.Desktop.Views
                 {
                     case Key.V:
                         var clipboardData = await AvaUtils.GetClipboardData(this);
-                        ViewModel?.AddServerViaClipboardAsync(clipboardData);
+                        if (clipboardData.IsNotEmpty() && ViewModel != null)
+                        {
+                            await ViewModel.AddServerViaClipboardAsync(clipboardData);
+                        }
                         break;
 
                     case Key.S:
@@ -347,7 +350,7 @@ namespace v2rayN.Desktop.Views
             //ShowHideWindow(false);
 
             NoticeHandler.Instance.SendMessageAndEnqueue("Not yet implemented.(还未实现)");
-            return;
+            await Task.CompletedTask;
             //if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             //{
             //    //var bytes = QRCodeHelper.CaptureScreen(desktop);
@@ -364,7 +367,11 @@ namespace v2rayN.Desktop.Views
             {
                 return;
             }
-            await ViewModel?.ScanImageResult(fileName);
+
+            if (ViewModel != null)
+            {
+                await ViewModel.ScanImageResult(fileName);
+            }
         }
 
         private void MenuCheckUpdate_Click(object? sender, RoutedEventArgs e)
@@ -388,8 +395,10 @@ namespace v2rayN.Desktop.Views
 
             _blCloseByUser = true;
             StorageUI();
-
-            await ViewModel?.MyAppExitAsync(false);
+            if (ViewModel != null)
+            {
+                await ViewModel.MyAppExitAsync(false);
+            }
         }
 
         #endregion Event
@@ -398,7 +407,7 @@ namespace v2rayN.Desktop.Views
 
         public void ShowHideWindow(bool? blShow)
         {
-            var bl = blShow ?? !_config.UiItem.ShowInTaskbar;
+            var bl = blShow ?? (!_config.UiItem.ShowInTaskbar ^ (WindowState == WindowState.Minimized));
             if (bl)
             {
                 this.Show();
@@ -411,14 +420,17 @@ namespace v2rayN.Desktop.Views
             }
             else
             {
-                if (_config.UiItem.Hide2TrayWhenClose)
-                {
-                    this.Hide();
-                }
-                else
+                if (Utils.IsLinux() && _config.UiItem.Hide2TrayWhenClose == false)
                 {
                     this.WindowState = WindowState.Minimized;
+                    return;
                 }
+
+                foreach (var ownedWindow in this.OwnedWindows)
+                {
+                    ownedWindow.Close();
+                }
+                this.Hide();
             }
 
             _config.UiItem.ShowInTaskbar = bl;
@@ -449,8 +461,8 @@ namespace v2rayN.Desktop.Views
 
         private void StorageUI(string? n = null)
         {
-            _config.UiItem.MainWidth = Utils.ToInt(this.Width);
-            _config.UiItem.MainHeight = Utils.ToInt(this.Height);
+            _config.UiItem.MainWidth = this.Width;
+            _config.UiItem.MainHeight = this.Height;
 
             if (_config.UiItem.MainGirdOrientation == EGirdOrientation.Horizontal)
             {

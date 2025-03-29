@@ -21,8 +21,8 @@ namespace ServiceLib.Handler
         public static Config? LoadConfig()
         {
             Config? config = null;
-            var result = Utils.LoadResource(Utils.GetConfigPath(_configRes));
-            if (Utils.IsNotEmpty(result))
+            var result = EmbedUtils.LoadResource(Utils.GetConfigPath(_configRes));
+            if (result.IsNotEmpty())
             {
                 config = JsonUtils.Deserialize<Config>(result);
             }
@@ -67,7 +67,7 @@ namespace ServiceLib.Handler
             }
 
             config.RoutingBasicItem ??= new();
-            if (Utils.IsNullOrEmpty(config.RoutingBasicItem.DomainStrategy))
+            if (config.RoutingBasicItem.DomainStrategy.IsNullOrEmpty())
             {
                 config.RoutingBasicItem.DomainStrategy = Global.DomainStrategies.First();
             }
@@ -103,16 +103,11 @@ namespace ServiceLib.Handler
             };
             config.UiItem.MainColumnItem ??= new();
 
-            if (Utils.IsNullOrEmpty(config.UiItem.CurrentLanguage))
+            if (config.UiItem.CurrentLanguage.IsNullOrEmpty())
             {
-                if (Thread.CurrentThread.CurrentCulture.Name.Equals("zh-cn", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    config.UiItem.CurrentLanguage = Global.Languages.First();
-                }
-                else
-                {
-                    config.UiItem.CurrentLanguage = Global.Languages[2];
-                }
+                config.UiItem.CurrentLanguage = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName.Equals("zh", StringComparison.CurrentCultureIgnoreCase)
+                    ? Global.Languages.First()
+                    : Global.Languages[2];
             }
 
             config.ConstItem ??= new ConstItem();
@@ -122,13 +117,17 @@ namespace ServiceLib.Handler
             {
                 config.SpeedTestItem.SpeedTestTimeout = 10;
             }
-            if (Utils.IsNullOrEmpty(config.SpeedTestItem.SpeedTestUrl))
+            if (config.SpeedTestItem.SpeedTestUrl.IsNullOrEmpty())
             {
                 config.SpeedTestItem.SpeedTestUrl = Global.SpeedTestUrls.First();
             }
-            if (Utils.IsNullOrEmpty(config.SpeedTestItem.SpeedPingTestUrl))
+            if (config.SpeedTestItem.SpeedPingTestUrl.IsNullOrEmpty())
             {
                 config.SpeedTestItem.SpeedPingTestUrl = Global.SpeedPingTestUrl;
+            }
+            if (config.SpeedTestItem.MixedConcurrencyCount < 1)
+            {
+                config.SpeedTestItem.MixedConcurrencyCount = 5;
             }
 
             config.Mux4RayItem ??= new()
@@ -159,6 +158,7 @@ namespace ServiceLib.Handler
                 Length = "100-200",
                 Interval = "100-200"
             };
+            config.GlobalHotkeys ??= new();
 
             if (config.SystemProxyItem.SystemProxyExceptions.IsNullOrEmpty())
             {
@@ -217,6 +217,7 @@ namespace ServiceLib.Handler
                 item.Remarks = profileItem.Remarks;
                 item.Address = profileItem.Address;
                 item.Port = profileItem.Port;
+                item.Ports = profileItem.Ports;
 
                 item.Id = profileItem.Id;
                 item.AlterId = profileItem.AlterId;
@@ -295,7 +296,7 @@ namespace ServiceLib.Handler
         /// <param name="config"></param>
         /// <param name="indexes"></param>
         /// <returns></returns>
-        public static async Task<int> RemoveServer(Config config, List<ProfileItem> indexes)
+        public static async Task<int> RemoveServers(Config config, List<ProfileItem> indexes)
         {
             var subid = "TempRemoveSubId";
             foreach (var item in indexes)
@@ -304,7 +305,7 @@ namespace ServiceLib.Handler
             }
 
             await SQLiteHelper.Instance.UpdateAllAsync(indexes);
-            await RemoveServerViaSubid(config, subid, false);
+            await RemoveServersViaSubid(config, subid, false);
 
             return 0;
         }
@@ -353,7 +354,7 @@ namespace ServiceLib.Handler
         /// <returns></returns>
         public static async Task<int> SetDefaultServerIndex(Config config, string? indexId)
         {
-            if (Utils.IsNullOrEmpty(indexId))
+            if (indexId.IsNullOrEmpty())
             {
                 return -1;
             }
@@ -505,7 +506,7 @@ namespace ServiceLib.Handler
 
             profileItem.Address = newFileName;
             profileItem.ConfigType = EConfigType.Custom;
-            if (Utils.IsNullOrEmpty(profileItem.Remarks))
+            if (profileItem.Remarks.IsNullOrEmpty())
             {
                 profileItem.Remarks = $"import custom@{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}";
             }
@@ -623,7 +624,7 @@ namespace ServiceLib.Handler
 
             profileItem.Address = profileItem.Address.TrimEx();
             profileItem.Id = profileItem.Id.TrimEx();
-            if (Utils.IsNullOrEmpty(profileItem.StreamSecurity))
+            if (profileItem.StreamSecurity.IsNullOrEmpty())
             {
                 profileItem.StreamSecurity = Global.StreamSecurity;
             }
@@ -653,7 +654,7 @@ namespace ServiceLib.Handler
             profileItem.Path = profileItem.Path.TrimEx();
             profileItem.Network = string.Empty;
 
-            if (Utils.IsNullOrEmpty(profileItem.StreamSecurity))
+            if (profileItem.StreamSecurity.IsNullOrEmpty())
             {
                 profileItem.StreamSecurity = Global.StreamSecurity;
             }
@@ -688,11 +689,11 @@ namespace ServiceLib.Handler
                 profileItem.HeaderType = Global.TuicCongestionControls.FirstOrDefault()!;
             }
 
-            if (Utils.IsNullOrEmpty(profileItem.StreamSecurity))
+            if (profileItem.StreamSecurity.IsNullOrEmpty())
             {
                 profileItem.StreamSecurity = Global.StreamSecurity;
             }
-            if (Utils.IsNullOrEmpty(profileItem.Alpn))
+            if (profileItem.Alpn.IsNullOrEmpty())
             {
                 profileItem.Alpn = "h3";
             }
@@ -725,7 +726,7 @@ namespace ServiceLib.Handler
             profileItem.Network = string.Empty;
             if (profileItem.ShortId.IsNullOrEmpty())
             {
-                profileItem.ShortId = Global.TunMtus.FirstOrDefault();
+                profileItem.ShortId = Global.TunMtus.First().ToString();
             }
 
             if (profileItem.Id.IsNullOrEmpty())
@@ -759,9 +760,9 @@ namespace ServiceLib.Handler
                                   Security = t.Security,
                                   Network = t.Network,
                                   StreamSecurity = t.StreamSecurity,
-                                  Delay = t33 == null ? 0 : t33.Delay,
-                                  Speed = t33 == null ? 0 : t33.Speed,
-                                  Sort = t33 == null ? 0 : t33.Sort
+                                  Delay = t33?.Delay ?? 0,
+                                  Speed = t33?.Speed ?? 0,
+                                  Sort = t33?.Sort ?? 0
                               }).ToList();
 
             Enum.TryParse(colName, true, out EServerColName name);
@@ -857,7 +858,7 @@ namespace ServiceLib.Handler
             {
                 return -1;
             }
-            if (Utils.IsNotEmpty(profileItem.Security) && profileItem.Security != Global.None)
+            if (profileItem.Security.IsNotEmpty() && profileItem.Security != Global.None)
             {
                 profileItem.Security = Global.None;
             }
@@ -870,12 +871,19 @@ namespace ServiceLib.Handler
         public static async Task<Tuple<int, int>> DedupServerList(Config config, string subId)
         {
             var lstProfile = await AppHandler.Instance.ProfileItems(subId);
+            if (lstProfile == null)
+            {
+                return new Tuple<int, int>(0, 0);
+            }
 
             List<ProfileItem> lstKeep = new();
             List<ProfileItem> lstRemove = new();
-            if (!config.GuiItem.KeepOlderDedupl) lstProfile.Reverse();
+            if (!config.GuiItem.KeepOlderDedupl)
+            {
+                lstProfile.Reverse();
+            }
 
-            foreach (ProfileItem item in lstProfile)
+            foreach (var item in lstProfile)
             {
                 if (!lstKeep.Exists(i => CompareProfileItem(i, item, false)))
                 {
@@ -886,7 +894,7 @@ namespace ServiceLib.Handler
                     lstRemove.Add(item);
                 }
             }
-            await RemoveServer(config, lstRemove);
+            await RemoveServers(config, lstRemove);
 
             return new Tuple<int, int>(lstProfile.Count, lstKeep.Count);
         }
@@ -895,7 +903,7 @@ namespace ServiceLib.Handler
         {
             profileItem.ConfigVersion = 2;
 
-            if (Utils.IsNotEmpty(profileItem.StreamSecurity))
+            if (profileItem.StreamSecurity.IsNotEmpty())
             {
                 if (profileItem.StreamSecurity != Global.StreamSecurity
                      && profileItem.StreamSecurity != Global.StreamSecurityReality)
@@ -904,24 +912,24 @@ namespace ServiceLib.Handler
                 }
                 else
                 {
-                    if (Utils.IsNullOrEmpty(profileItem.AllowInsecure))
+                    if (profileItem.AllowInsecure.IsNullOrEmpty())
                     {
                         profileItem.AllowInsecure = config.CoreBasicItem.DefAllowInsecure.ToString().ToLower();
                     }
-                    if (Utils.IsNullOrEmpty(profileItem.Fingerprint) && profileItem.StreamSecurity == Global.StreamSecurityReality)
+                    if (profileItem.Fingerprint.IsNullOrEmpty() && profileItem.StreamSecurity == Global.StreamSecurityReality)
                     {
                         profileItem.Fingerprint = config.CoreBasicItem.DefFingerprint;
                     }
                 }
             }
 
-            if (Utils.IsNotEmpty(profileItem.Network) && !Global.Networks.Contains(profileItem.Network))
+            if (profileItem.Network.IsNotEmpty() && !Global.Networks.Contains(profileItem.Network))
             {
                 profileItem.Network = Global.DefaultNetwork;
             }
 
             var maxSort = -1;
-            if (Utils.IsNullOrEmpty(profileItem.IndexId))
+            if (profileItem.IndexId.IsNullOrEmpty())
             {
                 profileItem.IndexId = Utils.GetGuid(false);
                 maxSort = ProfileExHandler.Instance.GetMaxSort();
@@ -942,7 +950,7 @@ namespace ServiceLib.Handler
             return 0;
         }
 
-        private static bool CompareProfileItem(ProfileItem o, ProfileItem n, bool remarks)
+        private static bool CompareProfileItem(ProfileItem? o, ProfileItem? n, bool remarks)
         {
             if (o == null || n == null)
             {
@@ -950,22 +958,27 @@ namespace ServiceLib.Handler
             }
 
             return o.ConfigType == n.ConfigType
-                && o.Address == n.Address
-                && o.Port == n.Port
-                && o.Id == n.Id
-                && o.Security == n.Security
-                && o.Network == n.Network
-                && o.HeaderType == n.HeaderType
-                && o.RequestHost == n.RequestHost
-                && o.Path == n.Path
-                && (o.ConfigType == EConfigType.Trojan || o.StreamSecurity == n.StreamSecurity)
-                && o.Flow == n.Flow
-                && o.Sni == n.Sni
-                && o.Alpn == n.Alpn
-                && o.Fingerprint == n.Fingerprint
-                && o.PublicKey == n.PublicKey
-                && o.ShortId == n.ShortId
-                && (!remarks || o.Remarks == n.Remarks);
+                   && AreEqual(o.Address, n.Address)
+                   && o.Port == n.Port
+                   && AreEqual(o.Id, n.Id)
+                   && AreEqual(o.Security, n.Security)
+                   && AreEqual(o.Network, n.Network)
+                   && AreEqual(o.HeaderType, n.HeaderType)
+                   && AreEqual(o.RequestHost, n.RequestHost)
+                   && AreEqual(o.Path, n.Path)
+                   && (o.ConfigType == EConfigType.Trojan || o.StreamSecurity == n.StreamSecurity)
+                   && AreEqual(o.Flow, n.Flow)
+                   && AreEqual(o.Sni, n.Sni)
+                   && AreEqual(o.Alpn, n.Alpn)
+                   && AreEqual(o.Fingerprint, n.Fingerprint)
+                   && AreEqual(o.PublicKey, n.PublicKey)
+                   && AreEqual(o.ShortId, n.ShortId)
+                   && (!remarks || o.Remarks == n.Remarks);
+
+            static bool AreEqual(string? a, string? b)
+            {
+                return string.Equals(a, b) || (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b));
+            }
         }
 
         private static async Task<int> RemoveProfileItem(Config config, string indexId)
@@ -992,26 +1005,32 @@ namespace ServiceLib.Handler
             return 0;
         }
 
-        public static async Task<RetResult> AddCustomServer4Multiple(Config config, List<ProfileItem> selecteds, ECoreType coreType)
+        public static async Task<RetResult> AddCustomServer4Multiple(Config config, List<ProfileItem> selecteds, ECoreType coreType, EMultipleLoad multipleLoad)
         {
             var indexId = Utils.GetMd5(Global.CoreMultipleLoadConfigFileName);
             var configPath = Utils.GetConfigPath(Global.CoreMultipleLoadConfigFileName);
 
-            var result = await CoreConfigHandler.GenerateClientMultipleLoadConfig(config, configPath, selecteds, coreType);
+            var result = await CoreConfigHandler.GenerateClientMultipleLoadConfig(config, configPath, selecteds, coreType, multipleLoad);
             if (result.Success != true)
             {
                 return result;
             }
 
-            var fileName = configPath;
-            if (!File.Exists(fileName))
+            if (!File.Exists(configPath))
             {
                 return result;
             }
 
             var profileItem = await AppHandler.Instance.GetProfileItem(indexId) ?? new();
             profileItem.IndexId = indexId;
-            profileItem.Remarks = coreType == ECoreType.sing_box ? ResUI.menuSetDefaultMultipleServer : ResUI.menuSetDefaultLoadBalanceServer;
+            profileItem.Remarks = multipleLoad switch
+            {
+                EMultipleLoad.Random => ResUI.menuSetDefaultMultipleServerXrayRandom,
+                EMultipleLoad.RoundRobin => ResUI.menuSetDefaultMultipleServerXrayRoundRobin,
+                EMultipleLoad.LeastPing => ResUI.menuSetDefaultMultipleServerXrayLeastPing,
+                EMultipleLoad.LeastLoad => ResUI.menuSetDefaultMultipleServerXrayLeastLoad,
+                _ => ResUI.menuSetDefaultMultipleServerXrayRoundRobin,
+            };
             profileItem.Address = Global.CoreMultipleLoadConfigFileName;
             profileItem.ConfigType = EConfigType.Custom;
             profileItem.CoreType = coreType;
@@ -1051,6 +1070,24 @@ namespace ServiceLib.Handler
             return itemSocks;
         }
 
+        public static async Task<int> RemoveInvalidServerResult(Config config, string subid)
+        {
+            var lstModel = await AppHandler.Instance.ProfileItems(subid, "");
+            if (lstModel is { Count: <= 0 })
+            {
+                return -1;
+            }
+            var lstProfileExs = await ProfileExHandler.Instance.GetProfileExs();
+            var lstProfile = (from t in lstModel
+                              join t2 in lstProfileExs on t.IndexId equals t2.IndexId
+                              where t2.Delay == -1
+                              select t).ToList();
+
+            await RemoveServers(config, JsonUtils.Deserialize<List<ProfileItem>>(JsonUtils.Serialize(lstProfile)));
+
+            return lstProfile.Count;
+        }
+
         #endregion Server
 
         #region Batch add servers
@@ -1064,16 +1101,16 @@ namespace ServiceLib.Handler
         /// <returns>成功导入的数量</returns>
         private static async Task<int> AddBatchServersCommon(Config config, string strData, string subid, bool isSub)
         {
-            if (Utils.IsNullOrEmpty(strData))
+            if (strData.IsNullOrEmpty())
             {
                 return -1;
             }
 
             var subFilter = string.Empty;
             //remove sub items
-            if (isSub && Utils.IsNotEmpty(subid))
+            if (isSub && subid.IsNotEmpty())
             {
-                await RemoveServerViaSubid(config, subid, isSub);
+                await RemoveServersViaSubid(config, subid, isSub);
                 subFilter = (await AppHandler.Instance.GetSubItem(subid))?.Filter ?? "";
             }
 
@@ -1102,7 +1139,7 @@ namespace ServiceLib.Handler
                 }
 
                 //exist sub items //filter
-                if (isSub && Utils.IsNotEmpty(subid) && Utils.IsNotEmpty(subFilter))
+                if (isSub && subid.IsNotEmpty() && subFilter.IsNotEmpty())
                 {
                     if (!Regex.IsMatch(profileItem.Remarks, subFilter))
                     {
@@ -1143,7 +1180,7 @@ namespace ServiceLib.Handler
 
         private static async Task<int> AddBatchServers4Custom(Config config, string strData, string subid, bool isSub)
         {
-            if (Utils.IsNullOrEmpty(strData))
+            if (strData.IsNullOrEmpty())
             {
                 return -1;
             }
@@ -1165,9 +1202,9 @@ namespace ServiceLib.Handler
             }
             if (lstProfiles != null && lstProfiles.Count > 0)
             {
-                if (isSub && Utils.IsNotEmpty(subid))
+                if (isSub && subid.IsNotEmpty())
                 {
-                    await RemoveServerViaSubid(config, subid, isSub);
+                    await RemoveServersViaSubid(config, subid, isSub);
                 }
                 int count = 0;
                 foreach (var it in lstProfiles)
@@ -1216,14 +1253,14 @@ namespace ServiceLib.Handler
             {
                 profileItem = NaiveproxyFmt.ResolveFull(strData, subRemarks);
             }
-            if (profileItem is null || Utils.IsNullOrEmpty(profileItem.Address))
+            if (profileItem is null || profileItem.Address.IsNullOrEmpty())
             {
                 return -1;
             }
 
-            if (isSub && Utils.IsNotEmpty(subid))
+            if (isSub && subid.IsNotEmpty())
             {
-                await RemoveServerViaSubid(config, subid, isSub);
+                await RemoveServersViaSubid(config, subid, isSub);
             }
 
             profileItem.Subid = subid;
@@ -1241,14 +1278,14 @@ namespace ServiceLib.Handler
 
         private static async Task<int> AddBatchServers4SsSIP008(Config config, string strData, string subid, bool isSub)
         {
-            if (Utils.IsNullOrEmpty(strData))
+            if (strData.IsNullOrEmpty())
             {
                 return -1;
             }
 
-            if (isSub && Utils.IsNotEmpty(subid))
+            if (isSub && subid.IsNotEmpty())
             {
-                await RemoveServerViaSubid(config, subid, isSub);
+                await RemoveServersViaSubid(config, subid, isSub);
             }
 
             var lstSsServer = ShadowsocksFmt.ResolveSip008(strData);
@@ -1273,13 +1310,13 @@ namespace ServiceLib.Handler
 
         public static async Task<int> AddBatchServers(Config config, string strData, string subid, bool isSub)
         {
-            if (Utils.IsNullOrEmpty(strData))
+            if (strData.IsNullOrEmpty())
             {
                 return -1;
             }
             List<ProfileItem>? lstOriSub = null;
             ProfileItem? activeProfile = null;
-            if (isSub && Utils.IsNotEmpty(subid))
+            if (isSub && subid.IsNotEmpty())
             {
                 lstOriSub = await AppHandler.Instance.ProfileItems(subid);
                 activeProfile = lstOriSub?.FirstOrDefault(t => t.IndexId == config.IndexId);
@@ -1363,7 +1400,8 @@ namespace ServiceLib.Handler
             };
 
             var uri = Utils.TryUri(url);
-            if (uri == null) return -1;
+            if (uri == null)
+                return -1;
             //Do not allow http protocol
             if (url.StartsWith(Global.HttpProtocol) && !Utils.IsPrivateNetwork(uri.IdnHost))
             {
@@ -1403,7 +1441,7 @@ namespace ServiceLib.Handler
                 item.Memo = subItem.Memo;
             }
 
-            if (Utils.IsNullOrEmpty(item.Id))
+            if (item.Id.IsNullOrEmpty())
             {
                 item.Id = Utils.GetGuid(false);
 
@@ -1434,9 +1472,9 @@ namespace ServiceLib.Handler
         /// <param name="config"></param>
         /// <param name="subid"></param>
         /// <returns></returns>
-        public static async Task<int> RemoveServerViaSubid(Config config, string subid, bool isSub)
+        public static async Task<int> RemoveServersViaSubid(Config config, string subid, bool isSub)
         {
-            if (Utils.IsNullOrEmpty(subid))
+            if (subid.IsNullOrEmpty())
             {
                 return -1;
             }
@@ -1465,7 +1503,7 @@ namespace ServiceLib.Handler
                 return 0;
             }
             await SQLiteHelper.Instance.DeleteAsync(item);
-            await RemoveServerViaSubid(config, id, false);
+            await RemoveServersViaSubid(config, id, false);
 
             return 0;
         }
@@ -1487,7 +1525,7 @@ namespace ServiceLib.Handler
 
         public static async Task<int> SaveRoutingItem(Config config, RoutingItem item)
         {
-            if (Utils.IsNullOrEmpty(item.Id))
+            if (item.Id.IsNullOrEmpty())
             {
                 item.Id = Utils.GetGuid(false);
             }
@@ -1510,7 +1548,7 @@ namespace ServiceLib.Handler
         /// <returns></returns>
         public static async Task<int> AddBatchRoutingRules(RoutingItem routingItem, string strData)
         {
-            if (Utils.IsNullOrEmpty(strData))
+            if (strData.IsNullOrEmpty())
             {
                 return -1;
             }
@@ -1528,7 +1566,7 @@ namespace ServiceLib.Handler
             routingItem.RuleNum = lstRules.Count;
             routingItem.RuleSet = JsonUtils.Serialize(lstRules, false);
 
-            if (Utils.IsNullOrEmpty(routingItem.Id))
+            if (routingItem.Id.IsNullOrEmpty())
             {
                 routingItem.Id = Utils.GetGuid(false);
             }
@@ -1647,7 +1685,7 @@ namespace ServiceLib.Handler
 
         public static async Task<int> InitRouting(Config config, bool blImportAdvancedRules = false)
         {
-            if (string.IsNullOrEmpty(config.ConstItem.RouteRulesTemplateSourceUrl))
+            if (config.ConstItem.RouteRulesTemplateSourceUrl.IsNullOrEmpty())
             {
                 await InitBuiltinRouting(config, blImportAdvancedRules);
             }
@@ -1663,7 +1701,7 @@ namespace ServiceLib.Handler
         {
             var downloadHandle = new DownloadService();
             var templateContent = await downloadHandle.TryDownloadString(config.ConstItem.RouteRulesTemplateSourceUrl, true, "");
-            if (string.IsNullOrEmpty(templateContent))
+            if (templateContent.IsNullOrEmpty())
                 return await InitBuiltinRouting(config, blImportAdvancedRules); // fallback
 
             var template = JsonUtils.Deserialize<RoutingTemplate>(templateContent);
@@ -1680,14 +1718,14 @@ namespace ServiceLib.Handler
             {
                 var item = template.RoutingItems[i];
 
-                if (string.IsNullOrEmpty(item.Url) && string.IsNullOrEmpty(item.RuleSet))
+                if (item.Url.IsNullOrEmpty() && item.RuleSet.IsNullOrEmpty())
                     continue;
 
-                var ruleSetsString = !string.IsNullOrEmpty(item.RuleSet)
+                var ruleSetsString = !item.RuleSet.IsNullOrEmpty()
                     ? item.RuleSet
                     : await downloadHandle.TryDownloadString(item.Url, true, "");
 
-                if (string.IsNullOrEmpty(ruleSetsString))
+                if (ruleSetsString.IsNullOrEmpty())
                     continue;
 
                 item.Remarks = $"{template.Version}-{item.Remarks}";
@@ -1733,7 +1771,7 @@ namespace ServiceLib.Handler
                 Url = string.Empty,
                 Sort = maxSort + 1,
             };
-            await AddBatchRoutingRules(item2, Utils.GetEmbedText(Global.CustomRoutingFileName + "white"));
+            await AddBatchRoutingRules(item2, EmbedUtils.GetEmbedText(Global.CustomRoutingFileName + "white"));
 
             //Blacklist
             var item3 = new RoutingItem()
@@ -1742,7 +1780,7 @@ namespace ServiceLib.Handler
                 Url = string.Empty,
                 Sort = maxSort + 2,
             };
-            await AddBatchRoutingRules(item3, Utils.GetEmbedText(Global.CustomRoutingFileName + "black"));
+            await AddBatchRoutingRules(item3, EmbedUtils.GetEmbedText(Global.CustomRoutingFileName + "black"));
 
             //Global
             var item1 = new RoutingItem()
@@ -1751,7 +1789,7 @@ namespace ServiceLib.Handler
                 Url = string.Empty,
                 Sort = maxSort + 3,
             };
-            await AddBatchRoutingRules(item1, Utils.GetEmbedText(Global.CustomRoutingFileName + "global"));
+            await AddBatchRoutingRules(item1, EmbedUtils.GetEmbedText(Global.CustomRoutingFileName + "global"));
 
             if (!blImportAdvancedRules)
             {
@@ -1799,7 +1837,7 @@ namespace ServiceLib.Handler
                 return -1;
             }
 
-            if (Utils.IsNullOrEmpty(item.Id))
+            if (item.Id.IsNullOrEmpty())
             {
                 item.Id = Utils.GetGuid(false);
             }
@@ -1820,17 +1858,17 @@ namespace ServiceLib.Handler
 
             var downloadHandle = new DownloadService();
             var templateContent = await downloadHandle.TryDownloadString(url, true, "");
-            if (string.IsNullOrEmpty(templateContent))
+            if (templateContent.IsNullOrEmpty())
                 return currentItem;
 
             var template = JsonUtils.Deserialize<DNSItem>(templateContent);
             if (template == null)
                 return currentItem;
 
-            if (!string.IsNullOrEmpty(template.NormalDNS))
+            if (!template.NormalDNS.IsNullOrEmpty())
                 template.NormalDNS = await downloadHandle.TryDownloadString(template.NormalDNS, true, "");
 
-            if (!string.IsNullOrEmpty(template.TunDNS))
+            if (!template.TunDNS.IsNullOrEmpty())
                 template.TunDNS = await downloadHandle.TryDownloadString(template.TunDNS, true, "");
 
             template.Id = currentItem.Id;

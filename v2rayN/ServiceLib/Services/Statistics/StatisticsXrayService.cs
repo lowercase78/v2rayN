@@ -1,10 +1,10 @@
-﻿namespace ServiceLib.Services.Statistics
+namespace ServiceLib.Services.Statistics
 {
     public class StatisticsXrayService
     {
         private const long linkBase = 1024;
         private ServerSpeedItem _serverSpeedItem = new();
-        private Config _config;
+        private readonly Config _config;
         private bool _exitFlag;
         private Action<ServerSpeedItem>? _updateFunc;
         private string Url => $"{Global.HttpProtocol}{Global.Loopback}:{AppHandler.Instance.StatePort}/debug/vars";
@@ -15,7 +15,7 @@
             _updateFunc = updateFunc;
             _exitFlag = false;
 
-            Task.Run(Run);
+            _ = Task.Run(Run);
         }
 
         public void Close()
@@ -23,7 +23,7 @@
             _exitFlag = true;
         }
 
-        private async void Run()
+        private async Task Run()
         {
             while (!_exitFlag)
             {
@@ -60,10 +60,13 @@
                 }
 
                 ServerSpeedItem server = new();
-                foreach (string key in source.stats.outbound.Keys)
+                foreach (var key in source.stats.outbound.Keys.Cast<string>())
                 {
                     var value = source.stats.outbound[key];
-                    if (value == null) continue;
+                    if (value == null)
+                    {
+                        continue;
+                    }
                     var state = JsonUtils.Deserialize<V2rayMetricsVarsLink>(value.ToString());
 
                     if (key.StartsWith(Global.ProxyTag))

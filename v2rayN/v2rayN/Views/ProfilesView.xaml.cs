@@ -1,6 +1,3 @@
-using MaterialDesignThemes.Wpf;
-using ReactiveUI;
-using Splat;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,6 +5,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MaterialDesignThemes.Wpf;
+using ReactiveUI;
+using Splat;
 using v2rayN.Base;
 using Point = System.Windows.Point;
 
@@ -61,8 +61,11 @@ namespace v2rayN.Views
                 this.BindCommand(ViewModel, vm => vm.CopyServerCmd, v => v.menuCopyServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SetDefaultServerCmd, v => v.menuSetDefaultServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.ShareServerCmd, v => v.menuShareServer).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerCmd, v => v.menuSetDefaultMultipleServer).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.SetDefaultLoadBalanceServerCmd, v => v.menuSetDefaultLoadBalanceServer).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRandomCmd, v => v.menuSetDefaultMultipleServerXrayRandom).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRoundRobinCmd, v => v.menuSetDefaultMultipleServerXrayRoundRobin).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastPingCmd, v => v.menuSetDefaultMultipleServerXrayLeastPing).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastLoadCmd, v => v.menuSetDefaultMultipleServerXrayLeastLoad).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerSingBoxLeastPingCmd, v => v.menuSetDefaultMultipleServerSingBoxLeastPing).DisposeWith(disposables);
 
                 //servers move
                 this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
@@ -79,6 +82,7 @@ namespace v2rayN.Views
                 this.BindCommand(ViewModel, vm => vm.RealPingServerCmd, v => v.menuRealPingServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SpeedServerCmd, v => v.menuSpeedServer).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.SortServerResultCmd, v => v.menuSortServerResult).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.RemoveInvalidServerResultCmd, v => v.menuRemoveInvalidServerResult).DisposeWith(disposables);
 
                 //servers export
                 this.BindCommand(ViewModel, vm => vm.Export2ClientConfigCmd, v => v.menuExport2ClientConfig).DisposeWith(disposables);
@@ -99,7 +103,8 @@ namespace v2rayN.Views
             switch (action)
             {
                 case EViewAction.SetClipboardData:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     WindowsUtils.SetClipboardData((string)obj);
                     break;
 
@@ -122,7 +127,8 @@ namespace v2rayN.Views
                     break;
 
                 case EViewAction.SaveFileDialog:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     if (UI.SaveFileDialog(out string fileName, "Config|*.json") != true)
                     {
                         return false;
@@ -131,24 +137,29 @@ namespace v2rayN.Views
                     break;
 
                 case EViewAction.AddServerWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new AddServerWindow((ProfileItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.AddServer2Window:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new AddServer2Window((ProfileItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.ShareServer:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     ShareServer((string)obj);
                     break;
 
                 case EViewAction.SubEditWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new SubEditWindow((SubItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.DispatcherSpeedTest:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Application.Current?.Dispatcher.Invoke((() =>
                     {
                         ViewModel?.SetSpeedTestResult((SpeedTestResult)obj);
@@ -158,7 +169,7 @@ namespace v2rayN.Views
                 case EViewAction.DispatcherRefreshServersBiz:
                     Application.Current?.Dispatcher.Invoke((() =>
                     {
-                        ViewModel?.RefreshServersBiz();
+                        _ = RefreshServersBiz();
                     }), DispatcherPriority.Normal);
                     break;
             }
@@ -178,9 +189,25 @@ namespace v2rayN.Views
             await DialogHost.Show(dialog, "RootDialog");
         }
 
+        public async Task RefreshServersBiz()
+        {
+            if (ViewModel != null)
+            {
+                await ViewModel.RefreshServersBiz();
+            }
+
+            if (lstProfiles.SelectedIndex > 0)
+            {
+                lstProfiles.ScrollIntoView(lstProfiles.SelectedItem, null);
+            }
+        }
+
         private void lstProfiles_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            ViewModel.SelectedProfiles = lstProfiles.SelectedItems.Cast<ProfileItemModel>().ToList();
+            if (ViewModel != null)
+            {
+                ViewModel.SelectedProfiles = lstProfiles.SelectedItems.Cast<ProfileItemModel>().ToList();
+            }
         }
 
         private void LstProfiles_LoadingRow(object? sender, DataGridRowEventArgs e)
@@ -345,13 +372,13 @@ namespace v2rayN.Views
         private void StorageUI(string? n = null)
         {
             List<ColumnItem> lvColumnItem = new();
-            for (int k = 0; k < lstProfiles.Columns.Count; k++)
+            foreach (var t in lstProfiles.Columns)
             {
-                var item2 = (MyDGTextColumn)lstProfiles.Columns[k];
+                var item2 = (MyDGTextColumn)t;
                 lvColumnItem.Add(new()
                 {
                     Name = item2.ExName,
-                    Width = item2.Visibility == Visibility.Visible ? Utils.ToInt(item2.ActualWidth) : -1,
+                    Width = (int)(item2.Visibility == Visibility.Visible ? item2.ActualWidth : -1),
                     Index = item2.DisplayIndex
                 });
             }
@@ -403,13 +430,16 @@ namespace v2rayN.Views
                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance))
             {
                 // Get the dragged Item
-                if (sender is not DataGrid listView) return;
+                if (sender is not DataGrid listView)
+                    return;
                 var listViewItem = FindAncestor<DataGridRow>((DependencyObject)e.OriginalSource);
-                if (listViewItem == null) return;           // Abort
-                                                            // Find the data behind the ListViewItem
+                if (listViewItem == null)
+                    return;           // Abort
+                                      // Find the data behind the ListViewItem
                 ProfileItemModel item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
-                if (item == null) return;                   // Abort
-                                                            // Initialize the drag & drop operation
+                if (item == null)
+                    return;                   // Abort
+                                              // Initialize the drag & drop operation
                 startIndex = lstProfiles.SelectedIndex;
                 DataObject dragData = new(formatData, item);
                 DragDrop.DoDragDrop(listViewItem, dragData, DragDropEffects.Copy | DragDropEffects.Move);
@@ -429,7 +459,8 @@ namespace v2rayN.Views
             if (e.Data.GetDataPresent(formatData) && sender == e.Source)
             {
                 // Get the drop Item destination
-                if (sender is not DataGrid listView) return;
+                if (sender is not DataGrid listView)
+                    return;
                 var listViewItem = FindAncestor<DataGridRow>((DependencyObject)e.OriginalSource);
                 if (listViewItem == null)
                 {
@@ -439,7 +470,8 @@ namespace v2rayN.Views
                 }
                 // Find the data behind the Item
                 ProfileItemModel item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
-                if (item == null) return;
+                if (item == null)
+                    return;
                 // Move item into observable collection
                 // (this will be automatically reflected to lstView.ItemsSource)
                 e.Effects = DragDropEffects.Move;

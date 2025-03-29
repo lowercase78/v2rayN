@@ -1,3 +1,7 @@
+using System.Reactive.Linq;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Interop;
 using DynamicData;
 using DynamicData.Binding;
 using MaterialDesignColors;
@@ -5,10 +9,6 @@ using MaterialDesignColors.ColorManipulation;
 using MaterialDesignThemes.Wpf;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System.Reactive.Linq;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
 
 namespace v2rayN.ViewModels
 {
@@ -116,7 +116,7 @@ namespace v2rayN.ViewModels
              y => y != null && !y.IsNullOrEmpty())
                 .Subscribe(c =>
                 {
-                    if (Utils.IsNotEmpty(CurrentLanguage) && _config.UiItem.CurrentLanguage != CurrentLanguage)
+                    if (CurrentLanguage.IsNotEmpty() && _config.UiItem.CurrentLanguage != CurrentLanguage)
                     {
                         _config.UiItem.CurrentLanguage = CurrentLanguage;
                         Thread.CurrentThread.CurrentUICulture = new(CurrentLanguage);
@@ -145,7 +145,8 @@ namespace v2rayN.ViewModels
         private void ModifyFontSize()
         {
             double size = (long)CurrentFontSize;
-            if (size < Global.MinFontSize) return;
+            if (size < Global.MinFontSize)
+                return;
 
             Application.Current.Resources["StdFontSize"] = size;
             Application.Current.Resources["StdFontSize1"] = size + 1;

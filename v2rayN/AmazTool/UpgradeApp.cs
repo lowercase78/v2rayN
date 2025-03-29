@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 
@@ -59,7 +59,11 @@ namespace AmazTool
                         Console.WriteLine(entry.FullName);
 
                         var lst = entry.FullName.Split(splitKey);
-                        if (lst.Length == 1) continue;
+                        if (lst.Length == 1)
+                        {
+                            continue;
+                        }
+
                         var fullName = string.Join(splitKey, lst[1..lst.Length]);
 
                         if (string.Equals(Utils.GetExePath(), Utils.GetPath(fullName), StringComparison.OrdinalIgnoreCase))
@@ -74,7 +78,16 @@ namespace AmazTool
                         {
                             continue;
                         }
-                        entry.ExtractToFile(entryOutputPath, true);
+
+                        try
+                        {
+                            entry.ExtractToFile(entryOutputPath, true);
+                        }
+                        catch
+                        {
+                            Thread.Sleep(1000);
+                            entry.ExtractToFile(entryOutputPath, true);
+                        }
 
                         Console.WriteLine(entryOutputPath);
                     }

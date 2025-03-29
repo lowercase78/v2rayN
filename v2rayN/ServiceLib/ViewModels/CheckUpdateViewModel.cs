@@ -1,10 +1,10 @@
-﻿using DynamicData;
+using System.Reactive;
+using System.Runtime.InteropServices;
+using DynamicData;
 using DynamicData.Binding;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Splat;
-using System.Reactive;
-using System.Runtime.InteropServices;
 
 namespace ServiceLib.ViewModels
 {
@@ -46,9 +46,13 @@ namespace ServiceLib.ViewModels
             if (RuntimeInformation.ProcessArchitecture != Architecture.X86)
             {
                 _checkUpdateModel.Add(GetCheckUpdateModel(_v2rayN));
-                _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.Xray.ToString()));
-                _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.mihomo.ToString()));
-                _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.sing_box.ToString()));
+                //Not Windows and under Win10
+                if (!(Utils.IsWindows() && Environment.OSVersion.Version.Major < 10))
+                {
+                    _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.Xray.ToString()));
+                    _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.mihomo.ToString()));
+                    _checkUpdateModel.Add(GetCheckUpdateModel(ECoreType.sing_box.ToString()));
+                }
             }
             _checkUpdateModel.Add(GetCheckUpdateModel(_geo));
         }
@@ -71,6 +75,14 @@ namespace ServiceLib.ViewModels
 
         private async Task CheckUpdate()
         {
+            await Task.Run(async () =>
+            {
+                await CheckUpdateTask();
+            });
+        }
+
+        private async Task CheckUpdateTask()
+        {
             _lstUpdated.Clear();
             _lstUpdated = _checkUpdateModel.Where(x => x.IsSelected == true)
                     .Select(x => new CheckUpdateModel() { CoreType = x.CoreType }).ToList();
@@ -79,7 +91,8 @@ namespace ServiceLib.ViewModels
             for (var k = _checkUpdateModel.Count - 1; k >= 0; k--)
             {
                 var item = _checkUpdateModel[k];
-                if (item.IsSelected != true) continue;
+                if (item.IsSelected != true)
+                    continue;
 
                 UpdateView(item.CoreType, "...");
                 if (item.CoreType == _geo)
@@ -293,7 +306,8 @@ namespace ServiceLib.ViewModels
         public void UpdateViewResult(CheckUpdateModel model)
         {
             var found = _checkUpdateModel.FirstOrDefault(t => t.CoreType == model.CoreType);
-            if (found == null) return;
+            if (found == null)
+                return;
             var itemCopy = JsonUtils.DeepCopy(found);
             itemCopy.Remarks = model.Remarks;
             _checkUpdateModel.Replace(found, itemCopy);

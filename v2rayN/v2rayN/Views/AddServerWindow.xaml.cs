@@ -1,7 +1,7 @@
-﻿using ReactiveUI;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
+using ReactiveUI;
 
 namespace v2rayN.Views
 {
@@ -172,6 +172,7 @@ namespace v2rayN.Views
                     case EConfigType.Hysteria2:
                         this.Bind(ViewModel, vm => vm.SelectedSource.Id, v => v.txtId7.Text).DisposeWith(disposables);
                         this.Bind(ViewModel, vm => vm.SelectedSource.Path, v => v.txtPath7.Text).DisposeWith(disposables);
+                        this.Bind(ViewModel, vm => vm.SelectedSource.Ports, v => v.txtPorts7.Text).DisposeWith(disposables);
                         break;
 
                     case EConfigType.TUIC:
@@ -266,7 +267,7 @@ namespace v2rayN.Views
             cmbHeaderType.Items.Clear();
 
             var network = cmbNetwork.SelectedItem.ToString();
-            if (Utils.IsNullOrEmpty(network))
+            if (network.IsNullOrEmpty())
             {
                 cmbHeaderType.Items.Add(Global.None);
                 return;
@@ -307,7 +308,7 @@ namespace v2rayN.Views
         private void SetTips()
         {
             var network = cmbNetwork.SelectedItem.ToString();
-            if (Utils.IsNullOrEmpty(network))
+            if (network.IsNullOrEmpty())
             {
                 network = Global.DefaultNetwork;
             }

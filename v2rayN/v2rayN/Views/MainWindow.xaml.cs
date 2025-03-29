@@ -1,6 +1,3 @@
-﻿using MaterialDesignThemes.Wpf;
-using ReactiveUI;
-using Splat;
 using System.ComponentModel;
 using System.Reactive.Disposables;
 using System.Windows;
@@ -9,6 +6,9 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MaterialDesignThemes.Wpf;
+using ReactiveUI;
+using Splat;
 using v2rayN.Handler;
 
 namespace v2rayN.Views
@@ -168,11 +168,13 @@ namespace v2rayN.Views
             switch (action)
             {
                 case EViewAction.AddServerWindow:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new AddServerWindow((ProfileItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.AddServer2Window:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     return (new AddServer2Window((ProfileItem)obj)).ShowDialog() ?? false;
 
                 case EViewAction.DNSSettingWindow:
@@ -198,7 +200,8 @@ namespace v2rayN.Views
                     break;
 
                 case EViewAction.DispatcherStatistics:
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Application.Current?.Dispatcher.Invoke((() =>
                     {
                         ViewModel?.SetStatisticsResult((ServerSpeedItem)obj);
@@ -229,7 +232,10 @@ namespace v2rayN.Views
 
                 case EViewAction.AddServerViaClipboard:
                     var clipboardData = WindowsUtils.GetClipboardData();
-                    ViewModel?.AddServerViaClipboardAsync(clipboardData);
+                    if (clipboardData.IsNotEmpty())
+                    {
+                        ViewModel?.AddServerViaClipboardAsync(clipboardData);
+                    }
                     break;
 
                 case EViewAction.AdjustMainLvColWidth:
@@ -280,10 +286,21 @@ namespace v2rayN.Views
                 switch (e.Key)
                 {
                     case Key.V:
-                        if (Keyboard.FocusedElement is TextBox) return;
+                        if (Keyboard.FocusedElement is TextBox)
+                        {
+                            return;
+                        }
+
                         var clipboardData = WindowsUtils.GetClipboardData();
-                        var service = Locator.Current.GetService<MainWindowViewModel>();
-                        if (service != null) _ = service.AddServerViaClipboardAsync(clipboardData);
+                        if (clipboardData.IsNotEmpty())
+                        {
+                            var service = Locator.Current.GetService<MainWindowViewModel>();
+                            if (service != null)
+                            {
+                                _ = service.AddServerViaClipboardAsync(clipboardData);
+                            }
+                        }
+
                         break;
 
                     case Key.S:
@@ -388,8 +405,10 @@ namespace v2rayN.Views
 
             var maxWidth = SystemParameters.WorkArea.Width;
             var maxHeight = SystemParameters.WorkArea.Height;
-            if (Width > maxWidth) Width = maxWidth;
-            if (Height > maxHeight) Height = maxHeight;
+            if (Width > maxWidth)
+                Width = maxWidth;
+            if (Height > maxHeight)
+                Height = maxHeight;
             if (_config.UiItem.MainGirdHeight1 > 0 && _config.UiItem.MainGirdHeight2 > 0)
             {
                 if (_config.UiItem.MainGirdOrientation == EGirdOrientation.Horizontal)
@@ -407,8 +426,8 @@ namespace v2rayN.Views
 
         private void StorageUI(string? n = null)
         {
-            _config.UiItem.MainWidth = Utils.ToInt(this.Width);
-            _config.UiItem.MainHeight = Utils.ToInt(this.Height);
+            _config.UiItem.MainWidth = this.Width;
+            _config.UiItem.MainHeight = this.Height;
 
             if (_config.UiItem.MainGirdOrientation == EGirdOrientation.Horizontal)
             {

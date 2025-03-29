@@ -1,4 +1,4 @@
-﻿using ReactiveUI;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -7,17 +7,66 @@ namespace ServiceLib.Services
 {
     public class SpeedtestService
     {
+        private static readonly string _tag = "SpeedtestService";
         private Config? _config;
         private Action<SpeedTestResult>? _updateFunc;
+        private static readonly ConcurrentBag<string> _lstExitLoop = new();
 
-        private bool _exitLoop = false;
-        private static readonly string _tag = "SpeedtestService";
-
-        public SpeedtestService(Config config, List<ProfileItem> selecteds, ESpeedActionType actionType, Action<SpeedTestResult> updateFunc)
+        public SpeedtestService(Config config, Action<SpeedTestResult> updateFunc)
         {
             _config = config;
             _updateFunc = updateFunc;
+        }
 
+        public void RunLoop(ESpeedActionType actionType, List<ProfileItem> selecteds)
+        {
+            Task.Run(async () =>
+            {
+                await RunAsync(actionType, selecteds);
+                await ProfileExHandler.Instance.SaveTo();
+                UpdateFunc("", ResUI.SpeedtestingCompleted);
+            });
+        }
+
+        public void ExitLoop()
+        {
+            if (_lstExitLoop.Count > 0)
+            {
+                UpdateFunc("", ResUI.SpeedtestingStop);
+
+                _lstExitLoop.Clear();
+            }
+        }
+
+        private async Task RunAsync(ESpeedActionType actionType, List<ProfileItem> selecteds)
+        {
+            var exitLoopKey = Utils.GetGuid(false);
+            _lstExitLoop.Add(exitLoopKey);
+
+            var lstSelected = GetClearItem(actionType, selecteds);
+
+            switch (actionType)
+            {
+                case ESpeedActionType.Tcping:
+                    await RunTcpingAsync(lstSelected);
+                    break;
+
+                case ESpeedActionType.Realping:
+                    await RunRealPingBatchAsync(lstSelected, exitLoopKey);
+                    break;
+
+                case ESpeedActionType.Speedtest:
+                    await RunMixedTestAsync(lstSelected, 1, true, exitLoopKey);
+                    break;
+
+                case ESpeedActionType.Mixedtest:
+                    await RunMixedTestAsync(lstSelected, _config.SpeedTestItem.MixedConcurrencyCount, true, exitLoopKey);
+                    break;
+            }
+        }
+
+        private List<ServerTestItem> GetClearItem(ESpeedActionType actionType, List<ProfileItem> selecteds)
+        {
             var lstSelected = new List<ServerTestItem>();
             foreach (var it in selecteds)
             {
@@ -25,16 +74,19 @@ namespace ServiceLib.Services
                 {
                     continue;
                 }
+
                 if (it.Port <= 0)
                 {
                     continue;
                 }
+
                 lstSelected.Add(new ServerTestItem()
                 {
                     IndexId = it.IndexId,
                     Address = it.Address,
                     Port = it.Port,
-                    ConfigType = it.ConfigType
+                    ConfigType = it.ConfigType,
+                    QueueNum = selecteds.IndexOf(it)
                 });
             }
 
@@ -46,124 +98,95 @@ namespace ServiceLib.Services
                     case ESpeedActionType.Tcping:
                     case ESpeedActionType.Realping:
                         UpdateFunc(it.IndexId, ResUI.Speedtesting, "");
-                        ProfileExHandler.Instance.SetTestDelay(it.IndexId, "0");
+                        ProfileExHandler.Instance.SetTestDelay(it.IndexId, 0);
                         break;
 
                     case ESpeedActionType.Speedtest:
                         UpdateFunc(it.IndexId, "", ResUI.SpeedtestingWait);
-                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, "0");
+                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, 0);
                         break;
 
                     case ESpeedActionType.Mixedtest:
                         UpdateFunc(it.IndexId, ResUI.Speedtesting, ResUI.SpeedtestingWait);
-                        ProfileExHandler.Instance.SetTestDelay(it.IndexId, "0");
-                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, "0");
+                        ProfileExHandler.Instance.SetTestDelay(it.IndexId, 0);
+                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, 0);
                         break;
                 }
             }
 
-            MessageBus.Current.Listen<string>(EMsgCommand.StopSpeedtest.ToString()).Subscribe(ExitLoop);
-
-            Task.Run(async () => { await RunAsync(actionType, lstSelected); });
-        }
-
-        private async Task RunAsync(ESpeedActionType actionType, List<ServerTestItem> lstSelected)
-        {
-            if (actionType == ESpeedActionType.Tcping)
-            {
-                await RunTcpingAsync(lstSelected);
-                return;
-            }
-
-            var pageSize = _config.SpeedTestItem.SpeedTestPageSize;
-            if (pageSize is <= 0 or > 1000)
-            {
-                pageSize = 1000;
-            }
-
-            List<List<ServerTestItem>> lstTest = new();
-            var lst1 = lstSelected.Where(t => t.ConfigType is not (EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard)).ToList();
-            var lst2 = lstSelected.Where(t => t.ConfigType is EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard).ToList();
-
-            for (var num = 0; num < (int)Math.Ceiling(lst1.Count * 1.0 / pageSize); num++)
-            {
-                lstTest.Add(lst1.Skip(num * pageSize).Take(pageSize).ToList());
-            }
-            for (var num = 0; num < (int)Math.Ceiling(lst2.Count * 1.0 / pageSize); num++)
-            {
-                lstTest.Add(lst2.Skip(num * pageSize).Take(pageSize).ToList());
-            }
-
-            foreach (var lst in lstTest)
-            {
-                switch (actionType)
-                {
-                    case ESpeedActionType.Realping:
-                        await RunRealPingAsync(lst);
-                        break;
-
-                    case ESpeedActionType.Speedtest:
-                        await RunSpeedTestAsync(lst);
-                        break;
-
-                    case ESpeedActionType.Mixedtest:
-                        await RunMixedTestAsync(lst);
-                        break;
-                }
-
-                await Task.Delay(100);
-            }
-
-            UpdateFunc("", ResUI.SpeedtestingCompleted);
-        }
-
-        private void ExitLoop(string x)
-        {
-            if (_exitLoop) return;
-            _exitLoop = true;
-            UpdateFunc("", ResUI.SpeedtestingStop);
+            return lstSelected;
         }
 
         private async Task RunTcpingAsync(List<ServerTestItem> selecteds)
         {
-            try
+            List<Task> tasks = [];
+            foreach (var it in selecteds)
             {
-                List<Task> tasks = [];
-                foreach (var it in selecteds)
+                if (it.ConfigType == EConfigType.Custom)
                 {
-                    if (it.ConfigType == EConfigType.Custom)
-                    {
-                        continue;
-                    }
-                    tasks.Add(Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var time = await GetTcpingTime(it.Address, it.Port);
-                            var output = FormatOut(time, Global.DelayUnit);
-
-                            ProfileExHandler.Instance.SetTestDelay(it.IndexId, output);
-                            UpdateFunc(it.IndexId, output);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logging.SaveLog(_tag, ex);
-                        }
-                    }));
+                    continue;
                 }
-                Task.WaitAll([.. tasks]);
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        var responseTime = await GetTcpingTime(it.Address, it.Port);
+
+                        ProfileExHandler.Instance.SetTestDelay(it.IndexId, responseTime);
+                        UpdateFunc(it.IndexId, responseTime.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.SaveLog(_tag, ex);
+                    }
+                }));
             }
-            catch (Exception ex)
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task RunRealPingBatchAsync(List<ServerTestItem> lstSelected, string exitLoopKey, int pageSize = 0)
+        {
+            if (pageSize <= 0)
             {
-                Logging.SaveLog(_tag, ex);
+                pageSize = lstSelected.Count < Global.SpeedTestPageSize ? lstSelected.Count : Global.SpeedTestPageSize;
             }
-            finally
+            var lstTest = GetTestBatchItem(lstSelected, pageSize);
+
+            List<ServerTestItem> lstFailed = new();
+            foreach (var lst in lstTest)
             {
-                await ProfileExHandler.Instance.SaveTo();
+                var ret = await RunRealPingAsync(lst, exitLoopKey);
+                if (ret == false)
+                {
+                    lstFailed.AddRange(lst);
+                }
+                await Task.Delay(100);
+            }
+
+            //Retest the failed part
+            var pageSizeNext = pageSize / 2;
+            if (lstFailed.Count > 0 && pageSizeNext > 0)
+            {
+                if (_lstExitLoop.Any(p => p == exitLoopKey) == false)
+                {
+                    UpdateFunc("", ResUI.SpeedtestingSkip);
+                    return;
+                }
+
+                UpdateFunc("", string.Format(ResUI.SpeedtestingTestFailedPart, lstFailed.Count));
+
+                if (pageSizeNext > _config.SpeedTestItem.MixedConcurrencyCount)
+                {
+                    await RunRealPingBatchAsync(lstFailed, exitLoopKey, pageSizeNext);
+                }
+                else
+                {
+                    await RunMixedTestAsync(lstSelected, _config.SpeedTestItem.MixedConcurrencyCount, false, exitLoopKey);
+                }
             }
         }
 
-        private async Task RunRealPingAsync(List<ServerTestItem> selecteds)
+        private async Task<bool> RunRealPingAsync(List<ServerTestItem> selecteds, string exitLoopKey)
         {
             var pid = -1;
             try
@@ -171,8 +194,7 @@ namespace ServiceLib.Services
                 pid = await CoreHandler.Instance.LoadCoreConfigSpeedtest(selecteds);
                 if (pid < 0)
                 {
-                    UpdateFunc("", ResUI.FailedToRunCore);
-                    return;
+                    return false;
                 }
 
                 var downloadHandle = new DownloadService();
@@ -190,23 +212,10 @@ namespace ServiceLib.Services
                     }
                     tasks.Add(Task.Run(async () =>
                     {
-                        try
-                        {
-                            var webProxy = new WebProxy($"socks5://{Global.Loopback}:{it.Port}");
-                            var output = await GetRealPingTime(downloadHandle, webProxy);
-
-                            ProfileExHandler.Instance.SetTestDelay(it.IndexId, output);
-                            UpdateFunc(it.IndexId, output);
-                            int.TryParse(output, out var delay);
-                            it.Delay = delay;
-                        }
-                        catch (Exception ex)
-                        {
-                            Logging.SaveLog(_tag, ex);
-                        }
+                        await DoRealPing(downloadHandle, it);
                     }));
                 }
-                Task.WaitAll(tasks.ToArray());
+                await Task.WhenAll(tasks);
             }
             catch (Exception ex)
             {
@@ -218,149 +227,98 @@ namespace ServiceLib.Services
                 {
                     await ProcUtils.ProcessKill(pid);
                 }
-                await ProfileExHandler.Instance.SaveTo();
             }
+            return true;
         }
 
-        private async Task RunSpeedTestAsync(List<ServerTestItem> selecteds)
+        private async Task RunMixedTestAsync(List<ServerTestItem> selecteds, int concurrencyCount, bool blSpeedTest, string exitLoopKey)
         {
-            var pid = -1;
-            pid = await CoreHandler.Instance.LoadCoreConfigSpeedtest(selecteds);
-            if (pid < 0)
-            {
-                UpdateFunc("", ResUI.FailedToRunCore);
-                return;
-            }
-
-            var url = _config.SpeedTestItem.SpeedTestUrl;
-            var timeout = _config.SpeedTestItem.SpeedTestTimeout;
-
-            DownloadService downloadHandle = new();
-
+            using var concurrencySemaphore = new SemaphoreSlim(concurrencyCount);
+            var downloadHandle = new DownloadService();
+            List<Task> tasks = new();
             foreach (var it in selecteds)
             {
-                if (_exitLoop)
+                if (_lstExitLoop.Any(p => p == exitLoopKey) == false)
                 {
                     UpdateFunc(it.IndexId, "", ResUI.SpeedtestingSkip);
-                    continue;
-                }
-                if (!it.AllowTest)
-                {
                     continue;
                 }
                 if (it.ConfigType == EConfigType.Custom)
                 {
                     continue;
                 }
-                //if (it.delay < 0)
-                //{
-                //    UpdateFunc(it.indexId, "", ResUI.SpeedtestingSkip);
-                //    continue;
-                //}
-                ProfileExHandler.Instance.SetTestSpeed(it.IndexId, "-1");
-                UpdateFunc(it.IndexId, "", ResUI.Speedtesting);
+                await concurrencySemaphore.WaitAsync();
 
-                var item = await AppHandler.Instance.GetProfileItem(it.IndexId);
-                if (item is null) continue;
-
-                var webProxy = new WebProxy($"socks5://{Global.Loopback}:{it.Port}");
-
-                await downloadHandle.DownloadDataAsync(url, webProxy, timeout, (success, msg) =>
+                tasks.Add(Task.Run(async () =>
                 {
-                    decimal.TryParse(msg, out var dec);
-                    if (dec > 0)
+                    var pid = -1;
+                    try
                     {
-                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, msg);
+                        pid = await CoreHandler.Instance.LoadCoreConfigSpeedtest(it);
+                        if (pid > 0)
+                        {
+                            await Task.Delay(500);
+                            var delay = await DoRealPing(downloadHandle, it);
+                            if (blSpeedTest)
+                            {
+                                if (delay > 0)
+                                {
+                                    await DoSpeedTest(downloadHandle, it);
+                                }
+                                else
+                                {
+                                    UpdateFunc(it.IndexId, "", ResUI.SpeedtestingSkip);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            UpdateFunc(it.IndexId, "", ResUI.FailedToRunCore);
+                        }
                     }
-                    UpdateFunc(it.IndexId, "", msg);
-                });
-            }
-
-            if (pid > 0)
-            {
-                await ProcUtils.ProcessKill(pid);
-            }
-            await ProfileExHandler.Instance.SaveTo();
-        }
-
-        private async Task RunSpeedTestMulti(List<ServerTestItem> selecteds)
-        {
-            var pid = -1;
-            pid = await CoreHandler.Instance.LoadCoreConfigSpeedtest(selecteds);
-            if (pid < 0)
-            {
-                UpdateFunc("", ResUI.FailedToRunCore);
-                return;
-            }
-
-            var url = _config.SpeedTestItem.SpeedTestUrl;
-            var timeout = _config.SpeedTestItem.SpeedTestTimeout;
-
-            DownloadService downloadHandle = new();
-
-            foreach (var it in selecteds)
-            {
-                if (_exitLoop)
-                {
-                    UpdateFunc(it.IndexId, "", ResUI.SpeedtestingSkip);
-                    continue;
-                }
-
-                if (!it.AllowTest)
-                {
-                    continue;
-                }
-                if (it.ConfigType == EConfigType.Custom)
-                {
-                    continue;
-                }
-                if (it.Delay < 0)
-                {
-                    UpdateFunc(it.IndexId, "", ResUI.SpeedtestingSkip);
-                    continue;
-                }
-                ProfileExHandler.Instance.SetTestSpeed(it.IndexId, "-1");
-                UpdateFunc(it.IndexId, "", ResUI.Speedtesting);
-
-                var item = await AppHandler.Instance.GetProfileItem(it.IndexId);
-                if (item is null) continue;
-
-                var webProxy = new WebProxy($"socks5://{Global.Loopback}:{it.Port}");
-                _ = downloadHandle.DownloadDataAsync(url, webProxy, timeout, (success, msg) =>
-                {
-                    decimal.TryParse(msg, out var dec);
-                    if (dec > 0)
+                    catch (Exception ex)
                     {
-                        ProfileExHandler.Instance.SetTestSpeed(it.IndexId, msg);
+                        Logging.SaveLog(_tag, ex);
                     }
-                    UpdateFunc(it.IndexId, "", msg);
-                });
-                await Task.Delay(2000);
+                    finally
+                    {
+                        if (pid > 0)
+                        {
+                            await ProcUtils.ProcessKill(pid);
+                        }
+                        concurrencySemaphore.Release();
+                    }
+                }));
             }
-
-            await Task.Delay((timeout + 2) * 1000);
-
-            if (pid > 0)
-            {
-                await ProcUtils.ProcessKill(pid);
-            }
-            await ProfileExHandler.Instance.SaveTo();
+            await Task.WhenAll(tasks);
         }
 
-        private async Task RunMixedTestAsync(List<ServerTestItem> selecteds)
+        private async Task<int> DoRealPing(DownloadService downloadHandle, ServerTestItem it)
         {
-            await RunRealPingAsync(selecteds);
-
-            await Task.Delay(1000);
-
-            await RunSpeedTestMulti(selecteds);
-        }
-
-        private async Task<string> GetRealPingTime(DownloadService downloadHandle, IWebProxy webProxy)
-        {
+            var webProxy = new WebProxy($"socks5://{Global.Loopback}:{it.Port}");
             var responseTime = await downloadHandle.GetRealPingTime(_config.SpeedTestItem.SpeedPingTestUrl, webProxy, 10);
-            //string output = Utile.IsNullOrEmpty(status) ? FormatOut(responseTime, "ms") : status;
-            return FormatOut(responseTime, Global.DelayUnit);
+
+            ProfileExHandler.Instance.SetTestDelay(it.IndexId, responseTime);
+            UpdateFunc(it.IndexId, responseTime.ToString());
+            return responseTime;
+        }
+
+        private async Task DoSpeedTest(DownloadService downloadHandle, ServerTestItem it)
+        {
+            UpdateFunc(it.IndexId, "", ResUI.Speedtesting);
+
+            var webProxy = new WebProxy($"socks5://{Global.Loopback}:{it.Port}");
+            var url = _config.SpeedTestItem.SpeedTestUrl;
+            var timeout = _config.SpeedTestItem.SpeedTestTimeout;
+            await downloadHandle.DownloadDataAsync(url, webProxy, timeout, (success, msg) =>
+            {
+                decimal.TryParse(msg, out var dec);
+                if (dec > 0)
+                {
+                    ProfileExHandler.Instance.SetTestSpeed(it.IndexId, dec);
+                }
+                UpdateFunc(it.IndexId, "", msg);
+            });
         }
 
         private async Task<int> GetTcpingTime(string url, int port)
@@ -375,18 +333,19 @@ namespace ServiceLib.Services
                     ipAddress = ipHostInfo.AddressList.First();
                 }
 
-                var timer = Stopwatch.StartNew();
-
                 IPEndPoint endPoint = new(ipAddress, port);
                 using Socket clientSocket = new(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
+                var timer = Stopwatch.StartNew();
                 var result = clientSocket.BeginConnect(endPoint, null, null);
                 if (!result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5)))
+                {
                     throw new TimeoutException("connect timeout (5s): " + url);
-                clientSocket.EndConnect(result);
-
+                }
                 timer.Stop();
                 responseTime = (int)timer.Elapsed.TotalMilliseconds;
+
+                clientSocket.EndConnect(result);
             }
             catch (Exception ex)
             {
@@ -395,14 +354,31 @@ namespace ServiceLib.Services
             return responseTime;
         }
 
-        private string FormatOut(object time, string unit)
+        private List<List<ServerTestItem>> GetTestBatchItem(List<ServerTestItem> lstSelected, int pageSize)
         {
-            return $"{time}";
+            List<List<ServerTestItem>> lstTest = new();
+            var lst1 = lstSelected.Where(t => t.ConfigType is not (EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard)).ToList();
+            var lst2 = lstSelected.Where(t => t.ConfigType is EConfigType.Hysteria2 or EConfigType.TUIC or EConfigType.WireGuard).ToList();
+
+            for (var num = 0; num < (int)Math.Ceiling(lst1.Count * 1.0 / pageSize); num++)
+            {
+                lstTest.Add(lst1.Skip(num * pageSize).Take(pageSize).ToList());
+            }
+            for (var num = 0; num < (int)Math.Ceiling(lst2.Count * 1.0 / pageSize); num++)
+            {
+                lstTest.Add(lst2.Skip(num * pageSize).Take(pageSize).ToList());
+            }
+
+            return lstTest;
         }
 
         private void UpdateFunc(string indexId, string delay, string speed = "")
         {
             _updateFunc?.Invoke(new() { IndexId = indexId, Delay = delay, Speed = speed });
+            if (indexId.IsNotEmpty() && speed.IsNotEmpty())
+            {
+                ProfileExHandler.Instance.SetTestMessage(indexId, speed);
+            }
         }
     }
 }

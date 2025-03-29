@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler.Fmt
+namespace ServiceLib.Handler.Fmt
 {
     public class SocksFmt : BaseFmt
     {
@@ -23,11 +23,12 @@
 
         public static string? ToUri(ProfileItem? item)
         {
-            if (item == null) return null;
-            var url = string.Empty;
-
+            if (item == null)
+            {
+                return null;
+            }
             var remark = string.Empty;
-            if (Utils.IsNotEmpty(item.Remarks))
+            if (item.Remarks.IsNotEmpty())
             {
                 remark = "#" + Utils.UrlEncode(item.Remarks);
             }
@@ -76,7 +77,7 @@
                 return null;
             }
             item.Address = arr1[1][..indexPort];
-            item.Port = Utils.ToInt(arr1[1][(indexPort + 1)..]);
+            item.Port = arr1[1][(indexPort + 1)..].ToInt();
             item.Security = arr21.First();
             item.Id = arr21[1];
 
@@ -86,7 +87,10 @@
         private static ProfileItem? ResolveSocksNew(string result)
         {
             var parsedUrl = Utils.TryUri(result);
-            if (parsedUrl == null) return null;
+            if (parsedUrl == null)
+            {
+                return null;
+            }
 
             ProfileItem item = new()
             {

@@ -1,4 +1,4 @@
-﻿namespace ServiceLib.Handler.Fmt
+namespace ServiceLib.Handler.Fmt
 {
     public class VmessFmt : BaseFmt
     {
@@ -19,10 +19,11 @@
 
         public static string? ToUri(ProfileItem? item)
         {
-            if (item == null) return null;
-            string url = string.Empty;
-
-            VmessQRCode vmessQRCode = new()
+            if (item == null)
+            {
+                return null;
+            }
+            var vmessQRCode = new VmessQRCode
             {
                 v = item.ConfigVersion,
                 ps = item.Remarks.TrimEx(),
@@ -41,7 +42,7 @@
                 fp = item.Fingerprint
             };
 
-            url = JsonUtils.Serialize(vmessQRCode);
+            var url = JsonUtils.Serialize(vmessQRCode);
             url = Utils.Base64Encode(url);
             url = $"{Global.ProtocolShares[EConfigType.VMess]}{url}";
 
@@ -59,7 +60,7 @@
             result = result[Global.ProtocolShares[EConfigType.VMess].Length..];
             result = Utils.Base64Decode(result);
 
-            VmessQRCode? vmessQRCode = JsonUtils.Deserialize<VmessQRCode>(result);
+            var vmessQRCode = JsonUtils.Deserialize<VmessQRCode>(result);
             if (vmessQRCode == null)
             {
                 msg = ResUI.FailedConversionConfiguration;
@@ -77,12 +78,12 @@
             item.AlterId = vmessQRCode.aid;
             item.Security = Utils.ToString(vmessQRCode.scy);
 
-            item.Security = Utils.IsNotEmpty(vmessQRCode.scy) ? vmessQRCode.scy : Global.DefaultSecurity;
-            if (Utils.IsNotEmpty(vmessQRCode.net))
+            item.Security = vmessQRCode.scy.IsNotEmpty() ? vmessQRCode.scy : Global.DefaultSecurity;
+            if (vmessQRCode.net.IsNotEmpty())
             {
                 item.Network = vmessQRCode.net;
             }
-            if (Utils.IsNotEmpty(vmessQRCode.type))
+            if (vmessQRCode.type.IsNotEmpty())
             {
                 item.HeaderType = vmessQRCode.type;
             }
@@ -99,14 +100,17 @@
 
         public static ProfileItem? ResolveStdVmess(string str)
         {
-            ProfileItem item = new()
+            var item = new ProfileItem
             {
                 ConfigType = EConfigType.VMess,
                 Security = "auto"
             };
 
             var url = Utils.TryUri(str);
-            if (url == null) return null;
+            if (url == null)
+            {
+                return null;
+            }
 
             item.Address = url.IdnHost;
             item.Port = url.Port;

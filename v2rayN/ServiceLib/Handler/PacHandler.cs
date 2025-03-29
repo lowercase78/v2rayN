@@ -1,4 +1,4 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using System.Text;
 
 namespace ServiceLib.Handler
@@ -15,7 +15,7 @@ namespace ServiceLib.Handler
 
         public static async Task Start(string configPath, int httpPort, int pacPort)
         {
-            _needRestart = (configPath != _configPath || httpPort != _httpPort || pacPort != _pacPort || !_isRunning);
+            _needRestart = configPath != _configPath || httpPort != _httpPort || pacPort != _pacPort || !_isRunning;
 
             _configPath = configPath;
             _httpPort = httpPort;
@@ -33,9 +33,16 @@ namespace ServiceLib.Handler
         private static async Task InitText()
         {
             var path = Path.Combine(_configPath, "pac.txt");
+
+            // Delete the old pac file
+            if (File.Exists(path) && Utils.GetFileHash(path).Equals("b590c07280f058ef05d5394aa2f927fe"))
+            {
+                File.Delete(path);
+            }
+
             if (!File.Exists(path))
             {
-                var pac = Utils.GetEmbedText(Global.PacFileName);
+                var pac = EmbedUtils.GetEmbedText(Global.PacFileName);
                 await File.AppendAllTextAsync(path, pac);
             }
 
@@ -70,7 +77,7 @@ namespace ServiceLib.Handler
                         }
 
                         var client = await _tcpListener.AcceptTcpClientAsync();
-                        await Task.Run(() => { WriteContent(client); });
+                        await Task.Run(() => WriteContent(client));
                     }
                     catch
                     {
@@ -89,7 +96,10 @@ namespace ServiceLib.Handler
 
         public static void Stop()
         {
-            if (_tcpListener == null) return;
+            if (_tcpListener == null)
+            {
+                return;
+            }
             try
             {
                 _isRunning = false;

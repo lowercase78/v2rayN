@@ -1,9 +1,9 @@
-using ReactiveUI;
-using Splat;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using ReactiveUI;
+using Splat;
 
 namespace v2rayN.Views
 {
@@ -28,9 +28,9 @@ namespace v2rayN.Views
                 this.Bind(ViewModel, vm => vm.SelectedDetail, v => v.lstProxyDetails.SelectedItem).DisposeWith(disposables);
 
                 this.BindCommand(ViewModel, vm => vm.ProxiesReloadCmd, v => v.menuProxiesReload).DisposeWith(disposables);
-                this.BindCommand(ViewModel, vm => vm.ProxiesDelaytestCmd, v => v.menuProxiesDelaytest).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.ProxiesDelayTestCmd, v => v.menuProxiesDelaytest).DisposeWith(disposables);
 
-                this.BindCommand(ViewModel, vm => vm.ProxiesDelaytestPartCmd, v => v.menuProxiesDelaytestPart).DisposeWith(disposables);
+                this.BindCommand(ViewModel, vm => vm.ProxiesDelayTestPartCmd, v => v.menuProxiesDelaytestPart).DisposeWith(disposables);
                 this.BindCommand(ViewModel, vm => vm.ProxiesSelectActivityCmd, v => v.menuProxiesSelectActivity).DisposeWith(disposables);
 
                 this.Bind(ViewModel, vm => vm.RuleModeSelected, v => v.cmbRulemode.SelectedIndex).DisposeWith(disposables);
@@ -52,7 +52,8 @@ namespace v2rayN.Views
 
                 case EViewAction.DispatcherProxiesDelayTest:
 
-                    if (obj is null) return false;
+                    if (obj is null)
+                        return false;
                     Application.Current?.Dispatcher.Invoke((() =>
                     {
                         ViewModel?.ProxiesDelayTestResult((SpeedTestResult)obj);
