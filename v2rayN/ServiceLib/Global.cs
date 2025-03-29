@@ -4,12 +4,12 @@ namespace ServiceLib
     {
         #region const
 
-        public const string AppName = "v2rayN";
+        public const string AppName = "v2rayN-Pro";
         public const string GithubUrl = "https://github.com";
         public const string GithubApiUrl = "https://api.github.com/repos";
-        public const string GeoUrl = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{0}.dat";
+        public const string GeoUrl = "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/{0}.dat";
         public const string SpeedPingTestUrl = @"https://www.google.com/generate_204";
-        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/2dust/sing-box-rules/rule-set-{0}/{1}.srs";
+        public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/{1}.srs";
         public const string IPAPIUrl = "https://api.ip.sb/geoip";
 
         public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
@@ -499,8 +499,8 @@ namespace ServiceLib
         {
             { ECoreType.v2fly, "v2fly/v2ray-core" },
             { ECoreType.v2fly_v5, "v2fly/v2ray-core" },
-            { ECoreType.Xray, "XTLS/Xray-core" },
-            { ECoreType.sing_box, "SagerNet/sing-box" },
+            { ECoreType.Xray, "GFW-knocker/Xray-core" },
+            { ECoreType.sing_box, "kyochikuto/sing-box-plus" },
             { ECoreType.mihomo, "MetaCubeX/mihomo" },
             { ECoreType.hysteria, "apernet/hysteria" },
             { ECoreType.hysteria2, "apernet/hysteria" },
@@ -509,7 +509,7 @@ namespace ServiceLib
             { ECoreType.juicity, "juicity/juicity" },
             { ECoreType.brook, "txthinking/brook" },
             { ECoreType.overtls, "ShadowsocksR-Live/overtls" },
-            { ECoreType.v2rayN, "2dust/v2rayN" },
+            { ECoreType.v2rayN, "lowercase78/v2rayN" },
         };
 
         public static readonly List<string> OtherGeoUrls =

@@ -155,8 +155,8 @@ namespace ServiceLib.Handler
             config.Fragment4RayItem ??= new()
             {
                 Packets = "tlshello",
-                Length = "100-200",
-                Interval = "100-200"
+                Length = "10-20",
+                Interval = "10-20"
             };
             config.GlobalHotkeys ??= new();
 
