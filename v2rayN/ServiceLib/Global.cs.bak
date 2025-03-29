@@ -358,15 +358,15 @@ namespace ServiceLib
 
         public static readonly List<string> DomainDNSAddress =
         [
-            "8.8.8.8",
-            "4.2.2.4",
+            "223.5.5.5",
+            "223.6.6.6",
             "localhost"
         ];
 
         public static readonly List<string> SingboxDomainDNSAddress =
         [
-            "8.8.8.8",
-            "4.2.2.4",
+            "223.5.5.5",
+            "223.6.6.6",
             "dhcp://auto"
         ];
 
