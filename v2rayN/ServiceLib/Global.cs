@@ -558,8 +558,8 @@ public class Global
         {
             { ECoreType.v2fly, "v2fly/v2ray-core" },
             { ECoreType.v2fly_v5, "v2fly/v2ray-core" },
-            { ECoreType.Xray, "XTLS/Xray-core" },
-            { ECoreType.sing_box, "SagerNet/sing-box" },
+            { ECoreType.Xray, "GFW-knocker/Xray-core" },
+            { ECoreType.sing_box, "kyochikuto/sing-box" },
             { ECoreType.mihomo, "MetaCubeX/mihomo" },
             { ECoreType.hysteria, "apernet/hysteria" },
             { ECoreType.hysteria2, "apernet/hysteria" },
@@ -570,7 +570,7 @@ public class Global
             { ECoreType.overtls, "ShadowsocksR-Live/overtls" },
             { ECoreType.shadowquic, "spongebob888/shadowquic" },
             { ECoreType.mieru, "enfein/mieru" },
-            { ECoreType.v2rayN, "2dust/v2rayN" },
+            { ECoreType.v2rayN, "lowercase78/v2rayN" },
         };
 
     public static readonly List<string> OtherGeoUrls =
